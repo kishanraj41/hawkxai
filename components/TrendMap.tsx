@@ -238,8 +238,46 @@ export default function TrendMap({
       zoomToNode(svg, zoom, root, width, height);
     });
 
+    const pingTimers: number[] = [];
+    if (!reduce) {
+      const rising = node
+        .filter((d) => d.data.topic?.velocity === "rising")
+        .nodes()
+        .slice(0, 6);
+      rising.forEach((el, i) => {
+        const host = d3.select(el);
+        const datum = host.datum() as d3.HierarchyCircularNode<PackDatum>;
+        const fire = () => {
+          host
+            .append("circle")
+            .attr("class", "ping")
+            .attr("r", datum.r)
+            .attr("fill", "none")
+            .attr("stroke", AMBER)
+            .attr("stroke-width", 1.25)
+            .attr("opacity", 0.85)
+            .style("pointer-events", "none")
+            .transition()
+            .duration(3000)
+            .ease(d3.easeCubicOut)
+            .attr("r", datum.r * 2.2)
+            .attr("opacity", 0)
+            .remove();
+        };
+        const start = window.setTimeout(() => {
+          fire();
+          pingTimers.push(window.setInterval(fire, 3000));
+        }, i * 400);
+        pingTimers.push(start);
+      });
+    }
+
     return () => {
       svg.on("click", null);
+      pingTimers.forEach((id) => {
+        window.clearTimeout(id);
+        window.clearInterval(id);
+      });
     };
   }, [topics, onSelect]);
 
