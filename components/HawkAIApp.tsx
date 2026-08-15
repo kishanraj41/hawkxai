@@ -23,6 +23,9 @@ function MapSkeleton() {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
+      <p className="absolute left-1/2 top-[42%] z-10 w-max -translate-x-1/2 text-sm text-zinc-400">
+        Clustering live signals… first load can take about a minute.
+      </p>
       {blobs.map((b, i) => (
         <div
           key={i}
