@@ -48,6 +48,10 @@ htmlcov/
 # Logs
 *.log
 
+# Local npm / design caches (never commit)
+.npm-cache/
+.impeccable/
+
 # Next.js / HawkAI
 /node_modules
 /.pnp
