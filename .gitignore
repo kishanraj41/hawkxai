@@ -38,6 +38,11 @@ my_research/
 
 # OS
 .DS_Store
+
+# macOS Finder duplicate copies (never commit)
+**/* 2.*
+**/* 3.*
+**/* 4.*
 Thumbs.db
 
 # Testing
