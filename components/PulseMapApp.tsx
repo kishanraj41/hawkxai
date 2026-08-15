@@ -7,6 +7,7 @@ import TopicDetailPanel from "@/components/TopicDetailPanel";
 import TrendMap from "@/components/TrendMap";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
+import { CITY_OPTIONS, type CityId } from "@/lib/geo";
 import type { Topic, TrendsPayload } from "@/lib/types";
 
 function MapSkeleton() {
@@ -57,6 +58,7 @@ export default function PulseMapApp() {
   const [askQuery, setAskQuery] = useState("");
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
+  const [city, setCity] = useState<CityId>("all");
 
   const loadTrends = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -64,7 +66,11 @@ export default function PulseMapApp() {
     setError(null);
 
     try {
-      const res = await fetch(`/api/trends${refresh ? "?refresh=1" : ""}`);
+      const params = new URLSearchParams();
+      if (refresh) params.set("refresh", "1");
+      if (city !== "all") params.set("city", city);
+      const qs = params.toString();
+      const res = await fetch(`/api/trends${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error(`Trends failed (${res.status})`);
       const data = (await res.json()) as TrendsPayload;
       setPayload(data);
@@ -74,9 +80,11 @@ export default function PulseMapApp() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [city]);
 
   useEffect(() => {
+    setSelected(null);
+    setHighlightedIds([]);
     void loadTrends();
   }, [loadTrends]);
 
@@ -139,6 +147,11 @@ export default function PulseMapApp() {
           <span className="truncate text-xs tabular-nums text-zinc-500">
             {loading ? "clustering live signals…" : formatUpdatedAt(payload?.updatedAt ?? null)}
           </span>
+          {payload?.pipeline ? (
+            <span className="hidden max-w-xl truncate font-mono text-[10px] text-zinc-600 lg:inline" title={payload.pipeline}>
+              {payload.pipeline}
+            </span>
+          ) : null}
           <AnimatePresence mode="popLayout">
             {payload?.degraded.map((msg) => (
               <motion.span
@@ -154,6 +167,19 @@ export default function PulseMapApp() {
             ))}
           </AnimatePresence>
         </div>
+
+        <select
+          value={city}
+          onChange={(e) => setCity(e.target.value as CityId)}
+          aria-label="City"
+          className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-zinc-200 focus:border-sky-400/50 focus:outline-none focus:ring-2 focus:ring-sky-400/20"
+        >
+          {CITY_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.id} className="bg-[#0a0e14]">
+              {opt.label}
+            </option>
+          ))}
+        </select>
 
         <form onSubmit={handleAsk} className="flex min-w-[220px] flex-1 items-center gap-2 sm:max-w-md">
           <motion.input

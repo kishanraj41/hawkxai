@@ -41,6 +41,7 @@ export interface TrendsPayload {
   updatedAt: string;
   sources: SourceHealth;
   degraded: string[];
+  pipeline?: string;
 }
 
 export interface RawSignals {

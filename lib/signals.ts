@@ -20,9 +20,10 @@ function parseJsonObject(raw: string): unknown {
   }
 }
 
-export async function fetchX(): Promise<Post[]> {
+export async function fetchX(place?: string): Promise<Post[]> {
+  const where = place ? ` in ${place}` : "";
   const parsed = await grokJson(
-    `Search X once for the 10 hottest topics in the last 24 hours (tech, business, culture).
+    `Search X once for the 10 hottest topics in the last 24 hours (tech, business, culture)${where}.
 Return ONLY JSON: {"topics":[{"topic":"short phrase","volume":0,"urls":["https://x.com/..."]}]}
 volume is relative heat 0-100. Prefer real x.com URLs.`,
     (raw) => xTrendListSchema.parse(parseJsonObject(raw)),

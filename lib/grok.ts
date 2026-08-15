@@ -29,7 +29,7 @@ async function withTimeout(
   }
 }
 
-export async function grokChat(prompt: string): Promise<string> {
+export async function grokChat(prompt: string, timeoutMs = TIMEOUT_MS): Promise<string> {
   const res = await withTimeout(`${BASE}/chat/completions`, {
     method: "POST",
     headers: {
@@ -49,7 +49,7 @@ export async function grokChat(prompt: string): Promise<string> {
         { role: "user", content: prompt },
       ],
     }),
-  });
+  }, timeoutMs);
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`grok chat ${res.status}: ${body.slice(0, 240)}`);

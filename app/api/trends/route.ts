@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet, cachePeek, cacheSet } from "@/lib/cache";
 import { attachXPosts, clusterTopics } from "@/lib/cluster";
-import { beginSignals } from "@/lib/signals";
+import {
+  collectorAgent,
+  collectorSummary,
+  healthFrom,
+  reviewerAgent,
+  validatorAgent,
+} from "@/lib/agents";
+import { geoAgent } from "@/lib/geo";
 import { grokJson } from "@/lib/grok";
 import { tickerListSchema } from "@/lib/schemas";
 import type { Topic, TrendsPayload } from "@/lib/types";
@@ -10,6 +17,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const CACHE_KEY = "trends:v1";
+
+function cacheKeyFor(city: string): string {
+  return `${CACHE_KEY}:${city}`;
+}
 
 async function attachTickers(topics: Topic[]): Promise<void> {
   if (!process.env.XAI_API_KEY) return;
@@ -42,43 +53,56 @@ POSTS:\n${sample.join("\n")}`,
 
 export async function GET(req: NextRequest) {
   const refresh = req.nextUrl.searchParams.get("refresh") === "1";
+  const geo = geoAgent(req.nextUrl.searchParams.get("city"));
+  console.log(geo.log);
+  const cacheKey = cacheKeyFor(geo.city);
   if (!refresh) {
-    const cached = cacheGet<TrendsPayload>(CACHE_KEY);
+    const cached = cacheGet<TrendsPayload>(cacheKey);
     if (cached) {
       return NextResponse.json(cached);
     }
   }
 
-  const prev = cachePeek<TrendsPayload>(CACHE_KEY)?.topics;
-  const { core, x: xP } = beginSignals();
-  const { reddit, hn } = await core;
-  const sources = { x: false, reddit: reddit.length > 0, hn: hn.length > 0 };
-  const degraded: string[] = [];
-  if (!sources.reddit) degraded.push("reddit offline");
-  if (!sources.hn) degraded.push("hn offline");
+  const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
+  const collected = collectorAgent(geo);
+  const [redditR, hnR] = await Promise.all([collected.reddit, collected.hn]);
 
-  const [topics, xPosts] = await Promise.all([
-    clusterTopics({ reddit, hn, x: [], sources, degraded }, prev),
-    xP,
+  const [clustered, xR] = await Promise.all([
+    clusterTopics(
+      {
+        reddit: redditR.posts,
+        hn: hnR.posts,
+        x: [],
+        sources: { x: false, reddit: redditR.ok, hn: hnR.ok },
+        degraded: [],
+      },
+      prev,
+    ),
+    collected.x,
   ]);
-  if (xPosts.length) {
-    sources.x = true;
-    attachXPosts(topics, xPosts);
-  } else {
-    degraded.push("x offline");
-  }
-  console.log(
-    `[signals] reddit=${reddit.length} hn=${hn.length} x=${xPosts.length} degraded=${degraded.join(",") || "none"}`,
-  );
-  await attachTickers(topics);
+  if (xR.ok) attachXPosts(clustered, xR.posts);
+  const { sources, degraded } = healthFrom([xR, redditR, hnR]);
+
+  const collectorLog = collectorSummary([xR, redditR, hnR]);
+  const clusterLog = `cluster: ${clustered.length} topics`;
+  console.log(clusterLog);
+
+  const validated = validatorAgent(clustered);
+  const reviewed = await reviewerAgent(validated.topics);
+  await attachTickers(reviewed.topics);
+
+  const pipeline = `${geo.log} → ${collectorLog} → ${clusterLog} → ${validated.log} → ${reviewed.log}`;
+  console.log(`[pipeline] ${pipeline}`);
 
   const payload: TrendsPayload = {
-    topics,
+    topics: reviewed.topics,
     updatedAt: new Date().toISOString(),
     sources,
     degraded,
+    pipeline,
   };
+  cacheSet(cacheKey, payload);
   cacheSet(CACHE_KEY, payload);
-  console.log(`[trends] ${topics.length} topics @ ${payload.updatedAt}`);
+  console.log(`[trends] ${reviewed.topics.length} topics @ ${payload.updatedAt}`);
   return NextResponse.json(payload);
 }
