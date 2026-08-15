@@ -1,12 +1,18 @@
-# HawkAI (hackathon)
+# HawkAI — Hackathon
 
-Live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters topics. Divergence is computed in code: a topic exploding on one platform is a different story than one rising everywhere.
+A live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters related topics, while divergence is calculated in code. A topic exploding on one platform tells a different story from one gaining momentum across all platforms.
 
-## Core idea — Booster Agent
+# Core Idea — Booster Agent
 
-Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
+The Booster Agent captures trending signals such as hashtags, phrases, URLs, and other emerging topics, then analyzes and correlates them to understand why they are trending.
 
-The **Booster Agent** is that layer: capture artifacts → correlate why → translate for every age group → arm competitors with campaign moves → keep improvising the product.
+It transforms those signals into an interactive dashboard that provides useful, easy-to-understand insights for different audiences and helps businesses understand emerging trends, competitors, and opportunities for their campaigns.
+
+The Booster Agent acts as the intelligence layer:
+
+Capture signals → Correlate trends → Explain why → Identify audience relevance → Generate campaign insights → Continuously improve
+
+The goal is to turn fragmented social signals into actionable trend intelligence, rather than simply showing what is trending.
 
 ```bash
 python3 agents/booster-agent/booster_agent.py --self-check
