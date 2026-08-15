@@ -1,14 +1,13 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import AmbientBackground from "@/components/AmbientBackground";
 import BoosterBriefBar from "@/components/BoosterBriefBar";
 import TopicDetailPanel from "@/components/TopicDetailPanel";
 import TrendMap from "@/components/TrendMap";
 import { boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
-import { motionTokens } from "@/lib/motionTokens";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
 import type { BoosterPayload, Topic, TrendsPayload } from "@/lib/types";
 
@@ -28,23 +27,16 @@ function MapSkeleton() {
         Clustering live signals… first load can take about a minute.
       </p>
       {blobs.map((b, i) => (
-        <motion.div
+        <div
           key={i}
-          className="absolute rounded-full border border-white/10 bg-white/[0.03]"
+          className="absolute rounded-full border border-[#1c2333] bg-[#2a3245]/40"
           style={{
             left: b.x,
             top: b.y,
             width: b.r * 2,
             height: b.r * 2,
             transform: "translate(-50%, -50%)",
-          }}
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: [0.35, 0.7, 0.35], scale: [1, 1.06, 1] }}
-          transition={{
-            duration: 2.2 + i * 0.2,
-            repeat: Infinity,
-            ease: motionTokens.easing.smooth,
-            delay: i * 0.12,
+            opacity: 0.35 + (i % 3) * 0.08,
           }}
         />
       ))}
@@ -52,8 +44,15 @@ function MapSkeleton() {
   );
 }
 
+function noSignalLabel(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes("reddit")) return "REDDIT: NO SIGNAL";
+  if (m.includes("hacker") || /\bhn\b/.test(m)) return "HN: NO SIGNAL";
+  if (m.includes("twitter") || /\bx\b/.test(m)) return "X: NO SIGNAL";
+  return `${msg.replace(/\s+/g, " ").trim().toUpperCase()}`;
+}
+
 export default function HawkAIApp() {
-  const reduce = useReducedMotion();
   const [payload, setPayload] = useState<TrendsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -94,6 +93,17 @@ export default function HawkAIApp() {
     setHighlightedIds([]);
     void loadTrends();
   }, [loadTrends]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSelected(null);
+        setHighlightedIds([]);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   async function handleAsk(event: FormEvent) {
     event.preventDefault();
@@ -138,160 +148,109 @@ export default function HawkAIApp() {
   const topics = payload?.topics ?? [];
 
   return (
-    <main className="relative flex h-screen flex-col overflow-hidden bg-[#0a0e14] text-zinc-200">
+    <main className="relative flex h-screen flex-col overflow-hidden bg-[#05060a] text-[#f4f1ea]">
       <AmbientBackground />
 
-      <motion.header
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
-        className="relative z-20 flex shrink-0 flex-wrap items-center gap-3 border-b border-white/10 bg-[#0a0e14]/60 px-4 py-3 backdrop-blur-md"
-      >
+      <header className="relative z-20 flex shrink-0 flex-wrap items-center gap-3 border-b border-[#1c2333] bg-[#0a0e17] px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          <span className="shrink-0 bg-gradient-to-r from-zinc-100 via-sky-200 to-zinc-300 bg-clip-text tracking-[0.2em] text-transparent">
-            HAWKAI
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="signal-live" aria-label="Live" />
+            <span className="text-[13px] font-medium tracking-tight text-[#f4f1ea]">
+              HAWKAI
+            </span>
           </span>
-          <span className="truncate text-xs tabular-nums text-zinc-500">
-            {loading ? "clustering live signals…" : formatUpdatedAt(payload?.updatedAt ?? null)}
+          <span className="signal-label truncate tabular-nums">
+            {loading
+              ? "clustering live signals"
+              : `${topics.length} / ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
           </span>
           {payload?.pipeline ? (
-            <span className="hidden max-w-xl truncate font-mono text-[10px] text-zinc-600 lg:inline" title={payload.pipeline}>
+            <span className="signal-label hidden max-w-xl truncate lg:inline" title={payload.pipeline}>
               {payload.pipeline}
             </span>
           ) : null}
-          <AnimatePresence mode="popLayout">
-            {payload?.degraded.map((msg) => (
-              <motion.span
-                key={msg}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-amber-200"
-              >
-                {msg}
-              </motion.span>
-            ))}
-          </AnimatePresence>
+          {payload?.degraded.map((msg) => (
+            <span
+              key={msg}
+              className="signal-label rounded-[4px] border border-[#1c2333] px-2 py-1"
+            >
+              {noSignalLabel(msg)}
+            </span>
+          ))}
         </div>
 
         <select
           value={city}
           onChange={(e) => setCity(e.target.value as CityId)}
           aria-label="City"
-          className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-zinc-200 focus:border-sky-400/50 focus:outline-none focus:ring-2 focus:ring-sky-400/20"
+          className="signal-label shrink-0 rounded-[4px] border border-[#1c2333] bg-[#05060a] px-2 py-1.5 text-[#f4f1ea] focus:border-[#ffb24d] focus:outline-none"
         >
           {CITY_OPTIONS.map((opt) => (
-            <option key={opt.id} value={opt.id} className="bg-[#0a0e14]">
+            <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
               {opt.label}
             </option>
           ))}
         </select>
 
         <form onSubmit={handleAsk} className="flex min-w-[220px] flex-1 items-center gap-2 sm:max-w-md">
-          <motion.input
+          <input
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Ask what's blowing up…"
-            whileFocus={{ scale: reduce ? 1 : 1.01 }}
-            transition={{ duration: motionTokens.duration.fast }}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-sky-400/50 focus:outline-none focus:ring-2 focus:ring-sky-400/20"
+            placeholder="ask /"
+            className="w-full rounded-[4px] border border-[#1c2333] bg-[#05060a] px-3 py-1.5 font-mono text-sm text-[#f4f1ea] placeholder:text-[#7c8598] focus:border-[#ffb24d] focus:outline-none focus:ring-1 focus:ring-[#ffb24d]"
           />
-          <motion.button
+          <button
             type="submit"
             disabled={asking || !askQuery.trim()}
-            whileHover={asking ? undefined : { scale: 1.03 }}
-            whileTap={asking ? undefined : { scale: 0.96 }}
-            className="shrink-0 rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-sm text-zinc-100 disabled:opacity-40"
+            className="signal-label shrink-0 rounded-[4px] border border-[#1c2333] px-3 py-1.5 text-[#f4f1ea] disabled:opacity-40"
           >
-            {asking ? "…" : "Ask"}
-          </motion.button>
+            Ask
+          </button>
         </form>
 
-        <motion.button
+        <button
           type="button"
           onClick={() => void loadTrends(true)}
           disabled={refreshing}
-          whileHover={refreshing ? undefined : { scale: 1.03 }}
-          whileTap={refreshing ? undefined : { scale: 0.96 }}
-          className="shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-sm text-zinc-300 disabled:opacity-40"
+          className="signal-label shrink-0 px-2 py-1.5 text-[#7c8598] disabled:opacity-40"
         >
-          {refreshing ? "Refreshing…" : "Refresh"}
-        </motion.button>
-      </motion.header>
+          Refresh
+        </button>
+      </header>
 
-      <AnimatePresence mode="wait">
-        {askAnswer ? (
-          <motion.div
-            key={askAnswer}
-            initial={{ opacity: 0, height: 0, filter: "blur(4px)" }}
-            animate={{ opacity: 1, height: "auto", filter: "blur(0px)" }}
-            exit={{ opacity: 0, height: 0, filter: "blur(4px)" }}
-            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
-            className="relative z-20 overflow-hidden border-b border-white/10 bg-sky-950/40 backdrop-blur-sm"
-          >
-            <p className="px-4 py-2 text-pretty text-sm text-sky-100">{askAnswer}</p>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {askAnswer ? (
+        <div className="relative z-20 border-b border-[#1c2333] bg-[#0a0e17]">
+          <p className="px-4 py-2 font-mono text-sm text-[#f4f1ea]">{askAnswer}</p>
+        </div>
+      ) : null}
 
-      <AnimatePresence>
-        {booster ? <BoosterBriefBar key="booster" booster={booster} /> : null}
-      </AnimatePresence>
+      {booster ? <BoosterBriefBar booster={booster} /> : null}
 
-      <AnimatePresence mode="wait">
-        {error ? (
-          <motion.div
-            key={error}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="relative z-20 border-b border-red-500/30 bg-red-950/40 px-4 py-2 text-sm text-red-200"
-          >
-            {error}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {error ? (
+        <div className="relative z-20 border-b border-[#1c2333] bg-[#0a0e17] px-4 py-2">
+          <p className="signal-label">{error}</p>
+        </div>
+      ) : null}
 
       <div className="relative min-h-0 flex-1">
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0"
-            >
-              <MapSkeleton />
-            </motion.div>
-          ) : topics.length > 0 ? (
-            <motion.div
-              key="map"
-              initial={{ opacity: 0, scale: reduce ? 1 : 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: motionTokens.duration.slow, ease: motionTokens.easing.smooth }}
-              className="absolute inset-0"
-            >
-              <TrendMap
-                topics={topics}
-                selectedId={selected?.id ?? null}
-                highlightedIds={highlightedIds}
-                onSelect={setSelected}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex h-full items-center justify-center text-zinc-500"
-            >
-              No topics yet — try refresh or check API keys.
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {loading ? (
+          <div className="absolute inset-0">
+            <MapSkeleton />
+          </div>
+        ) : topics.length > 0 ? (
+          <div className="absolute inset-0">
+            <TrendMap
+              topics={topics}
+              selectedId={selected?.id ?? null}
+              highlightedIds={highlightedIds}
+              onSelect={setSelected}
+            />
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <p className="signal-label">No topics — refresh</p>
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           {selected ? (

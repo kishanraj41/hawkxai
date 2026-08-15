@@ -3,8 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0e14;
-  --foreground: #e4e4e7;
+  --void: #05060a;
+  --panel: #0a0e17;
+  --line: #1c2333;
+  --ink: #f4f1ea;
+  --mute: #7c8598;
+  --slate-fill: #2a3245;
+  --slate-stroke: #46506b;
+  --amber: #ffb24d;
+  --amber-hot: #ff7a18;
+  --grid: rgba(148, 163, 184, 0.05);
+  --background: #05060a;
+  --foreground: #f4f1ea;
 }
 
 html {
@@ -13,8 +23,126 @@ html {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--ink);
+  background: var(--void);
+  caret-color: var(--amber);
+}
+
+::selection {
+  background: rgba(255, 178, 77, 0.22);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.signal-void {
+  background-color: var(--void);
+  background-image:
+    radial-gradient(circle at 50% 54%, transparent 11.6%, var(--grid) 12%, transparent 12.4%),
+    radial-gradient(circle at 50% 54%, transparent 23.6%, var(--grid) 24%, transparent 24.4%),
+    radial-gradient(circle at 50% 54%, transparent 35.6%, var(--grid) 36%, transparent 36.4%),
+    radial-gradient(circle at 50% 54%, transparent 47.6%, var(--grid) 48%, transparent 48.4%),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    72px 72px,
+    72px 72px;
+  background-position: center;
+}
+
+.signal-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.signal-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.signal-sweep {
+  pointer-events: none;
+  position: absolute;
+  inset: -35%;
+  background: conic-gradient(
+    from -90deg,
+    transparent 0 76%,
+    rgba(148, 163, 184, 0.16) 84%,
+    transparent 93%
+  );
+  animation: signal-sweep 1.8s cubic-bezier(0.22, 1, 0.36, 1) 1 forwards;
+}
+
+.signal-live {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(255, 178, 77, 0.35);
+  animation: signal-ekg 2.4s linear infinite;
+}
+
+@keyframes signal-ekg {
+  0%,
+  16% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  26% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  32% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  40%,
+  100% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-live {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+@keyframes signal-sweep {
+  from {
+    transform: rotate(0deg);
+    opacity: 0.75;
+  }
+  to {
+    transform: rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-sweep {
+    animation: none;
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
