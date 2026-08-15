@@ -150,8 +150,11 @@ export default function HawkAIApp() {
 
       <header className="relative z-20 flex shrink-0 flex-wrap items-center gap-3 border-b border-[#1c2333] bg-[#0a0e17] px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          <span className="shrink-0 text-[13px] font-medium tracking-tight text-[#f4f1ea]">
-            HAWKAI
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="signal-live" aria-label="Live" />
+            <span className="text-[13px] font-medium tracking-tight text-[#f4f1ea]">
+              HAWKAI
+            </span>
           </span>
           <span className="signal-label truncate tabular-nums">
             {loading
