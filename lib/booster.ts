@@ -235,7 +235,7 @@ export function campaignMove(topic: Topic, artifacts: CapturedArtifact[]): Campa
   };
 }
 
-export function ageTranslations(topic: Topic, _why: string): AgeTranslation[] {
+export function ageTranslations(topic: Topic): AgeTranslation[] {
   const label = topic.label;
   return (Object.keys(AGE_META) as AgeLens[]).map((lens) => {
     const meta = AGE_META[lens];
@@ -269,7 +269,7 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
     whyTrending: why,
     confidence,
     artifacts,
-    audiences: ageTranslations(topic, why),
+    audiences: ageTranslations(topic),
     campaign: campaignMove(topic, artifacts),
   };
 }
