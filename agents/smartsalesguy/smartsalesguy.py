@@ -54,8 +54,10 @@ FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
     ("lib/cluster.ts", "Grok topic clustering", "xAI Grok 4.6 clusters raw posts into topics; divergence is computed in code"),
     ("agents/booster-agent/booster_agent.py", "Booster Agent (CLI brain)", "Offline/live capture of hashtags, QRs, phrases, URLs; improvises the backlog"),
-    ("agents/docker-ci/ci_agent.py", "Production CI gate", "Dockerfile build, smoke test, Bug Bot on every PR and every merge to main"),
+    ("agents/pr-review-bot/review_bot.py", "PR Review Bot", "AI code review with 0-10 scoring and JSON/Markdown reports"),
     ("agents/bug-bot/bug_bot.py", "Bug Bot", "Security and logic scan as a merge gate"),
+    ("agents/docker-ci/ci_agent.py", "Production CI gate", "Dockerfile build, smoke test, Bug Bot on every PR and every merge to main"),
+    ("agents/smartsalesguy/smartsalesguy.py", "SmartSalesGuy", "Checks out this repo and writes the VC one-pager from evidence only"),
 )
 
 PRODUCT_REFS = (
@@ -121,6 +123,7 @@ class Dossier:
     stack: List[str] = field(default_factory=list)
     git: Optional[GitCheckout] = None
     sources: List[str] = field(default_factory=list)
+    agents: List[Feature] = field(default_factory=list)
 
 
 @dataclass
@@ -220,6 +223,80 @@ def _package_stack(root: Path) -> List[str]:
         if key in deps:
             names.append(f"{key} {deps[key]}")
     return names
+
+
+AGENT_ORDER = (
+    "booster-agent",
+    "pr-review-bot",
+    "bug-bot",
+    "docker-ci",
+    "smartsalesguy",
+)
+
+AGENT_COPY: Dict[str, Tuple[str, str]] = {
+    "booster-agent": (
+        "Booster Agent",
+        "Capture artifacts, correlate why, five age lenses, competitor campaign moves.",
+    ),
+    "pr-review-bot": (
+        "PR Review Bot",
+        "AI code review with 0-10 scoring and JSON/Markdown reports.",
+    ),
+    "bug-bot": (
+        "Bug Bot",
+        "Security and logic scan used as a merge gate.",
+    ),
+    "docker-ci": (
+        "Docker CI Agent",
+        "Production image build, smoke test, and Bug Bot on every PR and every merge to main.",
+    ),
+    "smartsalesguy": (
+        "SmartSalesGuy",
+        "Checks out this repo and writes the VC one-pager from evidence only.",
+    ),
+}
+
+_AGENT_SKIP = frozenset({"__pycache__", "runs", "reports", "fixtures", "tests"})
+
+
+def _discover_agents(root: Path) -> List[Feature]:
+    """Roster from directories under agents/, not a hardcoded README that drifts."""
+    agents_dir = Path(root) / "agents"
+    if not agents_dir.is_dir():
+        return []
+    slugs: List[str] = []
+    for path in agents_dir.iterdir():
+        if not path.is_dir() or path.name.startswith(".") or path.name in _AGENT_SKIP:
+            continue
+        if not (path / "README.md").is_file() and not any(path.glob("*.py")):
+            continue
+        slugs.append(path.name)
+    ordered = [slug for slug in AGENT_ORDER if slug in slugs]
+    ordered.extend(sorted(slug for slug in slugs if slug not in AGENT_ORDER))
+    found: List[Feature] = []
+    for slug in ordered:
+        rel = f"agents/{slug}/README.md"
+        text, evidence = _git_show(root, rel)
+        copied = AGENT_COPY.get(slug)
+        if copied:
+            name, detail = copied
+        else:
+            name = slug
+            for line in text.splitlines():
+                if line.startswith("# "):
+                    name = re.sub(r"[#*_`]+", "", line).strip()
+                    name = re.sub(r"[\U0001F300-\U0001FAFF]", "", name).strip()
+                    break
+            detail = _first_paragraphs(text, 1)[:180] or f"Agent at agents/{slug}"
+        found.append(
+            Feature(
+                name=name,
+                evidence=evidence if text else f"agents/{slug}",
+                detail=detail,
+                status="live",
+            )
+        )
+    return found
 
 
 def _live_features(root: Path) -> List[Feature]:
@@ -353,12 +430,14 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
     idea, product_para, _readme_line = _core_copy(root)
     current = _live_features(root)
     future = _future_features(root)
+    agents = _discover_agents(root)
     market = _market(root)
     stack = _package_stack(root)
     sources = [
         "README.md",
         "docs/CORE_IDEA.md",
         "docs/research/trend_analysis_dashboard_research.md",
+        "agents/README.md",
         "agents/booster-agent/IMPROVISATIONS.md",
         "package.json",
     ]
@@ -420,6 +499,7 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         stack=stack,
         git=git,
         sources=sources,
+        agents=agents,
     )
 
 
@@ -448,6 +528,13 @@ def compose_one_pager(dossier: Dossier) -> str:
 
     stack = ", ".join(dossier.stack) if dossier.stack else "Next.js, TypeScript, D3, Grok"
 
+    agents_block = ""
+    if dossier.agents:
+        agents_block = (
+            "\n## Agents\n\n"
+            f"{_bullets(dossier.agents, 12)}\n"
+        )
+
     return f"""# PulseMap
 **Confidential · one-page venture proposal**
 
@@ -474,7 +561,7 @@ def compose_one_pager(dossier: Dossier) -> str:
 {_bullets(dossier.current, 8)}
 
 Stack in the checkout: {stack}.
-
+{agents_block}
 ## What's next
 
 {_bullets(dossier.future, 7)}

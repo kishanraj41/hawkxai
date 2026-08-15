@@ -113,12 +113,22 @@ Every PR commit and every merge to `main` builds the production `Dockerfile` and
 
 Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · no database · no auth
 
-## SmartSalesGuy (VC one-pager)
+## Agents
 
-Unicorn-founder sales agent. Checks out this repo and writes a one-page venture proposal: problem, solution, what's live, what's next.
+Roster: [agents/README.md](agents/README.md)
+
+| Agent | Role |
+|---|---|
+| [Booster](agents/booster-agent/README.md) | Capture → correlate → campaign (core idea) |
+| [PR Review Bot](agents/pr-review-bot/README.md) | AI code review with quality scoring |
+| [Bug Bot](agents/bug-bot/README.md) | Security and logic scan |
+| [Docker CI](agents/docker-ci/README.md) | Production image build, smoke test, Bug Bot on every PR and merge to `main` |
+| [SmartSalesGuy](agents/smartsalesguy/README.md) | VC one-pager from this checkout |
 
 ```bash
+python3 agents/booster-agent/booster_agent.py --self-check
+python3 agents/docker-ci/ci_agent.py
 python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
-Canonical page: [docs/VC_ONE_PAGER.md](docs/VC_ONE_PAGER.md)
+Canonical investor page: [docs/VC_ONE_PAGER.md](docs/VC_ONE_PAGER.md)
