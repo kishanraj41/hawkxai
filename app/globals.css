@@ -72,6 +72,37 @@ body {
   border-radius: 4px;
 }
 
+.signal-sweep {
+  pointer-events: none;
+  position: absolute;
+  inset: -35%;
+  background: conic-gradient(
+    from -90deg,
+    transparent 0 76%,
+    rgba(148, 163, 184, 0.16) 84%,
+    transparent 93%
+  );
+  animation: signal-sweep 1.8s cubic-bezier(0.22, 1, 0.36, 1) 1 forwards;
+}
+
+@keyframes signal-sweep {
+  from {
+    transform: rotate(0deg);
+    opacity: 0.75;
+  }
+  to {
+    transform: rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-sweep {
+    animation: none;
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

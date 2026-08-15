@@ -1,7 +1,7 @@
 "use client";
 
 import * as d3 from "d3";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motionDuration, motionTokens } from "@/lib/motionTokens";
 import { totalScore } from "@/lib/ui-helpers";
 import type { Platform, Topic } from "@/lib/types";
@@ -74,9 +74,20 @@ export default function TrendMap({
   const selectedIdRef = useRef(selectedId);
   const highlightedIdsRef = useRef(highlightedIds);
   const hadSelectionRef = useRef(Boolean(selectedId));
+  const [sweepOn, setSweepOn] = useState(false);
 
   selectedIdRef.current = selectedId;
   highlightedIdsRef.current = highlightedIds;
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setSweepOn(false);
+      return;
+    }
+    setSweepOn(true);
+    const timer = window.setTimeout(() => setSweepOn(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [topics]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -86,8 +97,7 @@ export default function TrendMap({
     const width = container.clientWidth;
     const height = container.clientHeight;
     const reduce = prefersReducedMotion();
-    const enterMs = reduce ? 0 : motionDuration(motionTokens.duration.slow) * 1000;
-    const hoverMs = reduce ? 0 : motionDuration(motionTokens.duration.fast) * 1000;
+    const hoverMs = reduce ? 0 : 180;
 
     const svg = d3.select(svgEl);
     svg.selectAll("*").remove();
@@ -120,6 +130,34 @@ export default function TrendMap({
     hoverMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
     const g = svg.append("g");
+    const cx = width / 2;
+    const cy = height / 2;
+    const maxR = Math.hypot(width, height) * 0.7;
+    const grid = g.append("g").attr("class", "radar-grid");
+    for (let r = 72; r < maxR; r += 72) {
+      grid
+        .append("circle")
+        .attr("cx", cx)
+        .attr("cy", cy)
+        .attr("r", r)
+        .attr("fill", "none")
+        .attr("stroke", "rgba(148,163,184,0.05)")
+        .attr("stroke-width", 1);
+    }
+    grid
+      .append("line")
+      .attr("x1", cx - maxR)
+      .attr("x2", cx + maxR)
+      .attr("y1", cy)
+      .attr("y2", cy)
+      .attr("stroke", "rgba(148,163,184,0.05)");
+    grid
+      .append("line")
+      .attr("x1", cx)
+      .attr("x2", cx)
+      .attr("y1", cy - maxR)
+      .attr("y2", cy + maxR)
+      .attr("stroke", "rgba(148,163,184,0.05)");
 
     const root = d3
       .pack<PackDatum>()
@@ -177,11 +215,13 @@ export default function TrendMap({
       .attr("r", (d) => Math.max(d.r, 18));
 
     circles
+      .attr("opacity", 0)
       .transition()
-      .duration(enterMs)
-      .delay((_, i) => (reduce ? 0 : i * 18))
+      .duration(reduce ? 0 : 420)
+      .delay((_, i) => (reduce ? 0 : i * 50))
       .ease(d3.easeCubicOut)
-      .attr("r", (d) => d.r);
+      .attr("r", (d) => d.r)
+      .attr("opacity", 1);
 
     node
       .filter((d) => Boolean(d.data.topic) && d.r > 28)
@@ -199,10 +239,14 @@ export default function TrendMap({
         const text = label.length > max ? `${label.slice(0, max - 1)}…` : label;
         d3.select(this).text(text);
       })
+      .attr("opacity", 0);
+
+    const labelDelay = reduce ? 0 : 1800 + 200;
+    g.selectAll("text")
       .transition()
-      .duration(enterMs)
-      .delay((_, i) => (reduce ? 0 : 200 + i * 12))
-      .attr("opacity", 1);
+      .delay(labelDelay)
+      .duration(reduce ? 0 : 180)
+      .attr("opacity", 0.92);
 
     node
       .filter((d) => Boolean(d.data.topic))
@@ -329,6 +373,7 @@ export default function TrendMap({
   return (
     <div ref={containerRef} className="absolute inset-0">
       <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkAI trend map" />
+      {sweepOn ? <div className="signal-sweep" aria-hidden /> : null}
     </div>
   );
 }
@@ -411,10 +456,20 @@ function zoomToNode(
     .scale(k)
     .translate(-node.x, -node.y);
 
+  svg.selectAll("text").interrupt().attr("opacity", 0);
+  const zoomMs = prefersReducedMotion() ? 0 : 650;
   svg
     .transition()
-    .duration(prefersReducedMotion() ? 0 : 650)
+    .duration(zoomMs)
     .ease(d3.easeCubicOut)
+    .on("end", () => {
+      svg
+        .selectAll("text")
+        .transition()
+        .delay(prefersReducedMotion() ? 0 : 200)
+        .duration(prefersReducedMotion() ? 0 : 180)
+        .attr("opacity", 0.92);
+    })
     .call(zoom.transform, transform);
 }
 
@@ -438,9 +493,19 @@ function zoomToNodes(
     .scale(k)
     .translate(-cx, -cy);
 
+  svg.selectAll("text").interrupt().attr("opacity", 0);
+  const zoomMs = prefersReducedMotion() ? 0 : 650;
   svg
     .transition()
-    .duration(prefersReducedMotion() ? 0 : 650)
+    .duration(zoomMs)
     .ease(d3.easeCubicOut)
+    .on("end", () => {
+      svg
+        .selectAll("text")
+        .transition()
+        .delay(prefersReducedMotion() ? 0 : 200)
+        .duration(prefersReducedMotion() ? 0 : 180)
+        .attr("opacity", 0.92);
+    })
     .call(zoom.transform, transform);
 }
