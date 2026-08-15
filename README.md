@@ -136,4 +136,4 @@ python3 agents/docker-ci/ci_agent.py
 python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
-Canonical investor page: [docs/VC_ONE_PAGER.md](docs/VC_ONE_PAGER.md)
+Canonical investor page: [docs/VC_ONE_PAGER.md](docs/VC_ONE_PAGER.md) · Deck file list: [docs/README.md](docs/README.md#proposal-presentation)
