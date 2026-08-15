@@ -55,10 +55,10 @@ The backlog is not a brainstorm. Booster re-ranks it from real capture gaps afte
 
 ## Market
 
-- **TAM (intersection):** ~$5-8B _(source: docs/research/trend_analysis_dashboard_research.md)_
-- **SAM:** ~$500M-$1B _(source: docs/research/trend_analysis_dashboard_research.md)_
-- **SOM (3-year):** $5-10M in revenue _(source: docs/research/trend_analysis_dashboard_research.md)_
-- **Seed working capital (research):** $50k-$200k (2-3 person team for 6 months) _(source: docs/research/trend_analysis_dashboard_research.md)_
+- **TAM (intersection):** ~$5-8B *(source: docs/research/trend_analysis_dashboard_research.md)*
+- **SAM:** ~$500M-$1B *(source: docs/research/trend_analysis_dashboard_research.md)*
+- **SOM (3-year):** $5-10M in revenue *(source: docs/research/trend_analysis_dashboard_research.md)*
+- **Seed working capital (research):** $50k-$200k (2-3 person team for 6 months) *(source: docs/research/trend_analysis_dashboard_research.md)*
 
 Comparables in the research file: Dataminr, PredictHQ, Brandwatch. The gap they leave is the one we occupy: social artifacts + evidence-backed why + age translation + competitor campaign moves.
 
