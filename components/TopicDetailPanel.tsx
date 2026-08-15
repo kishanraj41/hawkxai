@@ -1,10 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { divergenceLabel, topPosts } from "@/lib/ui-helpers";
-import { motionTokens } from "@/lib/motionTokens";
 import BoosterInsights from "@/components/BoosterInsights";
-import type { BoosterTopicBrief, Platform, Topic } from "@/lib/types";
+import Sparkline from "@/components/Sparkline";
+import { divergenceLabel, sparkValues, topPosts } from "@/lib/ui-helpers";
+import { motionTokens } from "@/lib/motionTokens";
+import type { AgeLens, BoosterTopicBrief, Platform, Topic } from "@/lib/types";
 
 function VelocityMark({ velocity }: { velocity: Topic["velocity"] }) {
   if (velocity === "rising") {
@@ -26,7 +27,7 @@ function DivergenceMeter({ value }: { value: number }) {
           className="w-px"
           style={{
             height: i % 4 === 0 ? 14 : 9,
-            background: i < filled ? "#f4f1ea" : "#2a3245",
+            background: i < filled ? "#f4f4f5" : "#1a1d24",
           }}
         />
       ))}
@@ -55,10 +56,11 @@ function SourceMark({ platform }: { platform: Platform }) {
 interface TopicDetailPanelProps {
   topic: Topic;
   brief?: BoosterTopicBrief;
+  lens?: AgeLens | "all";
   onClose: () => void;
 }
 
-export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailPanelProps) {
+export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicDetailPanelProps) {
   const reduce = useReducedMotion();
   const receipts = topPosts(topic);
   const platformScores = (["x", "reddit", "hn"] as const).filter(
@@ -77,21 +79,17 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
       }}
       className="relative flex h-full w-full flex-col p-5"
     >
-      <span
-        aria-hidden
-        className="absolute left-0 top-5 h-4 w-0.5 bg-[#ffb24d]"
-      />
 
       <button
         type="button"
         onClick={onClose}
-        className="signal-label mb-3 self-end text-[#7c8598] hover:text-[#f4f1ea]"
+        className="signal-label mb-3 self-end hover:text-white"
       >
         Close
       </button>
 
       <motion.h2
-        className="text-balance text-2xl font-medium leading-snug tracking-tight text-[#f4f1ea]"
+        className="text-balance text-xl font-medium leading-snug tracking-tight"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
@@ -101,16 +99,22 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
 
       <div className="mt-5 space-y-4">
         <div>
-          <p className="signal-label">Detected</p>
-          <div className="mt-2">
+          <p className="signal-label">Tape</p>
+          <div className="mt-2 flex items-center gap-3">
             <VelocityMark velocity={topic.velocity} />
+            <Sparkline
+              values={sparkValues(topic)}
+              width={88}
+              height={22}
+              color={topic.velocity === "fading" ? "#f87171" : "#34d399"}
+            />
           </div>
         </div>
         <div>
           <p className="signal-label">Spread</p>
           <div className="mt-2 flex items-center gap-3">
             <DivergenceMeter value={topic.divergence} />
-            <span className="signal-label text-[#f4f1ea]">{divergenceLabel(topic)}</span>
+            <span className="signal-label text-white">{divergenceLabel(topic)}</span>
           </div>
         </div>
         <div>
@@ -120,7 +124,7 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
               <div key={p} className="flex items-center gap-1.5">
                 <SourceMark platform={p} />
                 <span className="signal-label tabular-nums text-[#f4f1ea]">
-                  {topic.platforms[p].score}
+                  {p} {topic.platforms[p].score}
                 </span>
               </div>
             ))}
@@ -129,7 +133,7 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
       </div>
 
       {topic.why ? (
-        <p className="mt-4 text-pretty text-sm leading-relaxed text-[#7c8598]">{topic.why}</p>
+        <p className="mt-4 text-pretty text-sm leading-relaxed text-white/55">{topic.why}</p>
       ) : null}
 
       {topic.peakHourCT ? (
@@ -137,7 +141,7 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
       ) : null}
 
       <div className="mt-6 min-h-0 flex-1 overflow-y-auto">
-        <p className="signal-label">Receipts</p>
+        <p className="signal-label">Print</p>
         <div className="mt-3 space-y-3">
           {receipts.length === 0 ? (
             <p className="signal-label">No posts attached</p>
@@ -148,7 +152,7 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
                 href={post.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-start gap-2 text-sm text-[#f4f1ea] hover:underline hover:decoration-[#ffb24d] hover:underline-offset-4"
+                className="flex items-start gap-2 text-sm text-white/90 hover:underline hover:underline-offset-4"
               >
                 <SourceMark platform={post.platform} />
                 <span className="min-w-0">
@@ -160,13 +164,13 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
           )}
         </div>
 
-        {brief ? <BoosterInsights brief={brief} /> : null}
+        {brief ? <BoosterInsights brief={brief} lens={lens} /> : null}
       </div>
 
       {topic.tickers.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-[#1c2333] pt-4">
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-white/8 pt-4">
           {topic.tickers.map((t) => (
-            <span key={t.symbol} className="signal-label tabular-nums text-[#f4f1ea]">
+            <span key={t.symbol} className="signal-label text-white">
               {t.symbol} · {t.sentiment}
             </span>
           ))}

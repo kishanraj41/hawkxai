@@ -36,12 +36,21 @@ const CONTROVERSY = [
 ];
 
 const AGE_META: Record<AgeLens, { label: string }> = {
-  kids: { label: "Kids" },
-  "gen-z": { label: "Gen Z" },
-  millennial: { label: "Millennial" },
-  "gen-x": { label: "Gen X" },
-  boomer: { label: "Boomer" },
+  kids: { label: "Family" },
+  "gen-z": { label: "18–24" },
+  millennial: { label: "25–40" },
+  "gen-x": { label: "41–56" },
+  boomer: { label: "57+" },
 };
+
+export const AUDIENCE_OPTIONS: { id: AgeLens | "all"; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "kids", label: "Family" },
+  { id: "gen-z", label: "18–24" },
+  { id: "millennial", label: "25–40" },
+  { id: "gen-x", label: "41–56" },
+  { id: "boomer", label: "57+" },
+];
 
 function allMatches(re: RegExp, text: string): string[] {
   const copy = new RegExp(re.source, re.flags);
@@ -166,19 +175,19 @@ export function whyTrending(topic: Topic, artifacts: CapturedArtifact[]): { why:
 
   const parts: string[] = [];
   if (topic.velocity === "rising" && topic.divergence >= 0.66) {
-    parts.push(`Exploding first as a ${div}. Other networks have not caught up — early window.`);
+    parts.push(`Breaking first as a ${div}. Other sources have not caught up — early window.`);
   } else if (topic.velocity === "rising") {
-    parts.push(`Rising and ${div}. Cross-platform heat is the story, not a one-app meme.`);
+    parts.push(`Rising and ${div}. Heat is spread across sources, not a single spike.`);
   } else if (topic.velocity === "peaking") {
-    parts.push(`At peak attention (${div}). Good for amplification; expensive to originate.`);
+    parts.push(`At peak attention (${div}). Cheap to amplify, expensive to originate.`);
   } else {
-    parts.push(`Cooling (${div}). Better for recap and explanation than a new campaign drop.`);
+    parts.push(`Cooling (${div}). Better as a recap than a new launch.`);
   }
 
-  if (active.length) parts.push(`Receipts on ${active.join(", ")}.`);
-  if (tags.length) parts.push(`Artifacts in play: ${tags.join(" ")}.`);
-  if (uniqueDomains.length) parts.push(`Link gravity: ${uniqueDomains.join(", ")}.`);
-  if (topic.peakHourCT) parts.push(`Historical peak hour CT: ${topic.peakHourCT}.`);
+  if (active.length) parts.push(`Print on ${active.join(", ")}.`);
+  if (tags.length) parts.push(`In play: ${tags.join(" ")}.`);
+  if (uniqueDomains.length) parts.push(`Traffic on ${uniqueDomains.join(", ")}.`);
+  if (topic.peakHourCT) parts.push(`Usual peak ${topic.peakHourCT} CT.`);
 
   const evidence = postsOf(topic).length + artifacts.length;
   const confidence = Math.max(0.25, Math.min(0.92, 0.35 + evidence * 0.06 + (score > 80 ? 0.1 : 0)));
@@ -202,7 +211,7 @@ export function campaignMove(topic: Topic, artifacts: CapturedArtifact[]): Campa
   if (topic.velocity === "fading") {
     return {
       angle: "Recap, don't launch",
-      forCompetitors: `Use "${hot}" as context in a post-mortem or explainer. Do not drop a new campaign into a cooling wave.`,
+      forCompetitors: `Use "${hot}" as context in an explainer. Do not drop a new campaign into a cooling wave.`,
       risk: risky ? "high" : "medium",
       timing: "fading",
       hook: `What ${topic.label} actually changed — in one screen.`,
@@ -210,38 +219,46 @@ export function campaignMove(topic: Topic, artifacts: CapturedArtifact[]): Campa
   }
   if (topic.divergence >= 0.66) {
     return {
-      angle: "Go native on the bubbling platform",
-      forCompetitors: `Don't paste the same ad everywhere. Speak the ${divergenceLabel(topic)} in its own format, then bridge to your product need — never clone the meme.`,
+      angle: "Win the source that's moving first",
+      forCompetitors: `Stay native to the ${divergenceLabel(topic)}. Bridge to a product need — don't copy the post.`,
       risk: risky ? "high" : "low",
       timing: topic.velocity,
       hook: `${hot} is still local. Be useful there before it goes mainstream.`,
     };
   }
   return {
-    angle: "Ride the need, not the joke",
-    forCompetitors: `Competitors should answer the job-to-be-done behind "${topic.label}" (speed, trust, status, safety). Copying the phrase without a new proof point looks late.`,
+    angle: "Sell the job underneath",
+    forCompetitors: `Answer the job behind "${topic.label}" (speed, trust, status, safety). Repeating the phrase without proof looks late.`,
     risk: risky ? "high" : topic.velocity === "peaking" ? "medium" : "low",
     timing: topic.velocity,
-    hook: `While ${hot} is ${topic.velocity}, show the proof your category still owes people.`,
+    hook: `${hot} is ${topic.velocity}. Show the proof the category still owes people.`,
   };
 }
 
-export function ageTranslations(topic: Topic, why: string): AgeTranslation[] {
+export function ageTranslations(topic: Topic, _why: string): AgeTranslation[] {
   const label = topic.label;
   return (Object.keys(AGE_META) as AgeLens[]).map((lens) => {
     const meta = AGE_META[lens];
     const takeaway =
       lens === "kids"
-        ? `People are talking about “${label}”. If you see a QR or link, ask a grown-up before scanning. ${why}`
+        ? `“${label}” is in the news. Don’t scan unknown QR codes or links without a parent.`
         : lens === "gen-z"
-          ? `This is live social weather around “${label}”. Remix only if you add a real take — brands that just #spam it get ratioed.`
+          ? `“${label}” is moving now. Only jump in if you have a real point of view.`
           : lens === "millennial"
-            ? `“${label}” is spiking. Worth 30 seconds if it changes a purchase, commute, or bill — skip if it's just dunking.`
+            ? `“${label}” is up. Check if it changes a purchase, commute, or bill before spending time on it.`
             : lens === "gen-x"
-              ? `Signal: “${label}” is ${topic.velocity}. Ignore the slang; check whether a product, policy, or outage actually moved.`
-              : `Plain version: “${label}” is trending (${topic.velocity}). Here’s why it might affect news, money, or family plans — no jargon.`;
+              ? `“${label}” is ${topic.velocity}. Look for a product, policy, or outage — skip the noise.`
+              : `“${label}” is ${topic.velocity}. Practical angle: news, money, or family plans.`;
     return { lens, label: meta.label, takeaway };
   });
+}
+
+export function topicRisk(topic: Topic): CampaignMove["risk"] {
+  const blob = blobOf(topic).toLowerCase();
+  if (CONTROVERSY.some((w) => blob.includes(w))) return "high";
+  if (topic.velocity === "fading") return "medium";
+  if (topic.velocity === "peaking") return "medium";
+  return "low";
 }
 
 export function boostTopic(topic: Topic): BoosterTopicBrief {
@@ -286,7 +303,7 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
     items.push({
       priority: "P0",
       title: "Ingest TikTok / Reels / Shorts caption text",
-      why: "Almost no hashtags in HN/Reddit titles. Gen Z campaigns are invisible.",
+      why: "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.",
       next: "Add a caption scraper (or Grok x_search for TikTok-named trends) into capture.",
     });
   }
@@ -309,8 +326,8 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
   if (rising >= 2) {
     items.push({
       priority: "P1",
-      title: "Age-group toggle on the map",
-      why: "Same rising cluster means different things to kids vs boomers vs a brand CMO.",
+      title: "Audience toggle on the map",
+      why: "The same rising cluster reads differently for family, 18–24, and a brand CMO.",
       next: "Compose five caption variants from BoosterInsights; filter map labels by lens.",
     });
   }
@@ -345,8 +362,8 @@ export function boostTrends(payload: TrendsPayload): BoosterPayload {
   const improvisations = improvisationsFor(payload, briefs);
   const top = briefs[0];
   const summary = top
-    ? `Hottest: “${payload.topics.find((t) => t.id === top.topicId)?.label}” — ${top.whyTrending} Campaign: ${top.campaign.hook}`
-    : "No topics to boost yet. Hit /api/trends first.";
+    ? `${payload.topics.find((t) => t.id === top.topicId)?.label ?? "Lead"} · ${top.campaign.risk} risk · ${top.campaign.hook}`
+    : "No topics on the tape yet.";
   return {
     updatedAt: new Date().toISOString(),
     sourceUpdatedAt: payload.updatedAt,

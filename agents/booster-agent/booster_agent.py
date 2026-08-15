@@ -48,11 +48,11 @@ CONTROVERSY = (
     "outage", "recall", "boycott", "protest", "death", "killed", "abuse",
 )
 AGE_LENSES = (
-    ("kids", "Kids"),
-    ("gen-z", "Gen Z"),
-    ("millennial", "Millennial"),
-    ("gen-x", "Gen X"),
-    ("boomer", "Boomer"),
+    ("kids", "Family"),
+    ("gen-z", "18–24"),
+    ("millennial", "25–40"),
+    ("gen-x", "41–56"),
+    ("boomer", "57+"),
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -225,20 +225,20 @@ def why_trending(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Tuple[
     div = _divergence_label(topic)
     parts: List[str] = []
     if velocity == "rising" and float(topic.get("divergence") or 0) >= 0.66:
-        parts.append(f"Exploding first as a {div}. Other networks have not caught up — early window.")
+        parts.append(f"Breaking first as a {div}. Other sources have not caught up — early window.")
     elif velocity == "rising":
-        parts.append(f"Rising and {div}. Cross-platform heat is the story, not a one-app meme.")
+        parts.append(f"Rising and {div}. Heat is spread across sources, not a single spike.")
     elif velocity == "peaking":
-        parts.append(f"At peak attention ({div}). Good for amplification; expensive to originate.")
+        parts.append(f"At peak attention ({div}). Cheap to amplify, expensive to originate.")
     else:
-        parts.append(f"Cooling ({div}). Better for recap and explanation than a new campaign drop.")
+        parts.append(f"Cooling ({div}). Better as a recap than a new launch.")
 
     active = _active_platforms(topic)
     if active:
-        parts.append(f"Receipts on {', '.join(active)}.")
+        parts.append(f"Print on {', '.join(active)}.")
     tags = [a.value for a in artifacts if a.kind == "hashtag"][:3]
     if tags:
-        parts.append(f"Artifacts in play: {' '.join(tags)}.")
+        parts.append(f"In play: {' '.join(tags)}.")
     domains = []
     for a in artifacts:
         if a.kind in ("url", "qr"):
@@ -246,7 +246,7 @@ def why_trending(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Tuple[
             if d and d not in domains:
                 domains.append(d)
     if domains:
-        parts.append(f"Link gravity: {', '.join(domains[:2])}.")
+        parts.append(f"Traffic on {', '.join(domains[:2])}.")
     if topic.get("peakHourCT"):
         parts.append(f"Historical peak hour CT: {topic['peakHourCT']}.")
 
@@ -291,15 +291,15 @@ def campaign_move(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Campa
     )
 
 
-def age_translations(topic: Dict[str, Any], why: str) -> List[AgeTranslation]:
+def age_translations(topic: Dict[str, Any], _why: str) -> List[AgeTranslation]:
     label = topic.get("label") or "this topic"
     velocity = topic.get("velocity") or "peaking"
     takes = {
-        "kids": f'People are talking about “{label}”. If you see a QR or link, ask a grown-up before scanning. {why}',
-        "gen-z": f'This is live social weather around “{label}”. Remix only if you add a real take — brands that just #spam it get ratioed.',
-        "millennial": f'“{label}” is spiking. Worth 30 seconds if it changes a purchase, commute, or bill — skip if it\'s just dunking.',
-        "gen-x": f'Signal: “{label}” is {velocity}. Ignore the slang; check whether a product, policy, or outage actually moved.',
-        "boomer": f'Plain version: “{label}” is trending ({velocity}). Here’s why it might affect news, money, or family plans — no jargon.',
+        "kids": f'“{label}” is in the news. Don’t scan unknown QR codes or links without a parent.',
+        "gen-z": f'“{label}” is moving now. Only jump in if you have a real point of view.',
+        "millennial": f'“{label}” is up. Check if it changes a purchase, commute, or bill before spending time on it.',
+        "gen-x": f'“{label}” is {velocity}. Look for a product, policy, or outage — skip the noise.',
+        "boomer": f'“{label}” is {velocity}. Practical angle: news, money, or family plans.',
     }
     return [AgeTranslation(lens=k, label=lab, takeaway=takes[k]) for k, lab in AGE_LENSES]
 
@@ -334,13 +334,13 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     if any("reddit" in d for d in degraded):
         items.append(Improvisation("P0", "Reddit fallback (OAuth or last-good cache)", "403s wipe phrase capture from the largest long-form platform.", "Authenticated Reddit client + cache last-good posts for 15m."))
     if len(hashtags) < 3:
-        items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Gen Z campaigns are invisible.", "Add a caption scraper (or Grok search for TikTok-named trends) into capture."))
+        items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.", "Add a caption scraper (or Grok search for TikTok-named trends) into capture."))
     if not qr_decoded:
         items.append(Improvisation("P0", "QR image decode, not just QR-shaped URLs", "Campaigns hide the payload in images. Text regex cannot see a poster QR.", "Accept image URLs → decode with a QR library → treat payload as a first-class artifact."))
     if bubbles >= 3:
         items.append(Improvisation("P1", "Platform-native campaign studio", f"{bubbles} topics are still single-platform bubbles — the cheapest time to act.", "One-click brief: format + hook + risk for the bubbling network only."))
     if rising >= 2:
-        items.append(Improvisation("P1", "Age-group toggle on the map", "Same rising cluster means different things to kids vs boomers vs a brand CMO.", "Compose five caption variants from BoosterInsights; filter map labels by lens."))
+        items.append(Improvisation("P1", "Audience toggle on the map", "The same rising cluster reads differently for family, 18–24, and a brand CMO.", "Compose five caption variants from BoosterInsights; filter map labels by lens."))
     if not any((t.get("tickers") or []) for t in topics):
         items.append(Improvisation("P1", "Finance overlay even without explicit tickers", "Competitors still need category peers when $TICKER is absent.", "Map topic labels to a small industry lexicon — never invent symbols."))
     items.append(Improvisation("P2", "News + disaster time-lag correlation", "Why-trending is still social-only. Campaigns miss weather, outages, and filings.", "Join GDELT/NOAA on a 0–24h lag next to velocity."))
@@ -358,9 +358,9 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
     captured = Counter(a.kind for b in briefs for a in b.artifacts)
     top = briefs[0] if briefs else None
     summary = (
-        f"Hottest: “{top.label}” — {top.why_trending} Campaign: {top.campaign.hook}"
+        f"{top.label} · {top.campaign.risk} risk · {top.campaign.hook}"
         if top
-        else "No topics to boost yet. Hit /api/trends first."
+        else "No topics on the tape yet."
     )
     return BoosterReport(
         timestamp=datetime.now(timezone.utc).isoformat(),

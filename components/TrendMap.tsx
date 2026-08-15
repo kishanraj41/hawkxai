@@ -22,7 +22,9 @@ interface TrendMapProps {
   topics: Topic[];
   selectedId: string | null;
   highlightedIds: string[];
+  hoverId: string | null;
   onSelect: (topic: Topic | null) => void;
+  onHover: (id: string | null) => void;
 }
 
 function scoreRadius(topics: Topic[]): (score: number) => number {
@@ -63,21 +65,27 @@ export default function TrendMap({
   topics,
   selectedId,
   highlightedIds,
+  hoverId,
   onSelect,
+  onHover,
 }: TrendMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const rootRef = useRef<d3.HierarchyCircularNode<PackDatum> | null>(null);
-  const hoverIdRef = useRef<string | null>(null);
+  const hoverIdRef = useRef<string | null>(hoverId);
   const selectedIdRef = useRef(selectedId);
   const highlightedIdsRef = useRef(highlightedIds);
   const hadSelectionRef = useRef(Boolean(selectedId));
+  const onHoverRef = useRef(onHover);
   const [sweepOn, setSweepOn] = useState(false);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [tip, setTip] = useState<{ topic: Topic; x: number; y: number } | null>(null);
 
   selectedIdRef.current = selectedId;
   highlightedIdsRef.current = highlightedIds;
+  hoverIdRef.current = hoverId;
+  onHoverRef.current = onHover;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -333,9 +341,19 @@ export default function TrendMap({
 
     node
       .filter((d) => Boolean(d.data.topic))
-      .on("mouseenter", function (_event, d) {
+      .on("mouseenter", function (event, d) {
         if (!d.data.topic) return;
         hoverIdRef.current = d.data.topic.id;
+        onHoverRef.current(d.data.topic.id);
+        const host = containerRef.current;
+        if (host) {
+          const rect = host.getBoundingClientRect();
+          setTip({
+            topic: d.data.topic,
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          });
+        }
         d3.select(this)
           .select("circle.viz")
           .transition()
@@ -344,8 +362,21 @@ export default function TrendMap({
           .attr("stroke-width", strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, d.data.topic!.id));
         d3.select(this).raise();
       })
+      .on("mousemove", (event, d) => {
+        if (!d.data.topic) return;
+        const host = containerRef.current;
+        if (!host) return;
+        const rect = host.getBoundingClientRect();
+        setTip({
+          topic: d.data.topic,
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        });
+      })
       .on("mouseleave", function (_event, d) {
         hoverIdRef.current = null;
+        onHoverRef.current(null);
+        setTip(null);
         d3.select(this)
           .select("circle.viz")
           .transition()
@@ -361,6 +392,8 @@ export default function TrendMap({
 
     svg.on("click", () => {
       hoverIdRef.current = null;
+      onHoverRef.current(null);
+      setTip(null);
       onSelect(null);
       zoomToNode(svg, zoom, root, width, height);
     });
@@ -451,12 +484,28 @@ export default function TrendMap({
       zoomToNode(svg, zoom, root, width, height);
     }
     hadSelectionRef.current = Boolean(selectedId);
-  }, [selectedId, highlightedIds]);
+  }, [selectedId, highlightedIds, hoverId]);
 
   return (
     <div ref={containerRef} className="absolute inset-0">
       <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkAI trend map" />
       {sweepOn ? <div className="signal-sweep" aria-hidden /> : null}
+      {tip ? <MapQuote topic={tip.topic} x={tip.x} y={tip.y} /> : null}
+    </div>
+  );
+}
+
+function MapQuote({ topic, x, y }: { topic: Topic; x: number; y: number }) {
+  const score = totalScore(topic);
+  return (
+    <div
+      className="pointer-events-none absolute z-20 w-56 rounded-lg border border-white/12 bg-[#0c0d10]/95 p-2.5"
+      style={{ left: Math.min(x + 12, 9999), top: Math.max(8, y - 8), transform: "translateY(-100%)" }}
+    >
+      <p className="line-clamp-2 text-[12px] leading-snug text-white">{topic.label}</p>
+      <p className="mt-1 font-mono text-[10px] tabular-nums text-white/55">
+        {Math.round(score)} · {topic.velocity} · {topic.platforms.x.score} X · {topic.platforms.reddit.score} Reddit · {topic.platforms.hn.score} HN
+      </p>
     </div>
   );
 }

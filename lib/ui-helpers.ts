@@ -40,7 +40,7 @@ export function topPosts(topic: Topic, limit = 3): Post[] {
 }
 
 export function formatUpdatedAt(iso: string | null): string {
-  if (!iso) return "waiting for signals…";
+  if (!iso) return "waiting";
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -48,3 +48,17 @@ export function formatUpdatedAt(iso: string | null): string {
     timeZoneName: "short",
   }).format(new Date(iso));
 }
+
+export function sparkValues(topic: Topic, limit = 12): number[] {
+  return Object.values(topic.platforms)
+    .flatMap((slice) => slice.posts)
+    .toSorted((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map((p) => p.score)
+    .slice(-limit);
+}
+
+export const VELOCITY_MARK: Record<Topic["velocity"], string> = {
+  rising: "▲",
+  peaking: "●",
+  fading: "▼",
+};
