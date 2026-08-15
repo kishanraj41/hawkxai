@@ -74,9 +74,24 @@ export default function TrendMap({
   const highlightedIdsRef = useRef(highlightedIds);
   const hadSelectionRef = useRef(Boolean(selectedId));
   const [sweepOn, setSweepOn] = useState(false);
+  const [size, setSize] = useState({ w: 0, h: 0 });
 
   selectedIdRef.current = selectedId;
   highlightedIdsRef.current = highlightedIds;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const apply = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -93,8 +108,9 @@ export default function TrendMap({
     const svgEl = svgRef.current;
     if (!container || !svgEl || topics.length === 0) return;
 
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = size.w || container.clientWidth;
+    const height = size.h || container.clientHeight;
+    if (width < 32 || height < 32) return;
     const reduce = prefersReducedMotion();
     const hoverMs = reduce ? 0 : 180;
 
@@ -168,10 +184,8 @@ export default function TrendMap({
       .attr("y2", cy + maxR)
       .attr("stroke", "rgba(148,163,184,0.05)");
 
-    const root = d3
-      .pack<PackDatum>()
-      .size([width, height])
-      .padding(4)(
+    const packed = d3.pack<PackDatum>().size([width, height]).padding(4);
+    const root = packed(
       d3
         .hierarchy(buildHierarchy(topics))
         .sum((d) => d.value ?? 0)
@@ -193,7 +207,7 @@ export default function TrendMap({
     const nodes = root.descendants().slice(1);
     const topicNodes = nodes.filter((d) => Boolean(d.data.topic));
 
-    if (topicNodes.length >= 3) {
+    if (topicNodes.length >= 3 && typeof d3.Delaunay?.from === "function") {
       const mesh = g.append("g").attr("class", "terrain-mesh").attr("pointer-events", "none");
       const delaunay = d3.Delaunay.from(topicNodes.map((d) => [d.x, d.y] as [number, number]));
       const { triangles } = delaunay;
@@ -392,7 +406,7 @@ export default function TrendMap({
         window.clearInterval(id);
       });
     };
-  }, [topics, onSelect]);
+  }, [topics, onSelect, size.w, size.h]);
 
   useEffect(() => {
     const svgEl = svgRef.current;
