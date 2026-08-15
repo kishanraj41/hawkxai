@@ -31,8 +31,8 @@ export const clusteredListSchema = z.object({
 
 export const xTrendSchema = z.object({
   topic: z.string(),
-  volume: z.number().min(0).max(100),
-  urls: z.array(z.string()).max(3),
+  volume: z.coerce.number().transform((n) => Math.max(0, Math.min(100, n))),
+  urls: z.array(z.string()).max(3).default([]),
 });
 
 export const xTrendListSchema = z.object({

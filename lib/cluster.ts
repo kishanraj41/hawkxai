@@ -113,3 +113,42 @@ HN: ${JSON.stringify(hn)}`,
     return singletonTopics([...signals.reddit, ...signals.hn, ...signals.x]);
   }
 }
+
+function tokens(s: string): Set<string> {
+  return new Set(
+    s
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 3),
+  );
+}
+
+function overlap(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+  let n = 0;
+  for (const t of a) if (b.has(t)) n += 1;
+  return n / Math.min(a.size, b.size);
+}
+
+/** Attach X topics after clustering so x_search can run in parallel with Grok. */
+export function attachXPosts(topics: Topic[], xPosts: Post[]): Topic[] {
+  if (!xPosts.length) return topics;
+  const used = new Set<string>();
+  for (const topic of topics) {
+    const labelTok = tokens(topic.label);
+    const matched = xPosts.filter(
+      (p) => !used.has(p.title) && overlap(labelTok, tokens(p.title)) >= 0.25,
+    );
+    for (const p of matched) used.add(p.title);
+    if (!matched.length) continue;
+    topic.platforms.x.posts = matched.slice(0, 5);
+    topic.platforms.x.score = matched[0]?.score ?? 0;
+    topic.divergence = divergenceOf(topic);
+  }
+  for (const p of xPosts) {
+    if (used.has(p.title)) continue;
+    topics.push(hydrate(p.title, { x: [p], reddit: [], hn: [] }));
+    used.add(p.title);
+  }
+  return topics;
+}
