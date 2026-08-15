@@ -4,7 +4,18 @@ This directory contains autonomous AI agents that enhance the development workfl
 
 ## Available Agents
 
-### 1. PR Review Bot (`pr-review-bot/`)
+### 1. Booster Agent (`booster-agent/`) — **core idea**
+
+Captures trending hashtags, QRs, phrases, and URLs; correlates why they are trending; translates insights for every age group and for campaign competitors; and keeps improvising the dashboard.
+
+```bash
+python3 agents/booster-agent/booster_agent.py --self-check
+python3 agents/booster-agent/booster_agent.py --file agents/booster-agent/fixtures/sample_trends.json
+```
+
+[See full documentation →](booster-agent/README.md) · [Core idea →](../docs/CORE_IDEA.md)
+
+### 2. PR Review Bot (`pr-review-bot/`)
 
 An AI-powered code review agent with reinforcement learning capabilities.
 
@@ -18,7 +29,7 @@ An AI-powered code review agent with reinforcement learning capabilities.
 
 [See full documentation →](pr-review-bot/README.md)
 
-### 2. Bug Bot (`bug-bot/`)
+### 3. Bug Bot (`bug-bot/`)
 
 Intelligent bug detection and tracking agent that finds security vulnerabilities and logic errors.
 
@@ -26,6 +37,9 @@ Intelligent bug detection and tracking agent that finds security vulnerabilities
 ```bash
 # PR Review Bot
 python3 agents/pr-review-bot/review_bot.py 2
+
+# Booster Agent
+python3 agents/booster-agent/booster_agent.py --self-check
 
 # Bug Bot
 python3 agents/bug-bot/bug_bot.py

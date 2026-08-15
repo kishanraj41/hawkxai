@@ -2,6 +2,18 @@
 
 Live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters topics. Divergence is computed in code: a topic exploding on one platform is a different story than one rising everywhere.
 
+## Core idea — Booster Agent
+
+Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
+
+The **Booster Agent** is that layer: capture artifacts → correlate why → translate for every age group → arm competitors with campaign moves → keep improvising the product.
+
+```bash
+python3 agents/booster-agent/booster_agent.py --self-check
+```
+
+North star: [docs/CORE_IDEA.md](docs/CORE_IDEA.md) · Agent: [agents/booster-agent/README.md](agents/booster-agent/README.md) · Live: `GET /api/booster` after `/api/trends`.
+
 Repo: https://github.com/snagaram3/grokhackx
 
 ## Team split
@@ -38,6 +50,7 @@ npm run dev
 - Data: http://localhost:3000/api/trends
 - Force refresh: http://localhost:3000/api/trends?refresh=1
 - Ask: `POST /api/ask` body `{ "q": "what's blowing up in Austin?" }`
+- Booster: http://localhost:3000/api/booster  (after trends are cached)
 
 First `/api/trends` can take ~60–90s (Grok cluster). After that it caches **5 minutes**.
 
