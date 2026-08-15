@@ -44,6 +44,55 @@ export interface TrendsPayload {
   pipeline?: string;
 }
 
+export type AgeLens = "kids" | "gen-z" | "millennial" | "gen-x" | "boomer";
+
+export type ArtifactKind = "hashtag" | "phrase" | "url" | "qr" | "ticker";
+
+export interface CapturedArtifact {
+  kind: ArtifactKind;
+  value: string;
+  mentions: number;
+  platforms: Platform[];
+}
+
+export interface CampaignMove {
+  angle: string;
+  forCompetitors: string;
+  risk: "low" | "medium" | "high";
+  timing: Topic["velocity"];
+  hook: string;
+}
+
+export interface AgeTranslation {
+  lens: AgeLens;
+  label: string;
+  takeaway: string;
+}
+
+export interface BoosterTopicBrief {
+  topicId: string;
+  whyTrending: string;
+  confidence: number;
+  artifacts: CapturedArtifact[];
+  audiences: AgeTranslation[];
+  campaign: CampaignMove;
+}
+
+export interface Improvisation {
+  priority: "P0" | "P1" | "P2";
+  title: string;
+  why: string;
+  next: string;
+}
+
+export interface BoosterPayload {
+  updatedAt: string;
+  sourceUpdatedAt: string;
+  summary: string;
+  briefs: BoosterTopicBrief[];
+  improvisations: Improvisation[];
+}
+
 export interface RawSignals {
   reddit: Post[];
   hn: Post[];

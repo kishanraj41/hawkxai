@@ -2,6 +2,14 @@
 
 This directory contains research, analysis, and planning documents for the grokhackx project.
 
+## Core idea
+
+PulseMap's north star is the **Booster Agent**: capture hashtags / QRs / phrases / URLs, correlate why they are trending, and feed an interactive dashboard useful to every age group and to competitors running campaigns.
+
+- **[Core idea](./CORE_IDEA.md)** — product contract
+- **[Booster Agent](../agents/booster-agent/README.md)** — capture → correlate → campaign → improvise
+- **[Improvisations](../agents/booster-agent/IMPROVISATIONS.md)** — living upgrade backlog
+
 ## Research
 
 ### Trend Analysis Dashboard Research

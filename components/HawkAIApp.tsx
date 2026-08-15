@@ -3,12 +3,14 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import AmbientBackground from "@/components/AmbientBackground";
+import BoosterBriefBar from "@/components/BoosterBriefBar";
 import TopicDetailPanel from "@/components/TopicDetailPanel";
 import TrendMap from "@/components/TrendMap";
+import { boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
-import type { Topic, TrendsPayload } from "@/lib/types";
+import type { BoosterPayload, Topic, TrendsPayload } from "@/lib/types";
 
 function MapSkeleton() {
   const blobs = [
@@ -59,6 +61,7 @@ export default function HawkAIApp() {
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [city, setCity] = useState<CityId>("all");
+  const [booster, setBooster] = useState<BoosterPayload | null>(null);
 
   const loadTrends = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -74,6 +77,7 @@ export default function HawkAIApp() {
       if (!res.ok) throw new Error(`Trends failed (${res.status})`);
       const data = (await res.json()) as TrendsPayload;
       setPayload(data);
+      setBooster(boostTrends(data));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load trends");
     } finally {
@@ -228,6 +232,10 @@ export default function HawkAIApp() {
         ) : null}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {booster ? <BoosterBriefBar key="booster" booster={booster} /> : null}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {error ? (
           <motion.div
@@ -287,6 +295,7 @@ export default function HawkAIApp() {
             <TopicDetailPanel
               key={selected.id}
               topic={selected}
+              brief={booster?.briefs.find((b) => b.topicId === selected.id)}
               onClose={() => setSelected(null)}
             />
           ) : null}

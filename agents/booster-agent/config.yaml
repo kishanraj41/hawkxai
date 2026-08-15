@@ -1,0 +1,34 @@
+# Booster Agent Configuration
+
+capture:
+  max_artifacts_per_topic: 12
+  max_phrases: 4
+  short_link_hosts:
+    - bit.ly
+    - t.co
+    - tinyurl.com
+    - lnkd.in
+    - qrco.de
+    - qrs.ly
+    - goo.gl
+    - ow.ly
+
+age_lenses:
+  - kids
+  - gen-z
+  - millennial
+  - gen-x
+  - boomer
+
+campaign:
+  never_invent_why: true
+  include_risk: true
+
+sources:
+  trends_url: http://localhost:3000/api/trends
+
+reports:
+  save_json: true
+  save_markdown: true
+  update_improvisations: true
+  output_directory: agents/booster-agent/runs

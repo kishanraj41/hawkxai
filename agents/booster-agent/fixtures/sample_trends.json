@@ -1,0 +1,65 @@
+{
+  "topics": [
+    {
+      "id": "qr-summer-drop",
+      "label": "QR summer drop #HeatWaveFit",
+      "platforms": {
+        "x": {
+          "score": 88,
+          "posts": [
+            {
+              "platform": "x",
+              "title": "Scan this QR for the #HeatWaveFit drop https://qrco.de/hwfit?utm_medium=qr",
+              "url": "https://x.com/brand/status/1",
+              "score": 88,
+              "createdAt": "2026-08-15T16:00:00.000Z"
+            }
+          ]
+        },
+        "reddit": {
+          "score": 40,
+          "posts": [
+            {
+              "platform": "reddit",
+              "title": "Anyone else seeing #HeatWaveFit posters on every corner?",
+              "url": "https://reddit.com/r/outfits/comments/1",
+              "score": 210,
+              "createdAt": "2026-08-15T15:10:00.000Z"
+            }
+          ]
+        },
+        "hn": { "score": 0, "posts": [] }
+      },
+      "velocity": "rising",
+      "divergence": 0.33,
+      "tickers": [],
+      "peakHourCT": "7pm"
+    },
+    {
+      "id": "airline-outage",
+      "label": "Airline app outage",
+      "platforms": {
+        "x": {
+          "score": 71,
+          "posts": [
+            {
+              "platform": "x",
+              "title": "Outage: $DAL app down, #TravelFail spreading https://t.co/abc123",
+              "url": "https://x.com/travel/status/2",
+              "score": 71,
+              "createdAt": "2026-08-15T14:00:00.000Z"
+            }
+          ]
+        },
+        "reddit": { "score": 0, "posts": [] },
+        "hn": { "score": 0, "posts": [] }
+      },
+      "velocity": "peaking",
+      "divergence": 1,
+      "tickers": [{ "symbol": "DAL", "sentiment": "neg", "mentions": 2 }]
+    }
+  ],
+  "updatedAt": "2026-08-15T17:00:00.000Z",
+  "sources": { "x": true, "reddit": true, "hn": false },
+  "degraded": ["hn offline"]
+}
