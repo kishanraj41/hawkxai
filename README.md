@@ -94,6 +94,8 @@ Never invent posts or a fake WHY.
 
 Push a hello-world to Vercel as soon as `npm run build` works. Set `XAI_API_KEY` in Vercel env. First deploy at 2:40 is how this dies.
 
+Every PR commit and every merge to `main` builds the production `Dockerfile` and runs Bug Bot (`agents/docker-ci`, `.github/workflows/docker-ci.yml`).
+
 ## Stack
 
 Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · no database · no auth

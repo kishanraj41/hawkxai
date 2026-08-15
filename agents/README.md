@@ -29,9 +29,20 @@ python3 agents/pr-review-bot/review_bot.py 2
 
 # Bug Bot
 python3 agents/bug-bot/bug_bot.py
+
+# Docker CI agent
+python3 agents/docker-ci/ci_agent.py
 ```
 
-[See full documentation →](pr-review-bot/README.md) | [Bug Bot docs →](bug-bot/README.md)
+[See full documentation →](pr-review-bot/README.md) | [Bug Bot docs →](bug-bot/README.md) | [Docker CI docs →](docker-ci/README.md)
+
+### 3. Docker CI Agent (`docker-ci/`)
+
+Builds the production Dockerfile, smoke-tests the image, and gates every PR commit and every merge to `main` with Bug Bot.
+
+Runs via `.github/workflows/docker-ci.yml`.
+
+[See full documentation →](docker-ci/README.md)
 
 ---
 
@@ -147,8 +158,15 @@ Potential agents to build:
 
 ### CI/CD Integration
 
+Docker builds and Bug Bot already run on every PR commit and every push to `main`:
+
 ```yaml
-# .github/workflows/agents.yml
+# .github/workflows/docker-ci.yml
+# build Dockerfile → smoke-test image → Bug Bot --fail-on critical
+```
+
+```yaml
+# Optional extra: PR Review Bot only
 name: AI Agents
 
 on: pull_request
@@ -157,7 +175,7 @@ jobs:
   pr-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: PR Review Bot
         run: python3 agents/pr-review-bot/review_bot.py ${{ github.event.pull_request.number }}
 ```

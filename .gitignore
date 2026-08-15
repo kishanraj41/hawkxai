@@ -66,3 +66,6 @@ yarn-error.log*
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# Agent CI reports (regenerated on each run)
+agents/docker-ci/reports/

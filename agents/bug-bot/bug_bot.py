@@ -488,24 +488,40 @@ class BugDetector:
         print(f"📄 Markdown report saved to: {filepath}")
 
 
+def _meets_fail_threshold(report: BugReport, fail_on: str) -> bool:
+    """True when the report contains a bug at fail_on severity or worse."""
+    if fail_on == "none":
+        return False
+    counts = {
+        "critical": report.critical_bugs,
+        "high": report.high_bugs,
+        "medium": report.medium_bugs,
+        "low": report.low_bugs,
+    }
+    order = ["critical", "high", "medium", "low"]
+    start = order.index(fail_on)
+    return any(counts[level] > 0 for level in order[: start + 1])
+
+
 def main():
     """Main CLI interface."""
+    import argparse
     import sys
-    
+
+    parser = argparse.ArgumentParser(description="Bug Bot — scan a tree for common bugs")
+    parser.add_argument("target", nargs="?", default=".")
+    parser.add_argument(
+        "--fail-on",
+        choices=["none", "low", "medium", "high", "critical"],
+        default="none",
+        help="Exit 1 if any bug at this severity or worse is found (CI gate)",
+    )
+    args = parser.parse_args()
+
     detector = BugDetector()
-    
-    if len(sys.argv) > 1:
-        target = sys.argv[1]
-    else:
-        target = "."
-    
-    # Scan for bugs
-    bugs = detector.scan_directory(target)
-    
-    # Generate report
+    bugs = detector.scan_directory(args.target)
     report = detector.generate_report(bugs)
-    
-    # Display summary
+
     print(f"\n{'='*60}")
     print(report.summary)
     print(f"{'='*60}")
@@ -514,9 +530,11 @@ def main():
     print(f"  ⚠️  High: {report.high_bugs}")
     print(f"  💡 Medium: {report.medium_bugs}")
     print(f"  🔸 Low: {report.low_bugs}")
-    
-    # Save report
+
     detector.save_report(report)
+
+    if args.fail_on != "none" and _meets_fail_threshold(report, args.fail_on):
+        sys.exit(1)
 
 
 if __name__ == '__main__':

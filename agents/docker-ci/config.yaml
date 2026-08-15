@@ -1,0 +1,22 @@
+# Docker CI agent — used as the documented contract.
+# The agent ships matching defaults so CI does not require PyYAML.
+
+image: pulsemap:ci
+dockerfile: Dockerfile
+smoke:
+  port: 3000
+  timeout_seconds: 60
+  path: /
+bugbot:
+  scan:
+    - app
+    - lib
+    - components
+  fail_on: critical
+review:
+  run_on: pull_request
+  blocking: false
+dockerfile_contract:
+  require_nonroot_user: true
+  forbid_secret_env: true
+  prefer_multistage: true
