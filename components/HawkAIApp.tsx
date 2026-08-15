@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import AmbientBackground from "@/components/AmbientBackground";
 import TopicDetailPanel from "@/components/TopicDetailPanel";
 import TrendMap from "@/components/TrendMap";
@@ -47,7 +47,7 @@ function MapSkeleton() {
   );
 }
 
-export default function PulseMapApp() {
+export default function HawkAIApp() {
   const reduce = useReducedMotion();
   const [payload, setPayload] = useState<TrendsPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,7 +142,7 @@ export default function PulseMapApp() {
       >
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <span className="shrink-0 bg-gradient-to-r from-zinc-100 via-sky-200 to-zinc-300 bg-clip-text tracking-[0.2em] text-transparent">
-            PULSEMAP
+            HAWKAI
           </span>
           <span className="truncate text-xs tabular-nums text-zinc-500">
             {loading ? "clustering live signals…" : formatUpdatedAt(payload?.updatedAt ?? null)}

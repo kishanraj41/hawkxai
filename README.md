@@ -1,4 +1,4 @@
-# PulseMap (hackathon)
+# HawkAI (hackathon)
 
 Live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters topics. Divergence is computed in code: a topic exploding on one platform is a different story than one rising everywhere.
 

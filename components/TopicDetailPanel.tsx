@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { divergenceLabel, topPosts } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
 import type { Topic } from "@/lib/types";

@@ -279,7 +279,7 @@ export default function TrendMap({
 
   return (
     <div ref={containerRef} className="absolute inset-0">
-      <svg ref={svgRef} className="h-full w-full" role="img" aria-label="Trend map" />
+      <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkAI trend map" />
     </div>
   );
 }
