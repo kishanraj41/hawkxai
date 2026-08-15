@@ -49,3 +49,7 @@ export function geoAgent(raw?: string | null): GeoQuery {
     log: `geo: ${city} r/${spec.sub}+defaults`,
   };
 }
+
+export function trendsCacheKey(raw?: string | null): string {
+  return `trends:v1:${geoAgent(raw).city}`;
+}

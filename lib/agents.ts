@@ -4,6 +4,7 @@ import { fetchX } from "./signals";
 import { grokChat } from "./grok";
 import { divergenceOf } from "./metrics";
 import { geoAgent, type GeoQuery } from "./geo";
+import { whyListSchema } from "./schemas";
 import type { Platform, Post, SourceHealth, Topic } from "./types";
 
 export type { CityId, GeoQuery } from "./geo";
@@ -187,5 +188,46 @@ Topics: ${JSON.stringify(topics.map((t) => ({ id: t.id, label: t.label })))}`,
   } catch {
     console.log("reviewer: skipped");
     return { topics, log: "reviewer: skipped" };
+  }
+}
+
+/** One Grok briefing per topic. Skip silently if it fails. */
+export async function whyAgent(topics: Topic[]): Promise<{
+  topics: Topic[];
+  log: string;
+}> {
+  if (!process.env.XAI_API_KEY || topics.length === 0) {
+    return { topics, log: "why: skipped" };
+  }
+  try {
+    const compact = topics.slice(0, 20).map((t) => ({
+      id: t.id,
+      label: t.label,
+      posts: Object.values(t.platforms)
+        .flatMap((s) => s.posts.map((p) => p.title))
+        .slice(0, 2),
+    }));
+    const raw = await grokChat(
+      `For each topic, write one sentence on why it is trending, grounded only in the post titles.
+No hype. No tickers. No advice. If you cannot tell, omit that id.
+JSON only: {"why":[{"id":"slug","why":"one sentence"}]}
+Topics: ${JSON.stringify(compact)}`,
+      20_000,
+    );
+    const parsed = whyListSchema.parse(parseJsonObject(raw));
+    const byId = new Map(parsed.why.map((w) => [w.id, w.why.trim()]));
+    let n = 0;
+    for (const topic of topics) {
+      const sentence = byId.get(topic.id);
+      if (!sentence) continue;
+      topic.why = sentence.slice(0, 240);
+      n += 1;
+    }
+    const log = `why: ${n}`;
+    console.log(log);
+    return { topics, log };
+  } catch {
+    console.log("why: skipped");
+    return { topics, log: "why: skipped" };
   }
 }

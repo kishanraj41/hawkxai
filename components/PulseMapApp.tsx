@@ -101,7 +101,7 @@ export default function PulseMapApp() {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q }),
+        body: JSON.stringify({ q, city }),
       });
       const data = (await res.json()) as {
         answer?: string;

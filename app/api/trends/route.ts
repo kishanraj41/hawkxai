@@ -7,55 +7,21 @@ import {
   healthFrom,
   reviewerAgent,
   validatorAgent,
+  whyAgent,
 } from "@/lib/agents";
-import { geoAgent } from "@/lib/geo";
-import { grokJson } from "@/lib/grok";
-import { tickerListSchema } from "@/lib/schemas";
-import type { Topic, TrendsPayload } from "@/lib/types";
+import { geoAgent, trendsCacheKey } from "@/lib/geo";
+import type { TrendsPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const CACHE_KEY = "trends:v1";
-
-function cacheKeyFor(city: string): string {
-  return `${CACHE_KEY}:${city}`;
-}
-
-async function attachTickers(topics: Topic[]): Promise<void> {
-  if (!process.env.XAI_API_KEY) return;
-  const sample = topics
-    .slice(0, 12)
-    .flatMap((t) =>
-      Object.values(t.platforms).flatMap((s) => s.posts.map((p) => p.title)),
-    )
-    .slice(0, 40);
-  try {
-    const parsed = await grokJson(
-      `From these posts, list stock tickers explicitly mentioned, with sentiment and mention count.
-Only tickers literally present in the text. JSON: {"tickers":[{"symbol":"NVDA","sentiment":"pos","mentions":2}]}
-POSTS:\n${sample.join("\n")}`,
-      (raw) => tickerListSchema.parse(JSON.parse(raw)),
-    );
-    for (const topic of topics) {
-      const blob = Object.values(topic.platforms)
-        .flatMap((s) => s.posts.map((p) => p.title))
-        .join(" ")
-        .toUpperCase();
-      topic.tickers = parsed.tickers.filter((tk) =>
-        blob.includes(tk.symbol.replace("$", "").toUpperCase()),
-      );
-    }
-  } catch (err) {
-    console.error("[tickers] skipped", err);
-  }
-}
+const LAST_KEY = "trends:v1";
 
 export async function GET(req: NextRequest) {
   const refresh = req.nextUrl.searchParams.get("refresh") === "1";
   const geo = geoAgent(req.nextUrl.searchParams.get("city"));
   console.log(geo.log);
-  const cacheKey = cacheKeyFor(geo.city);
+  const cacheKey = trendsCacheKey(geo.city);
   if (!refresh) {
     const cached = cacheGet<TrendsPayload>(cacheKey);
     if (cached) {
@@ -89,20 +55,20 @@ export async function GET(req: NextRequest) {
 
   const validated = validatorAgent(clustered);
   const reviewed = await reviewerAgent(validated.topics);
-  await attachTickers(reviewed.topics);
+  const briefed = await whyAgent(reviewed.topics);
 
-  const pipeline = `${geo.log} → ${collectorLog} → ${clusterLog} → ${validated.log} → ${reviewed.log}`;
+  const pipeline = `${geo.log} → ${collectorLog} → ${clusterLog} → ${validated.log} → ${reviewed.log} → ${briefed.log}`;
   console.log(`[pipeline] ${pipeline}`);
 
   const payload: TrendsPayload = {
-    topics: reviewed.topics,
+    topics: briefed.topics,
     updatedAt: new Date().toISOString(),
     sources,
     degraded,
     pipeline,
   };
   cacheSet(cacheKey, payload);
-  cacheSet(CACHE_KEY, payload);
-  console.log(`[trends] ${reviewed.topics.length} topics @ ${payload.updatedAt}`);
+  cacheSet(LAST_KEY, payload);
+  console.log(`[trends] ${briefed.topics.length} topics @ ${payload.updatedAt}`);
   return NextResponse.json(payload);
 }
