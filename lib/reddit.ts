@@ -4,16 +4,15 @@ import type { Post } from "./types";
 
 const execFileP = promisify(execFile);
 
-const SUBS = [
+const DEFAULT_SUBS = [
   "technology",
   "wallstreetbets",
   "news",
-  "Austin",
   "artificial",
 ] as const;
 
 const UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 PulseMap/0.1";
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 HawkAI/0.1";
 
 interface RedditChild {
   data?: {
@@ -214,10 +213,16 @@ async function fetchOfficial(sub: string): Promise<Post[]> {
   }
 }
 
-export async function fetchReddit(): Promise<Post[]> {
+export async function fetchReddit(
+  subs: string[] = [...DEFAULT_SUBS],
+): Promise<Post[]> {
+  const list = [...new Set(subs.map((s) => s.trim()).filter(Boolean))];
+  if (!list.length) throw new Error("reddit: no subreddits");
+
+  const probe = list.includes("technology") ? "technology" : list[0];
   let official: Post[] = [];
   try {
-    official = await fetchOfficial("technology");
+    official = await fetchOfficial(probe);
   } catch (err) {
     console.warn(
       "[reddit] official json/rss blocked",
@@ -225,9 +230,7 @@ export async function fetchReddit(): Promise<Post[]> {
     );
   }
 
-  const rest = official.length
-    ? SUBS.filter((s) => s !== "technology")
-    : SUBS;
+  const rest = official.length ? list.filter((s) => s !== probe) : list;
   const settled = await Promise.allSettled(rest.map((s) => pullArchive(s)));
   const posts = [...official];
   let archiveOk = 0;
@@ -241,7 +244,7 @@ export async function fetchReddit(): Promise<Post[]> {
   }
   if (!posts.length) throw new Error("reddit: all subreddits failed");
   console.log(
-    `[reddit] ${posts.length} posts (official=${official.length ? "technology" : "none"}, archive=${archiveOk}/${rest.length})`,
+    `[reddit] ${posts.length} posts (official=${official.length ? probe : "none"}, archive=${archiveOk}/${rest.length})`,
   );
   return posts;
 }

@@ -1,6 +1,6 @@
 # Docker CI Agent
 
-Builds the PulseMap production `Dockerfile`, smoke-tests the image, and gates
+Builds the HawkAI production `Dockerfile`, smoke-tests the image, and gates
 the change with Bug Bot. On pull requests it also runs PR Review Bot and posts
 a sticky comment.
 
@@ -20,7 +20,7 @@ GitHub Actions workflow: `.github/workflows/docker-ci.yml`.
 python3 agents/docker-ci/ci_agent.py
 
 # If the image is already built
-python3 agents/docker-ci/ci_agent.py --skip-build --image pulsemap:ci
+python3 agents/docker-ci/ci_agent.py --skip-build --image hawkai:ci
 
 # Contract tests (no Docker required)
 python3 -m unittest agents/docker-ci/tests/test_ci_agent.py

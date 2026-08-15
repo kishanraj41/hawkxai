@@ -1,6 +1,6 @@
 # Presentation
 
-Investor and pitch materials for PulseMap. Ops docs stay in [docs/](../README.md) (`CONTRIBUTING.md`, `RUNBOOK.md`).
+Investor and pitch materials for HawkAI. Ops docs stay in [docs/](../README.md) (`CONTRIBUTING.md`, `RUNBOOK.md`).
 
 - **[VC one-pager](./VC_ONE_PAGER.md)** — SmartSalesGuy investor proposal (problem, solution, live / next)
 - **[Core idea](./CORE_IDEA.md)** — product contract: capture → correlate → campaign
@@ -52,7 +52,7 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | File | Use in the deck |
 |---|---|
 | `app/page.tsx` | App entry |
-| `components/PulseMapApp.tsx` | Map shell |
+| `components/HawkAIApp.tsx` | Map shell |
 | `components/BoosterBriefBar.tsx` | Always-on briefing strip |
 | `components/BoosterInsights.tsx` | Artifacts, age lenses, competitor move |
 | `app/api/trends/route.ts` | Live X / Reddit / HN clustering |

@@ -24,9 +24,9 @@ class SmartSalesGuyTests(unittest.TestCase):
     def setUp(self):
         self.proposal = run_sales(ROOT)
 
-    def test_checkout_finds_pulsemap(self):
+    def test_checkout_finds_hawkai(self):
         dossier = self.proposal.dossier
-        self.assertEqual(dossier.product, "PulseMap")
+        self.assertEqual(dossier.product, "HawkAI")
         self.assertTrue(dossier.git)
         self.assertTrue(dossier.git.root)
         self.assertTrue(dossier.current)
@@ -82,7 +82,7 @@ class SmartSalesGuyTests(unittest.TestCase):
         self.assertFalse(score.passed)
 
     def test_word_count_helper(self):
-        self.assertEqual(word_count("PulseMap ships a live map."), 5)
+        self.assertEqual(word_count("HawkAI ships a live map."), 5)
 
     def test_self_check(self):
         self.assertEqual(self_check(ROOT), 0)

@@ -48,3 +48,12 @@ export const tickerSchema = z.object({
 export const tickerListSchema = z.object({
   tickers: z.array(tickerSchema),
 });
+
+export const whyItemSchema = z.object({
+  id: z.string(),
+  why: z.string().min(1).transform((s) => s.slice(0, 280)),
+});
+
+export const whyListSchema = z.object({
+  why: z.array(whyItemSchema).max(24),
+});

@@ -1,10 +1,10 @@
 ---
 name: booster-agent
 description: >-
-  PulseMap Booster Agent — captures trending hashtags, QRs, phrases, and URLs;
+  HawkAI Booster Agent — captures trending hashtags, QRs, phrases, and URLs;
   correlates why they are trending; translates insights for all age groups and
   business competitors; and always suggests improvisations that improve the
-  dashboard and campaigns. Use when working on grokhackx, PulseMap, trends,
+  dashboard and campaigns. Use when working on grokhackx, HawkAI, trends,
   hashtags, QR codes, campaign intelligence, the booster agent, dashboard
   insights, or product betterment.
 ---
@@ -17,7 +17,7 @@ This agent does extremely smart things. Treat it as the product's core idea, not
 
 ## When this skill is on
 
-Any PulseMap / grokhackx work: capture, clustering, map UI, Ask box, campaign copy, age-group UX, or "what should we build next."
+Any HawkAI / grokhackx work: capture, clustering, map UI, Ask box, campaign copy, age-group UX, or "what should we build next."
 
 ## Core loop
 

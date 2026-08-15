@@ -7,7 +7,7 @@ Local:
     python3 agents/docker-ci/ci_agent.py
 
 CI (image already built with layer cache):
-    python3 agents/docker-ci/ci_agent.py --skip-build --image pulsemap:ci --pr 12
+    python3 agents/docker-ci/ci_agent.py --skip-build --image hawkai:ci --pr 12
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from typing import List, Optional, Sequence, Tuple
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
 REPORT_DIR = HERE / "reports"
-MARKER = "<!-- pulsemap-docker-ci -->"
+MARKER = "<!-- hawkai-docker-ci -->"
 
 SECRET_ENV = re.compile(
     r"^\s*(?:ENV|ARG)\s+(?:API[_-]?KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY)\b",
@@ -219,7 +219,7 @@ def inspect_nonroot(image: str) -> CheckResult:
 
 
 def smoke_test(image: str, port: int, timeout_s: int) -> CheckResult:
-    name = f"pulsemap-ci-{os.getpid()}"
+    name = f"hawkai-ci-{os.getpid()}"
     run_cmd = [
         "docker",
         "run",
@@ -434,9 +434,9 @@ def post_pr_comment(pr_number: int, body_path: Path) -> None:
 
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build and validate the PulseMap Dockerfile")
+    parser = argparse.ArgumentParser(description="Build and validate the HawkAI Dockerfile")
     parser.add_argument("--dockerfile", default="Dockerfile")
-    parser.add_argument("--image", default="pulsemap:ci")
+    parser.add_argument("--image", default="hawkai:ci")
     parser.add_argument("--skip-build", action="store_true", help="Image already built (CI cache path)")
     parser.add_argument("--skip-smoke", action="store_true")
     parser.add_argument("--skip-bugbot", action="store_true")

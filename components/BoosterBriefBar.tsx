@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { motionTokens } from "@/lib/motionTokens";
 import type { BoosterPayload } from "@/lib/types";
 

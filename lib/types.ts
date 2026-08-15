@@ -41,6 +41,7 @@ export interface TrendsPayload {
   updatedAt: string;
   sources: SourceHealth;
   degraded: string[];
+  pipeline?: string;
 }
 
 export type AgeLens = "kids" | "gen-z" | "millennial" | "gen-x" | "boomer";

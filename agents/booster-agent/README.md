@@ -1,6 +1,6 @@
 # Booster Agent
 
-PulseMap's core intelligence layer. It does extremely smart things: capture live trend artifacts, explain *why* they are trending, translate that for every age group, arm competitors with campaign moves, and keep improvising the product.
+HawkAI's core intelligence layer. It does extremely smart things: capture live trend artifacts, explain *why* they are trending, translate that for every age group, arm competitors with campaign moves, and keep improvising the product.
 
 Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
 

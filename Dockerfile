@@ -1,4 +1,4 @@
-# PulseMap — production image (Next.js standalone)
+# HawkAI — production image (Next.js standalone)
 FROM node:20-alpine AS base
 
 FROM base AS deps

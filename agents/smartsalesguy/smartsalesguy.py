@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartSalesGuy — unicorn-founder sales agent for PulseMap.
+SmartSalesGuy — unicorn-founder sales agent for HawkAI.
 
 Checks out the repo, reads what is actually built, and writes a one-page
 venture proposal: core problem, solution, current features, future features.
@@ -471,7 +471,7 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "the need underneath it has already moved."
     )
     solution = (
-        "PulseMap is a live circle-pack of topics across X, Reddit, and Hacker News, "
+        "HawkAI is a live circle-pack of topics across X, Reddit, and Hacker News, "
         "clustered by Grok, with divergence computed in code (everywhere vs a "
         "single-platform bubble). Beside the map sits the Booster Agent: capture "
         "artifacts from real posts only, correlate why they are trending (never invent "
@@ -500,13 +500,13 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "fake ARR slide."
     )
     one_liner = (
-        "PulseMap is the live operating system for why the world is trending — "
+        "HawkAI is the live operating system for why the world is trending — "
         "and the campaign move that follows."
     )
     if product_para:
         sources.append(f"{(core_src.split(' @', 1)[0] or CORE_IDEA_RELS[0])}#product")
     return Dossier(
-        product="PulseMap",
+        product="HawkAI",
         one_liner=one_liner,
         problem=problem,
         solution=solution,
@@ -555,7 +555,7 @@ def compose_one_pager(dossier: Dossier) -> str:
             f"{_bullets(dossier.agents, 12)}\n"
         )
 
-    return f"""# PulseMap
+    return f"""# HawkAI
 **Confidential · one-page venture proposal**
 
 {dossier.one_liner}
@@ -607,7 +607,7 @@ We are raising to turn this wedge into the default war-room for cultural attenti
 
 We will not pitch fake users. The proof is the product: a live map, a live booster loop, and a checkout you can run.
 
-— Founder, PulseMap
+— Founder, HawkAI
 """.strip() + "\n"
 
 
@@ -707,7 +707,7 @@ def run_sales(root: Path = REPO_ROOT) -> Proposal:
 def self_check(root: Path = REPO_ROOT) -> int:
     root = Path(root)
     proposal = run_sales(root)
-    assert proposal.dossier.product == "PulseMap"
+    assert proposal.dossier.product == "HawkAI"
     assert proposal.dossier.git is not None
     assert proposal.dossier.current, "checkout found no live features"
     names = " ".join(f.name.lower() for f in proposal.dossier.current)
@@ -728,7 +728,7 @@ def self_check(root: Path = REPO_ROOT) -> int:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        description="SmartSalesGuy — checkout PulseMap and write a VC one-pager.",
+        description="SmartSalesGuy — checkout HawkAI and write a VC one-pager.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

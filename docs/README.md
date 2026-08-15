@@ -1,9 +1,10 @@
 # Documentation
 
-Ops docs for PulseMap live here. **Pitch and investor materials** are in **[presentation/](./presentation/)**.
+Ops docs for HawkAI live here. **Pitch and investor materials** are in **[presentation/](./presentation/)**.
 
 - **[Contributing](./CONTRIBUTING.md)** — setup, scripts, tests, PR checklist
 - **[Runbook](./RUNBOOK.md)** — local / Docker / Vercel / CI, health checks, rollback
+- **[Vercel hosting](./VERCEL.md)** — import the GitHub repo, set `XAI_API_KEY`, deploy
 - **[Presentation](./presentation/README.md)** — VC one-pager, core idea, research, agent canvas
 
 North star (product contract): [presentation/CORE_IDEA.md](./presentation/CORE_IDEA.md) · Booster: [agents/booster-agent/README.md](../agents/booster-agent/README.md) · Improvisations: [IMPROVISATIONS.md](../agents/booster-agent/IMPROVISATIONS.md)
@@ -23,7 +24,7 @@ North star (product contract): [presentation/CORE_IDEA.md](./presentation/CORE_I
 | `python3 agents/docker-ci/ci_agent.py` | Lint Dockerfile, build image, smoke-test, Bug Bot |
 | `python3 agents/bug-bot/bug_bot.py [path] --fail-on critical` | Scan tree; CI gate on critical |
 | `python3 agents/pr-review-bot/review_bot.py <pr>` | Review a GitHub PR |
-| `docker build -t pulsemap:latest .` | Production image |
+| `docker build -t hawkai:latest .` | Production image |
 
 <!-- /AUTO-GENERATED: commands -->
 
@@ -64,7 +65,7 @@ Vercel `maxDuration` is 60s for trends and ask (`vercel.json`).
 
 - **Dockerfile** — multi-stage Next.js standalone, non-root `nextjs`, port 3000.
 - **Docker CI** — `.github/workflows/docker-ci.yml` on every PR commit and every push to `main`: contract tests, Hadolint (advisory), image build, smoke test, Bug Bot `--fail-on critical`.
-- **Local image:** Grafana often holds host `:3000`; map PulseMap to `:3001` (`-p 3001:3000`).
+- **Local image:** Grafana often holds host `:3000`; map HawkAI to `:3001` (`-p 3001:3000`).
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [RUNBOOK.md](./RUNBOOK.md).
 
