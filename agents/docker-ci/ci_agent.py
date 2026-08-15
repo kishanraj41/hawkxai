@@ -28,6 +28,10 @@ HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
 REPORT_DIR = HERE / "reports"
 MARKER = "<!-- hawkai-docker-ci -->"
+AUTO_PR_MARKER = "<!-- hawkai-auto-pr -->"
+SKIP_PR_BRANCHES = frozenset({"main", "master"})
+SKIP_PR_PREFIXES = ("dependabot/", "renovate/")
+DEFAULT_PR_BASE = "main"
 
 SECRET_ENV = re.compile(
     r"^\s*(?:ENV|ARG)\s+(?:API[_-]?KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY)\b",
@@ -391,13 +395,166 @@ def write_report(report: AgentReport) -> Path:
     return latest
 
 
-def post_pr_comment(pr_number: int, body_path: Path) -> None:
+def gh_env() -> Optional[dict]:
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if not token:
+        return None
+    env = os.environ.copy()
+    env["GH_TOKEN"] = token
+    env["GITHUB_TOKEN"] = token
+    return env
+
+
+def current_branch() -> str:
+    return (
+        os.environ.get("GITHUB_REF_NAME")
+        or os.environ.get("GITHUB_HEAD_REF")
+        or ""
+    ).strip()
+
+
+def should_open_pr(event: str, branch: str, *, ref_type: str = "branch") -> bool:
+    """Open a PR only for feature-branch pushes. Main / bots / tags skip."""
+    if event != "push" or ref_type != "branch":
+        return False
+    name = (branch or "").strip()
+    if not name or name in SKIP_PR_BRANCHES:
+        return False
+    return not any(name.startswith(prefix) for prefix in SKIP_PR_PREFIXES)
+
+
+def pr_title_for_push(commit_subject: str, branch: str) -> str:
+    subject = (commit_subject or "").strip()
+    if subject:
+        return subject[:72]
+    return f"Auto PR: {branch}"
+
+
+def pr_body_for_push(branch: str) -> str:
+    return (
+        f"{AUTO_PR_MARKER}\n"
+        "## Summary\n"
+        f"- Auto-opened from push to `{branch}` so Docker CI, Bug Bot, and review can run.\n"
+        "- Later pushes to this branch update this PR.\n"
+    )
+
+
+def latest_commit_subject() -> str:
+    try:
+        result = capture(["git", "log", "-1", "--pretty=%s"], timeout=15)
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"⚠️  git log failed: {exc}")
+        return ""
+    return (result.stdout or "").strip() if result.returncode == 0 else ""
+
+
+def find_open_pr(branch: str, base: str = DEFAULT_PR_BASE) -> Optional[int]:
+    env = gh_env()
+    if env is None:
+        return None
+    try:
+        listed = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--head",
+                branch,
+                "--base",
+                base,
+                "--state",
+                "open",
+                "--json",
+                "number",
+                "--limit",
+                "1",
+            ],
+            text=True,
+            capture_output=True,
+            env=env,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"⚠️  gh pr list failed: {exc}")
+        return None
+    if listed.returncode != 0:
+        err = (listed.stderr or listed.stdout or "").strip()
+        print(f"⚠️  gh pr list failed: {err}")
+        return None
+    try:
+        rows = json.loads(listed.stdout or "[]")
+    except json.JSONDecodeError:
+        return None
+    if not rows:
+        return None
+    number = rows[0].get("number")
+    return int(number) if number else None
+
+
+def create_pr(branch: str, title: str, body: str, base: str = DEFAULT_PR_BASE) -> Optional[int]:
+    env = gh_env()
+    if env is None:
+        print("ℹ️  No GITHUB_TOKEN — cannot open PR")
+        return None
+    try:
+        created = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "create",
+                "--base",
+                base,
+                "--head",
+                branch,
+                "--title",
+                title,
+                "--body-file",
+                "-",
+            ],
+            input=body,
+            text=True,
+            capture_output=True,
+            env=env,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"⚠️  gh pr create failed: {exc}")
+        return find_open_pr(branch, base)
+    if created.returncode != 0:
+        err = (created.stderr or created.stdout or "").strip()
+        print(f"⚠️  gh pr create failed: {err}")
+        return find_open_pr(branch, base)
+    match = re.search(r"/pull/(\d+)", (created.stdout or "").strip())
+    if match:
+        return int(match.group(1))
+    return find_open_pr(branch, base)
+
+
+def ensure_pr(
+    event: str,
+    *,
+    branch: Optional[str] = None,
+    base: str = DEFAULT_PR_BASE,
+) -> Optional[int]:
+    ref_type = os.environ.get("GITHUB_REF_TYPE", "branch")
+    name = current_branch() if branch is None else branch
+    if not should_open_pr(event, name, ref_type=ref_type):
+        return None
+    existing = find_open_pr(name, base)
+    if existing:
+        print(f"ℹ️  Open PR already exists for {name}: #{existing}")
+        return existing
+    number = create_pr(name, pr_title_for_push(latest_commit_subject(), name), pr_body_for_push(name), base)
+    if number:
+        print(f"📬 Opened PR #{number} for {name}")
+    return number
+
+
+def post_pr_comment(pr_number: int, body_path: Path) -> None:
+    env = gh_env()
+    if env is None:
         print("ℹ️  No GITHUB_TOKEN — skipping PR comment")
         return
-    env = os.environ.copy()
-    env.setdefault("GH_TOKEN", token)
     listed = subprocess.run(
         ["gh", "api", f"repos/{os.environ.get('GITHUB_REPOSITORY', '')}/issues/{pr_number}/comments"],
         text=True,
@@ -452,6 +609,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--fail-on", default="critical", choices=["none", "low", "medium", "high", "critical"])
     parser.add_argument("--event", default=os.environ.get("GITHUB_EVENT_NAME", "local"))
+    parser.add_argument(
+        "--ensure-pr",
+        action="store_true",
+        help="On feature-branch push, open a PR against main if one is missing",
+    )
+    parser.add_argument("--pr-base", default=DEFAULT_PR_BASE, help="Base branch for auto-opened PRs")
     return parser.parse_args(argv)
 
 
@@ -460,6 +623,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     dockerfile = (REPO_ROOT / args.dockerfile).resolve()
     scan_paths = args.scan or ["app", "lib", "components"]
     pr_number = args.pr or int(os.environ.get("PR_NUMBER") or 0)
+    if args.ensure_pr and not pr_number:
+        try:
+            opened = ensure_pr(args.event, base=args.pr_base)
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            print(f"⚠️  ensure_pr failed: {exc}")
+            opened = None
+        if opened:
+            pr_number = opened
 
     checks: List[CheckResult] = []
     checks.extend(lint_dockerfile(dockerfile))

@@ -4,20 +4,21 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [main]
+    branches:
+      - "**"
 
 concurrency:
-  group: docker-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: docker-ci-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   checks: write
 
 jobs:
   docker-ci:
-    name: Build image · Bug Bot · review
+    name: Build image · Bug Bot · review · auto-PR
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -48,6 +49,7 @@ jobs:
       - name: Docker CI agent
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: >
@@ -55,7 +57,8 @@ jobs:
           --skip-build
           --image hawkai:ci
           --event ${{ github.event_name }}
-          ${{ github.event_name == 'pull_request' && format('--pr {0}', github.event.pull_request.number) || '--skip-review' }}
+          --ensure-pr
+          ${{ github.event.pull_request.number && format('--pr {0}', github.event.pull_request.number) || '' }}
 
       - name: Upload agent reports
         if: always()

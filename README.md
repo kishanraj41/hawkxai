@@ -118,7 +118,7 @@ Public URL: host on **Vercel**. Step-by-step: [docs/VERCEL.md](docs/VERCEL.md).
 3. Env: `XAI_API_KEY` (Production + Preview)
 4. Deploy. First `/api/trends` can take up to ~60s.
 
-Do not commit `.env.local`. Docker CI still builds the production image on every PR (`agents/docker-ci`).
+Do not commit `.env.local`. Docker CI still builds the production image on every PR and opens a PR on every feature-branch push (`agents/docker-ci`).
 
 ## Stack
 
@@ -133,7 +133,7 @@ Roster: [agents/README.md](agents/README.md)
 | [Booster](agents/booster-agent/README.md) | Capture → correlate → campaign (core idea) |
 | [PR Review Bot](agents/pr-review-bot/README.md) | AI code review with quality scoring |
 | [Bug Bot](agents/bug-bot/README.md) | Security and logic scan |
-| [Docker CI](agents/docker-ci/README.md) | Production image build, smoke test, Bug Bot on every PR and merge to `main` |
+| [Docker CI](agents/docker-ci/README.md) | Production image build, smoke test, Bug Bot; auto-PR on every feature-branch push |
 | [SmartSalesGuy](agents/smartsalesguy/README.md) | VC one-pager from this checkout |
 
 ```bash

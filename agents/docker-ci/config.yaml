@@ -16,6 +16,15 @@ bugbot:
 review:
   run_on: pull_request
   blocking: false
+auto_pr:
+  on: push
+  base: main
+  skip_branches:
+    - main
+    - master
+  skip_prefixes:
+    - dependabot/
+    - renovate/
 dockerfile_contract:
   require_nonroot_user: true
   forbid_secret_env: true

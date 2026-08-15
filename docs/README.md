@@ -64,7 +64,7 @@ Vercel `maxDuration`: 60s for `/api/trends` and `/api/ask`; 30s for `/api/booste
 ## Infrastructure
 
 - **Dockerfile** — multi-stage Next.js standalone, non-root `nextjs`, port 3000.
-- **Docker CI** — `.github/workflows/docker-ci.yml` on every PR commit and every push to `main`: contract tests, Hadolint (advisory), image build, smoke test, Bug Bot `--fail-on critical`.
+- **Docker CI** — `.github/workflows/docker-ci.yml` on every PR commit, every feature-branch push (auto-opens a PR if missing), and every push to `main`: contract tests, Hadolint (advisory), image build, smoke test, Bug Bot `--fail-on critical`.
 - **Local image:** Grafana often holds host `:3000`; map HawkAI to `:3001` (`-p 3001:3000`).
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [RUNBOOK.md](./RUNBOOK.md).

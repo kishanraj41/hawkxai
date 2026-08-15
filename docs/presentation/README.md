@@ -67,7 +67,7 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | `app/api/ask/route.ts` | Natural-language ask → zoom |
 | `lib/booster.ts` | Capture / correlate / campaign logic |
 | `Dockerfile` | Production image |
-| `.github/workflows/docker-ci.yml` | Build + Bug Bot on every PR and `main` |
+| `.github/workflows/docker-ci.yml` | Build + Bug Bot + auto-PR on every feature-branch push |
 
 ### Team / agents
 
