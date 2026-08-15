@@ -45,4 +45,4 @@ The D3 map and `/api/trends` contract are unchanged.
 
 ## North star
 
-See [docs/CORE_IDEA.md](../../docs/CORE_IDEA.md).
+See [docs/presentation/CORE_IDEA.md](../../docs/presentation/CORE_IDEA.md).

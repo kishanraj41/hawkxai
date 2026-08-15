@@ -9,10 +9,10 @@ It does extremely smart things: evidence from the git tree, not invented tractio
 | Step | Output |
 |---|---|
 | **Checkout** | Branch, commit, remote — and product files from `feat/booster-agent` if this CI branch is thin |
-| **Read** | README, `docs/CORE_IDEA.md`, APIs, components, agents, research, improvisations |
+| **Read** | README, `docs/presentation/CORE_IDEA.md`, APIs, components, agents, research, improvisations |
 | **Compose** | Founder-voice one-pager (problem / solution / live / next / ask) |
 | **Score** | Partner-meeting gate: sections, word band, no hype, no fake ARR |
-| **Publish** | `docs/VC_ONE_PAGER.md` plus a timestamped run |
+| **Publish** | `docs/presentation/VC_ONE_PAGER.md` plus a timestamped run |
 
 ## Quick start
 
@@ -27,7 +27,7 @@ python3 agents/smartsalesguy/smartsalesguy.py --self-check
 python3 agents/smartsalesguy/tests/test_smartsalesguy.py
 ```
 
-Canonical investor asset: [docs/VC_ONE_PAGER.md](../../docs/VC_ONE_PAGER.md).
+Canonical investor asset: [docs/presentation/VC_ONE_PAGER.md](../../docs/presentation/VC_ONE_PAGER.md).
 
 Runs land in `agents/smartsalesguy/runs/`.
 
@@ -37,9 +37,9 @@ Act as the founder who intends to build a unicorn — category, wedge, why-now, 
 
 - Lead with the pain a CMO / editor / growth lead already feels.
 - Name the mechanism (capture → correlate → campaign), not "AI."
-- Current features come from files that exist. Future features come from `IMPROVISATIONS.md` and `docs/CORE_IDEA.md`.
+- Current features come from files that exist. Future features come from `IMPROVISATIONS.md` and `docs/presentation/CORE_IDEA.md`.
 - Never invent users, ARR, or a fake WHY.
 
 ## North star
 
-See [docs/CORE_IDEA.md](../../docs/CORE_IDEA.md). The product is still Booster + the map. SmartSalesGuy is how we sell it.
+See [docs/presentation/CORE_IDEA.md](../../docs/presentation/CORE_IDEA.md). The product is still Booster + the map. SmartSalesGuy is how we sell it.

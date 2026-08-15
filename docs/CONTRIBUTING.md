@@ -72,4 +72,4 @@ New agent tests live next to the agent (`agents/<name>/tests/`). Do not invent W
 - [ ] Description says why, not only what
 - [ ] Did not invent posts or a fake WHY
 
-Team split is in the root [README.md](../README.md). Investor file list is in [README.md](./README.md#proposal-presentation).
+Team split is in the root [README.md](../README.md). Investor file list is in [presentation/README.md](./presentation/README.md#proposal-presentation).

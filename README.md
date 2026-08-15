@@ -12,7 +12,7 @@ The **Booster Agent** is that layer: capture artifacts → correlate why → tra
 python3 agents/booster-agent/booster_agent.py --self-check
 ```
 
-North star: [docs/CORE_IDEA.md](docs/CORE_IDEA.md) · Agent: [agents/booster-agent/README.md](agents/booster-agent/README.md) · Live: `GET /api/booster` after `/api/trends`.
+North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) · Agent: [agents/booster-agent/README.md](agents/booster-agent/README.md) · Live: `GET /api/booster` after `/api/trends`.
 
 Repo: https://github.com/snagaram3/grokhackx
 
@@ -131,4 +131,4 @@ python3 agents/docker-ci/ci_agent.py
 python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
-Canonical investor page: [docs/VC_ONE_PAGER.md](docs/VC_ONE_PAGER.md) · Deck file list: [docs/README.md](docs/README.md#proposal-presentation)
+Canonical investor page: [docs/presentation/VC_ONE_PAGER.md](docs/presentation/VC_ONE_PAGER.md) · Deck file list: [docs/presentation/README.md](docs/presentation/README.md#proposal-presentation)

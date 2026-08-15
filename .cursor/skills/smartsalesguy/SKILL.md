@@ -20,11 +20,11 @@ Investor materials, fundraising copy, a VC one-pager, a seed proposal, or anyone
 
 ## Core loop
 
-1. **Checkout** the project (`git` branch/commit/remote). If `docs/CORE_IDEA.md` or the Booster backlog is missing on this branch, pull product truth from `feat/booster-agent` — sell the company, not the CI branch.
+1. **Checkout** the project (`git` branch/commit/remote). If `docs/presentation/CORE_IDEA.md` or the Booster backlog is missing on this branch, pull product truth from `feat/booster-agent` — sell the company, not the CI branch.
 2. **Extract** live features from files that exist. Extract next features from the backlog, not a brainstorm.
 3. **Compose** a one-page venture proposal in founder voice: category, wedge, why-now, receipts.
 4. **Score** it. No hype adjectives. No fake ARR / user counts. Word band 380–900.
-5. **Publish** to `docs/VC_ONE_PAGER.md`.
+5. **Publish** to `docs/presentation/VC_ONE_PAGER.md`.
 
 Prefer the Python agent over freehand copy:
 
@@ -49,11 +49,11 @@ python3 agents/smartsalesguy/smartsalesguy.py --self-check
 ## Implementation map
 
 - Brain: `agents/smartsalesguy/smartsalesguy.py`
-- Canonical page: `docs/VC_ONE_PAGER.md`
-- Product truth: `docs/CORE_IDEA.md`
+- Canonical page: `docs/presentation/VC_ONE_PAGER.md`
+- Product truth: `docs/presentation/CORE_IDEA.md`
 - Living backlog: `agents/booster-agent/IMPROVISATIONS.md`
 
 ## Additional resources
 
 - [SmartSalesGuy README](../../../agents/smartsalesguy/README.md)
-- [CORE_IDEA.md](../../../docs/CORE_IDEA.md)
+- [CORE_IDEA.md](../../../docs/presentation/CORE_IDEA.md)

@@ -13,4 +13,4 @@ Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and 
 - Translate every hot topic for kids / Gen Z / millennials / Gen X / boomers and for campaign competitors (hook, timing, risk).
 - Keep `/api/trends` and the D3 map stable. Add booster via `/api/booster` and composed UI.
 - After work on this project, suggest 3–5 ranked improvisations that make the dashboard or campaigns smarter.
-- Read `docs/CORE_IDEA.md` and `agents/booster-agent/IMPROVISATIONS.md` before proposing new features.
+- Read `docs/presentation/CORE_IDEA.md` and `agents/booster-agent/IMPROVISATIONS.md` before proposing new features.
