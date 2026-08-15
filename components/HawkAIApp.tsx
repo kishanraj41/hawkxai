@@ -1,64 +1,26 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
 import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
 import OverviewRail from "@/components/OverviewRail";
-import { boostTrends } from "@/lib/booster";
+import TickerTape from "@/components/TickerTape";
+import TrendMap from "@/components/TrendMap";
+import { AUDIENCE_OPTIONS, boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
-import type { BoosterPayload, Topic, TrendsPayload } from "@/lib/types";
+import type { AgeLens, BoosterPayload, Platform, Topic, TrendsPayload } from "@/lib/types";
 
-const CinematicVideo = dynamic(() => import("@/components/CinematicVideo"), {
-  ssr: false,
-});
-
-const TrendMap = dynamic(() => import("@/components/TrendMap"), {
-  ssr: false,
-  loading: () => <MapSkeleton />,
-});
+type SortKey = "score" | Platform | "risk";
+type VelocityFilter = Topic["velocity"] | "all";
 
 function MapSkeleton() {
-  const blobs = [
-    { x: "18%", y: "28%", r: 72 },
-    { x: "42%", y: "22%", r: 96 },
-    { x: "68%", y: "35%", r: 64 },
-    { x: "55%", y: "58%", r: 88 },
-    { x: "28%", y: "62%", r: 56 },
-    { x: "78%", y: "68%", r: 48 },
-  ];
-
   return (
-    <div className="absolute inset-0 overflow-hidden">
-      <p className="absolute left-1/2 top-[42%] z-10 w-max -translate-x-1/2 text-sm text-[#7c8598]">
-        Clustering live signals… first load can take about a minute.
-      </p>
-      {blobs.map((b, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full border border-[#1c2333] bg-[#2a3245]/40"
-          style={{
-            left: b.x,
-            top: b.y,
-            width: b.r * 2,
-            height: b.r * 2,
-            transform: "translate(-50%, -50%)",
-            opacity: 0.35 + (i % 3) * 0.08,
-          }}
-        />
-      ))}
+    <div className="absolute inset-0 flex items-center justify-center">
+      <p className="text-sm text-white/45">Loading the tape…</p>
     </div>
   );
-}
-
-function noSignalLabel(msg: string): string {
-  const m = msg.toLowerCase();
-  if (m.includes("reddit")) return "REDDIT: NO SIGNAL";
-  if (m.includes("hacker") || /\bhn\b/.test(m)) return "HN: NO SIGNAL";
-  if (m.includes("twitter") || /\bx\b/.test(m)) return "X: NO SIGNAL";
-  return `${msg.replace(/\s+/g, " ").trim().toUpperCase()}`;
 }
 
 export default function HawkAIApp() {
@@ -68,11 +30,15 @@ export default function HawkAIApp() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Topic | null>(null);
   const [highlightedIds, setHighlightedIds] = useState<string[]>([]);
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const [askQuery, setAskQuery] = useState("");
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [city, setCity] = useState<CityId>("all");
   const [booster, setBooster] = useState<BoosterPayload | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("score");
+  const [velocityFilter, setVelocityFilter] = useState<VelocityFilter>("all");
+  const [lens, setLens] = useState<AgeLens | "all">("all");
 
   const loadTrends = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -102,10 +68,6 @@ export default function HawkAIApp() {
     setHighlightedIds([]);
     void loadTrends();
   }, [loadTrends]);
-
-  useEffect(() => {
-    void import("@/components/TrendMap");
-  }, []);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -158,55 +120,83 @@ export default function HawkAIApp() {
     }
   }
 
-  const topics = payload?.topics ?? [];
+  const topics = useMemo(() => {
+    const all = payload?.topics ?? [];
+    if (velocityFilter === "all") return all;
+    return all.filter((t) => t.velocity === velocityFilter);
+  }, [payload, velocityFilter]);
 
   function pickTopicId(id: string) {
-    const topic = topics.find((t) => t.id === id) ?? null;
+    const topic = topics.find((t) => t.id === id) ?? payload?.topics.find((t) => t.id === id) ?? null;
     setSelected(topic);
     if (topic) setHighlightedIds([topic.id]);
   }
 
+  function pickTopic(topic: Topic | null) {
+    setSelected(topic);
+    setHighlightedIds(topic ? [topic.id] : []);
+  }
+
   return (
-    <main className="relative flex h-screen flex-col overflow-hidden bg-transparent text-white">
-      <CinematicVideo />
+    <main className="relative flex h-screen flex-col overflow-hidden bg-[#07080b] text-white">
       <AmbientBackground />
 
-      <header className="reveal relative z-50 mx-3 mt-3 flex shrink-0 flex-wrap items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
-        <div className="flex min-w-0 flex-1 items-center gap-4">
+      <header className="relative z-50 mx-3 mt-3 flex shrink-0 items-center gap-2 overflow-x-auto rounded-lg border border-white/8 bg-[#0c0d10] px-3 py-2">
+        <div className="flex shrink-0 items-center gap-3">
           <span className="flex shrink-0 items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white" aria-hidden>
-              <path
-                d="M12 2.5 20.5 7.25v9.5L12 21.5 3.5 16.75v-9.5L12 2.5Z"
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-white">
+              <polygon
+                points="8,1.5 14.5,5 14.5,11 8,14.5 1.5,11 1.5,5"
+                fill="none"
                 stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
+                strokeWidth="1.2"
               />
             </svg>
-            <span className="text-lg font-medium tracking-tight text-white drop-shadow-md sm:text-xl">
-              hawkai
-            </span>
+            <span className="text-sm font-medium tracking-tight">hawkai</span>
             <span className="signal-live" aria-label="Live" />
           </span>
-          <span className="signal-label truncate tabular-nums">
+          <span className="font-mono text-[11px] tabular-nums text-white/50">
             {loading
-              ? "clustering live signals"
-              : `${topics.length} / ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
+              ? "loading"
+              : `${topics.length} names · ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
           </span>
           {payload?.degraded.map((msg) => (
-            <span
-              key={msg}
-              className="signal-label rounded-md border border-[#1c2333] px-2 py-1"
-            >
-              {noSignalLabel(msg)}
+            <span key={msg} className="signal-label rounded border border-white/10 px-1.5 py-0.5">
+              {msg}
             </span>
           ))}
         </div>
 
         <select
+          value={velocityFilter}
+          onChange={(e) => setVelocityFilter(e.target.value as VelocityFilter)}
+          aria-label="Velocity"
+          className="signal-label shrink-0 rounded border border-white/10 bg-transparent px-2 py-1.5 text-white focus:border-white/40 focus:outline-none"
+        >
+          <option value="all" className="bg-[#0a0e17]">All</option>
+          <option value="rising" className="bg-[#0a0e17]">Rising</option>
+          <option value="peaking" className="bg-[#0a0e17]">Peaking</option>
+          <option value="fading" className="bg-[#0a0e17]">Fading</option>
+        </select>
+
+        <select
+          value={lens}
+          onChange={(e) => setLens(e.target.value as AgeLens | "all")}
+          aria-label="Audience"
+          className="signal-label shrink-0 rounded border border-white/10 bg-transparent px-2 py-1.5 text-white focus:border-white/40 focus:outline-none"
+        >
+          {AUDIENCE_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        <select
           value={city}
           onChange={(e) => setCity(e.target.value as CityId)}
           aria-label="City"
-          className="signal-label shrink-0 rounded-md border border-white/20 bg-white/10 px-2 py-1.5 text-white focus:border-white focus:outline-none"
+          className="signal-label shrink-0 rounded border border-white/10 bg-transparent px-2 py-1.5 text-white focus:border-white/40 focus:outline-none"
         >
           {CITY_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
@@ -215,17 +205,17 @@ export default function HawkAIApp() {
           ))}
         </select>
 
-        <form onSubmit={handleAsk} className="flex min-w-[220px] flex-1 items-center gap-2 sm:max-w-md">
+        <form onSubmit={handleAsk} className="flex min-w-[200px] flex-1 items-center gap-2 sm:max-w-md">
           <input
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Search by topic, city, campaign…"
-            className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
+            placeholder="Ask the tape…"
+            className="w-full rounded border border-white/10 bg-transparent px-3 py-1.5 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
           />
           <button
             type="submit"
             disabled={asking || !askQuery.trim()}
-            className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition-colors duration-300 hover:bg-white/85 disabled:opacity-40"
+            className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
           >
             Ask
           </button>
@@ -235,33 +225,46 @@ export default function HawkAIApp() {
           type="button"
           onClick={() => void loadTrends(true)}
           disabled={refreshing}
-          className="signal-label shrink-0 px-2 py-1.5 text-[#7c8598] disabled:opacity-40"
+          className="signal-label shrink-0 px-2 py-1.5 disabled:opacity-40"
         >
           Refresh
         </button>
       </header>
 
+      <TickerTape topics={payload?.topics ?? []} onSelect={pickTopic} />
+
       {askAnswer ? (
-        <div className="relative z-20 mx-3 mt-2 rounded-xl border border-[#1c2333] bg-[#0a0e17]/85 px-4 py-2 backdrop-blur-xl">
-          <p className="font-mono text-sm text-[#f4f1ea]">{askAnswer}</p>
+        <div className="relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
+          <p className="text-sm text-white/80">{askAnswer}</p>
         </div>
       ) : null}
 
       {error ? (
-        <div className="relative z-20 mx-3 mt-2 rounded-xl border border-[#1c2333] bg-[#0a0e17]/85 px-4 py-2">
+        <div className="relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
           <p className="signal-label">{error}</p>
         </div>
       ) : null}
 
-      <div className="relative z-10 grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+      <div className="relative z-10 grid min-h-0 min-w-0 flex-1 grid-cols-[240px_minmax(0,1fr)_300px] gap-3 p-3">
         <OverviewRail
           payload={payload}
           topics={topics}
           selectedId={selected?.id ?? null}
-          onSelect={setSelected}
+          hoverId={hoverId}
+          sortKey={sortKey}
+          onSort={setSortKey}
+          onSelect={pickTopic}
+          onHover={setHoverId}
         />
 
-        <MapStage topics={topics} loading={loading}>
+        <MapStage
+          topics={topics}
+          loading={loading}
+          selectedId={selected?.id ?? null}
+          hoverId={hoverId}
+          onSelect={pickTopic}
+          onHover={setHoverId}
+        >
           {loading ? (
             <MapSkeleton />
           ) : topics.length > 0 ? (
@@ -269,11 +272,13 @@ export default function HawkAIApp() {
               topics={topics}
               selectedId={selected?.id ?? null}
               highlightedIds={highlightedIds}
-              onSelect={setSelected}
+              hoverId={hoverId}
+              onSelect={pickTopic}
+              onHover={setHoverId}
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <p className="signal-label">No topics — refresh</p>
+              <p className="signal-label">No names — refresh</p>
             </div>
           )}
         </MapStage>
@@ -281,8 +286,12 @@ export default function HawkAIApp() {
         <IntelRail
           selected={selected}
           booster={booster}
-          onSelect={setSelected}
+          topics={topics}
+          hoverId={hoverId}
+          lens={lens}
+          onSelect={pickTopic}
           onPickId={pickTopicId}
+          onHover={setHoverId}
         />
       </div>
     </main>

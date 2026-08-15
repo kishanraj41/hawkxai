@@ -1,24 +1,29 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import type { BoosterPayload, Topic } from "@/lib/types";
-
-const TopicDetailPanel = dynamic(() => import("@/components/TopicDetailPanel"), {
-  ssr: false,
-});
+import type { AgeLens, BoosterPayload, Topic } from "@/lib/types";
+import RiskBoard from "@/components/RiskBoard";
+import TopicDetailPanel from "@/components/TopicDetailPanel";
 
 interface IntelRailProps {
   selected: Topic | null;
   booster: BoosterPayload | null;
+  topics: Topic[];
+  hoverId: string | null;
+  lens: AgeLens | "all";
   onSelect: (topic: Topic | null) => void;
   onPickId: (id: string) => void;
+  onHover: (id: string | null) => void;
 }
 
 export default function IntelRail({
   selected,
   booster,
+  topics,
+  hoverId,
+  lens,
   onSelect,
   onPickId,
+  onHover,
 }: IntelRailProps) {
   if (selected) {
     return (
@@ -26,48 +31,60 @@ export default function IntelRail({
         <TopicDetailPanel
           topic={selected}
           brief={booster?.briefs.find((b) => b.topicId === selected.id)}
+          lens={lens}
           onClose={() => onSelect(null)}
         />
       </aside>
     );
   }
 
-  const briefs = booster?.briefs.slice(0, 5) ?? [];
+  const briefs = booster?.briefs.slice(0, 4) ?? [];
+  const topicById = new Map(topics.map((t) => [t.id, t]));
 
   return (
     <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-[15px] font-medium tracking-tight text-[#f4f1ea]">
-          Booster intel
-        </p>
-        <span className="signal-label">booster</span>
-      </div>
-      <p className="mt-2 text-pretty text-xs leading-relaxed text-[#7c8598]">
-        {booster?.summary ?? "Load trends to capture hashtags, QRs, and campaign hooks."}
+      <p className="text-sm font-medium tracking-tight">Desk</p>
+      <p className="mt-2 line-clamp-3 text-pretty text-xs leading-relaxed text-white/50">
+        {booster?.summary ?? "Load the tape to capture hashtags, QRs, and the next play."}
       </p>
 
-      <ul className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
-        {briefs.map((b) => (
-          <li key={b.topicId}>
-            <button
-              type="button"
-              onClick={() => onPickId(b.topicId)}
-              className="w-full rounded-xl border border-[#1c2333] bg-[#05060a]/50 px-3 py-3 text-left transition-colors hover:border-[#ffb24d]/40"
-            >
-              <p className="line-clamp-2 text-sm text-[#f4f1ea]">{b.whyTrending}</p>
-              <p className="signal-label mt-2">
-                {b.campaign.risk} risk · {b.campaign.timing}
-              </p>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-4">
+        <RiskBoard
+          topics={topics}
+          selectedId={null}
+          hoverId={hoverId}
+          onSelect={onSelect}
+          onHover={onHover}
+        />
+      </div>
 
-      {booster?.improvisations[0] ? (
-        <p className="signal-label mt-3 border-t border-[#1c2333] pt-3 text-[#f4f1ea]">
-          Next {booster.improvisations[0].priority}: {booster.improvisations[0].title}
-        </p>
-      ) : null}
+      <ul className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
+        {briefs.map((b) => {
+          const topic = topicById.get(b.topicId);
+          return (
+            <li key={b.topicId}>
+              <button
+                type="button"
+                onClick={() => onPickId(b.topicId)}
+                onMouseEnter={() => onHover(b.topicId)}
+                onMouseLeave={() => onHover(null)}
+                className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 ${
+                  hoverId === b.topicId
+                    ? "border-white/25 bg-white/[0.04]"
+                    : "border-white/8 hover:border-white/16"
+                }`}
+              >
+                <p className="line-clamp-2 text-[13px] leading-snug text-white">
+                  {topic?.label ?? b.campaign.hook}
+                </p>
+                <p className="signal-label mt-2">
+                  {b.campaign.risk} risk · {b.campaign.timing}
+                </p>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </aside>
   );
 }

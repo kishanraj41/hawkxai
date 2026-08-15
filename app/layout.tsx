@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,9 +10,16 @@ const inter = Inter({
   adjustFontFallback: true,
 });
 
+const plex = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "HAWKAI — Live trend intelligence",
-  description: "Live cross-platform trend intelligence map",
+  title: "HawkAI",
+  description: "Live trend desk — X, Reddit, Hacker News",
 };
 
 export default function RootLayout({
@@ -22,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} min-h-screen bg-[#0a0a0a] font-sans antialiased text-white`}>
+      <body
+        className={`${inter.variable} ${plex.variable} min-h-screen bg-[#07080b] font-sans antialiased text-white`}
+      >
         {children}
       </body>
     </html>
