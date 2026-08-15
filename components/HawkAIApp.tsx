@@ -18,7 +18,7 @@ type VelocityFilter = Topic["velocity"] | "all";
 function MapSkeleton() {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
-      <p className="text-sm text-white/45">Loading the tape…</p>
+      <p className="text-sm text-white/45">Loading…</p>
     </div>
   );
 }
@@ -209,7 +209,7 @@ export default function HawkAIApp() {
           <input
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Ask the tape…"
+            placeholder="Search topics…"
             className="w-full rounded border border-white/10 bg-transparent px-3 py-1.5 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
           />
           <button
