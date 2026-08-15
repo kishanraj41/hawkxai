@@ -52,7 +52,11 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | File | Use in the deck |
 |---|---|
 | `app/page.tsx` | App entry |
-| `components/HawkAIApp.tsx` | Map shell |
+| `components/HawkAIApp.tsx` | Three-column glass dashboard shell |
+| `components/CinematicVideo.tsx` | Scrubbed video backdrop |
+| `components/MapStage.tsx` | Center map stage |
+| `components/OverviewRail.tsx` | Left overview rail |
+| `components/IntelRail.tsx` | Right intel rail |
 | `components/BoosterBriefBar.tsx` | Always-on briefing strip |
 | `components/BoosterInsights.tsx` | Artifacts, age lenses, competitor move |
 | `app/api/trends/route.ts` | Live X / Reddit / HN clustering |

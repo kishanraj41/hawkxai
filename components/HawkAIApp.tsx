@@ -1,17 +1,24 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import AmbientBackground from "@/components/AmbientBackground";
-import CinematicVideo from "@/components/CinematicVideo";
 import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
 import OverviewRail from "@/components/OverviewRail";
-import TrendMap from "@/components/TrendMap";
 import { boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
 import type { BoosterPayload, Topic, TrendsPayload } from "@/lib/types";
-import { Hexagon } from "lucide-react";
+
+const CinematicVideo = dynamic(() => import("@/components/CinematicVideo"), {
+  ssr: false,
+});
+
+const TrendMap = dynamic(() => import("@/components/TrendMap"), {
+  ssr: false,
+  loading: () => <MapSkeleton />,
+});
 
 function MapSkeleton() {
   const blobs = [
@@ -97,6 +104,10 @@ export default function HawkAIApp() {
   }, [loadTrends]);
 
   useEffect(() => {
+    void import("@/components/TrendMap");
+  }, []);
+
+  useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setSelected(null);
@@ -163,7 +174,14 @@ export default function HawkAIApp() {
       <header className="reveal relative z-50 mx-3 mt-3 flex shrink-0 flex-wrap items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <span className="flex shrink-0 items-center gap-2">
-            <Hexagon size={24} strokeWidth={1.5} className="text-white" aria-hidden />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white" aria-hidden>
+              <path
+                d="M12 2.5 20.5 7.25v9.5L12 21.5 3.5 16.75v-9.5L12 2.5Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
+            </svg>
             <span className="text-lg font-medium tracking-tight text-white drop-shadow-md sm:text-xl">
               hawkai
             </span>

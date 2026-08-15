@@ -55,7 +55,7 @@ Warm `/api/trends` before Ask or Booster (409 until the cache is populated). Fir
 | `POST` | `/api/ask` | Grok optional | Body `{ "q": "..." }` → `{ answer, topicIds[] }`. 400 if `q` missing; 409 if no trends. |
 | `GET` | `/api/booster` | none (uses trends cache) | Artifacts, why-trending, age lenses, campaign. 409 if no trends. |
 
-Vercel `maxDuration` is 60s for trends and ask (`vercel.json`).
+Vercel `maxDuration`: 60s for `/api/trends` and `/api/ask`; 30s for `/api/booster` (`vercel.json`).
 
 <!-- /AUTO-GENERATED: API -->
 
