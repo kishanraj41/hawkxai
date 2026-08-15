@@ -73,3 +73,7 @@ agents/docker-ci/reports/
 # Booster Agent generated briefings
 agents/booster-agent/runs/*.json
 agents/booster-agent/runs/*.md
+
+# SmartSalesGuy generated pitches
+agents/smartsalesguy/runs/*.json
+agents/smartsalesguy/runs/*.md

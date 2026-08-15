@@ -1,0 +1,2 @@
+# SmartSalesGuy — no extra packages. Python 3.10+ stdlib only.
+# Needs `git` on PATH so checkout can read branch / commit / remote.

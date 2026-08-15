@@ -46,9 +46,12 @@ python3 agents/bug-bot/bug_bot.py
 
 # Docker CI agent
 python3 agents/docker-ci/ci_agent.py
+
+# SmartSalesGuy (VC one-pager)
+python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
-[See full documentation →](pr-review-bot/README.md) | [Bug Bot docs →](bug-bot/README.md) | [Docker CI docs →](docker-ci/README.md)
+[See full documentation →](pr-review-bot/README.md) | [Bug Bot docs →](bug-bot/README.md) | [Docker CI docs →](docker-ci/README.md) | [SmartSalesGuy docs →](smartsalesguy/README.md)
 
 ### 4. Docker CI Agent (`docker-ci/`)
 
@@ -57,6 +60,17 @@ Builds the production Dockerfile, smoke-tests the image, and gates every PR comm
 Runs via `.github/workflows/docker-ci.yml`.
 
 [See full documentation →](docker-ci/README.md)
+
+### 5. SmartSalesGuy (`smartsalesguy/`) — **VC one-pager**
+
+Checks out PulseMap and writes a one-page venture proposal in unicorn-founder voice: core problem, solution, what's live, what's next. Evidence from the git tree only — no invented traction.
+
+```bash
+python3 agents/smartsalesguy/smartsalesguy.py --self-check
+python3 agents/smartsalesguy/smartsalesguy.py
+```
+
+Canonical page: [docs/VC_ONE_PAGER.md](../docs/VC_ONE_PAGER.md) · [Agent docs →](smartsalesguy/README.md)
 
 ---
 

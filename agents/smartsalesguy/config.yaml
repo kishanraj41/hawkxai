@@ -1,0 +1,34 @@
+# SmartSalesGuy — unicorn-founder VC one-pager
+
+voice: unicorn-founder
+never_invent_traction: true
+banned_hype: true
+
+checkout:
+  read:
+    - README.md
+    - docs/CORE_IDEA.md
+    - docs/research/trend_analysis_dashboard_research.md
+    - agents/booster-agent/IMPROVISATIONS.md
+    - package.json
+    - app/api
+    - components
+    - agents
+
+one_pager:
+  sections:
+    - The problem
+    - The solution
+    - Why now
+    - What's live
+    - What's next
+    - Market
+    - The proposal
+  word_min: 380
+  word_max: 900
+  publish: docs/VC_ONE_PAGER.md
+
+reports:
+  save_json: true
+  save_markdown: true
+  output_directory: agents/smartsalesguy/runs

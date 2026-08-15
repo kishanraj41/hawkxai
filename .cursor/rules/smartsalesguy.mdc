@@ -1,0 +1,14 @@
+---
+description: PulseMap SmartSalesGuy — checkout the project and write a VC one-pager as a unicorn founder
+globs: grokhackx/agents/smartsalesguy/**,grokhackx/docs/VC_ONE_PAGER.md
+alwaysApply: false
+---
+
+# SmartSalesGuy (VC one-pager)
+
+Unicorn-founder sales agent. Checkout PulseMap. Write a one-page venture proposal: core problem, solution, what's live, what's next, the ask.
+
+- Run `python3 agents/smartsalesguy/smartsalesguy.py` to regenerate `docs/VC_ONE_PAGER.md`.
+- Live features come from files that exist. Future features come from `IMPROVISATIONS.md` and `docs/CORE_IDEA.md`.
+- Never invent traction, ARR, or a fake WHY. Cite research numbers or omit them.
+- Voice: category, wedge, why-now, receipts — not deck-template adjectives.
