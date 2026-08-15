@@ -1,7 +1,7 @@
 ---
 name: builddocker
 description: >-
-  Builds the PulseMap Dockerfile and updates docker run so the running
+  Builds the HawkAI Dockerfile and updates docker run so the running
   container matches the new image. Use when the user invokes /builddocker,
   asks to docker build, rebuild the image, or refresh the running container.
 disable-model-invocation: true
@@ -16,33 +16,33 @@ Run this from the grokhackx repo root (`Dockerfile` lives there). Do both steps 
 ## 1. Build the Dockerfile
 
 ```bash
-docker build -t pulsemap:latest -t pulsemap:ci .
+docker build -t hawkai:latest -t hawkai:ci .
 ```
 
 Use `required_permissions: ["all"]` (Docker socket). `block_until_ms` at least 600000. Fail the skill if the build fails.
 
-Tags: `pulsemap:latest` (run) and `pulsemap:ci` (CI agent). Same image.
+Tags: `hawkai:latest` (run) and `hawkai:ci` (CI agent). Same image.
 
 ## 2. Update docker run
 
-1. If a container named `pulsemap` exists, `docker stop pulsemap` (and `docker rm` if it is not `--rm`).
+1. If a container named `hawkai` exists, `docker stop hawkai` (and `docker rm` if it is not `--rm`).
 2. Host **:3000** is often Grafana. Default publish **3001:3000**. If 3001 is taken, pick the next free port.
 3. Load `XAI_API_KEY` from `.env.local` (gitignored). Do not print the key. If missing, still run the container; Ask/Grok will degrade.
 4. Start:
 
 ```bash
-docker run -d --name pulsemap --rm -p 3001:3000 --env-file .env.local pulsemap:latest
+docker run -d --name hawkai --rm -p 3001:3000 --env-file .env.local hawkai:latest
 ```
 
 If `.env.local` is absent:
 
 ```bash
-docker run -d --name pulsemap --rm -p 3001:3000 pulsemap:latest
+docker run -d --name hawkai --rm -p 3001:3000 hawkai:latest
 ```
 
-5. Confirm `docker ps --filter name=pulsemap` is Up. Report the URL (`http://localhost:<host-port>`).
+5. Confirm `docker ps --filter name=hawkai` is Up. Report the URL (`http://localhost:<host-port>`).
 
-If the user's terminal already has a foreground `docker run --rm`, stopping `pulsemap` will end that process — that is expected; the detached replacement is the update.
+If the user's terminal already has a foreground `docker run --rm`, stopping `hawkai` will end that process — that is expected; the detached replacement is the update.
 
 ## Do not
 

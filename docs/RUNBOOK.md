@@ -1,6 +1,6 @@
 # Runbook
 
-Operational path for PulseMap: local, Docker, Vercel, and CI.
+Operational path for HawkAI: local, Docker, Vercel, and CI.
 
 ## Health
 
@@ -28,8 +28,8 @@ Force refresh: `GET /api/trends?refresh=1`. Cache TTL is 5 minutes.
 ## Docker
 
 ```bash
-docker build -t pulsemap:latest .
-docker run --rm -p 3001:3000 -e XAI_API_KEY=xai-... pulsemap:latest
+docker build -t hawkai:latest .
+docker run --rm -p 3001:3000 -e XAI_API_KEY=xai-... hawkai:latest
 ```
 
 Host **:3000** is often Grafana. Map the container to **:3001**. Image user is `nextjs` (non-root).

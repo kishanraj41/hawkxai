@@ -79,7 +79,7 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | File | Use in the deck |
 |---|---|
 | `app/page.tsx` | App entry |
-| `components/PulseMapApp.tsx` | Map shell |
+| `components/HawkAIApp.tsx` | Map shell |
 | `components/BoosterBriefBar.tsx` | Always-on briefing strip |
 | `components/BoosterInsights.tsx` | Artifacts, age lenses, competitor move |
 | `app/api/trends/route.ts` | Live X / Reddit / HN clustering |
@@ -120,7 +120,7 @@ Skip for the deck: `agents/*/runs/`, `agents/bug-bot/reports/`, `agents/pr-revie
 | `python3 agents/docker-ci/ci_agent.py` | Lint Dockerfile, build image, smoke-test, Bug Bot |
 | `python3 agents/bug-bot/bug_bot.py [path] --fail-on critical` | Scan tree; CI gate on critical |
 | `python3 agents/pr-review-bot/review_bot.py <pr>` | Review a GitHub PR |
-| `docker build -t pulsemap:latest .` | Production image |
+| `docker build -t hawkai:latest .` | Production image |
 
 <!-- /AUTO-GENERATED: commands -->
 
@@ -161,7 +161,7 @@ Vercel `maxDuration` is 60s for trends and ask (`vercel.json`).
 
 - **Dockerfile** — multi-stage Next.js standalone, non-root `nextjs`, port 3000.
 - **Docker CI** — `.github/workflows/docker-ci.yml` on every PR commit and every push to `main`: contract tests, Hadolint (advisory), image build, smoke test, Bug Bot `--fail-on critical`.
-- **Local image:** Grafana often holds host `:3000`; map PulseMap to `:3001` (`-p 3001:3000`).
+- **Local image:** Grafana often holds host `:3000`; map HawkAI to `:3001` (`-p 3001:3000`).
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [RUNBOOK.md](./RUNBOOK.md).
 
