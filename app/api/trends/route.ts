@@ -16,19 +16,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const LAST_KEY = "trends:v1";
+const inflight = new Map<string, Promise<TrendsPayload>>();
 
-export async function GET(req: NextRequest) {
-  const refresh = req.nextUrl.searchParams.get("refresh") === "1";
-  const geo = geoAgent(req.nextUrl.searchParams.get("city"));
-  console.log(geo.log);
-  const cacheKey = trendsCacheKey(geo.city);
-  if (!refresh) {
-    const cached = cacheGet<TrendsPayload>(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached);
-    }
-  }
-
+async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
   const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
   const collected = collectorAgent(geo);
   const [redditR, hnR] = await Promise.all([collected.reddit, collected.hn]);
@@ -70,5 +60,30 @@ export async function GET(req: NextRequest) {
   cacheSet(cacheKey, payload);
   cacheSet(LAST_KEY, payload);
   console.log(`[trends] ${briefed.topics.length} topics @ ${payload.updatedAt}`);
-  return NextResponse.json(payload);
+  return payload;
+}
+
+export async function GET(req: NextRequest) {
+  const refresh = req.nextUrl.searchParams.get("refresh") === "1";
+  const geo = geoAgent(req.nextUrl.searchParams.get("city"));
+  console.log(geo.log);
+  const cacheKey = trendsCacheKey(geo.city);
+
+  if (!refresh) {
+    const cached = cacheGet<TrendsPayload>(cacheKey);
+    if (cached) return NextResponse.json(cached);
+    const stale = cachePeek<TrendsPayload>(cacheKey);
+    if (stale) return NextResponse.json(stale);
+  }
+
+  const existing = inflight.get(cacheKey);
+  if (existing && !refresh) {
+    return NextResponse.json(await existing);
+  }
+
+  const job = runPipeline(geo, cacheKey).finally(() => {
+    if (inflight.get(cacheKey) === job) inflight.delete(cacheKey);
+  });
+  inflight.set(cacheKey, job);
+  return NextResponse.json(await job);
 }

@@ -1,4 +1,4 @@
-const TTL_MS = 5 * 60 * 1000;
+const TTL_MS = 15 * 60 * 1000;
 
 interface Entry<T> {
   value: T;
@@ -11,7 +11,6 @@ export function cacheGet<T>(key: string): T | undefined {
   const hit = store.get(key) as Entry<T> | undefined;
   if (!hit) return undefined;
   if (Date.now() > hit.expires) {
-    store.delete(key);
     return undefined;
   }
   return hit.value;
