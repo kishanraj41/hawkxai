@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   const prev = cachePeek<TrendsPayload>(CACHE_KEY)?.topics;
   const signals = await collectSignals();
   const topics = await clusterTopics(signals, prev);
-  // Tickers cut until map is live.
+  await attachTickers(topics);
 
   const payload: TrendsPayload = {
     topics,

@@ -1,0 +1,36 @@
+# dependencies & build output
+node_modules
+.next
+out
+build
+
+# env & secrets
+.env
+.env*.local
+*.pem
+
+# git & IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# python / agents (not part of Next.js app)
+__pycache__
+*.py[cod]
+venv
+.venv
+agents
+research_output
+*.egg-info
+
+# docs & misc
+docs
+*.md
+!README.md
+coverage
+.vercel
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
