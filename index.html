@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Team - Cartoon Canvas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .canvas-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .agent-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid;
+        }
+        
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .agent-card.research {
+            border-color: #3498db;
+        }
+        
+        .agent-card.bug {
+            border-color: #e74c3c;
+        }
+        
+        .agent-card.review {
+            border-color: #2ecc71;
+        }
+        
+        .agent-card.booster {
+            border-color: #9b59b6;
+        }
+        
+        .agent-card h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .agent-card .emoji {
+            font-size: 1.5em;
+        }
+        
+        .agent-card h3 {
+            color: #666;
+            font-size: 1em;
+            margin-bottom: 15px;
+            font-weight: normal;
+            font-style: italic;
+        }
+        
+        .duties {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        .duties li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .duties li:last-child {
+            border-bottom: none;
+        }
+        
+        .duties li::before {
+            content: "✓";
+            color: white;
+            background: #4CAF50;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .tech-stack {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .tech-stack h4 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tech-tag {
+            background: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .agents-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Meet Our AI Agent Team!</h1>
+            <p>A cartoon guide to our intelligent automation crew</p>
+        </div>
+        
+        <img src="/opt/cursor/artifacts/assets/agent_team_cartoon_canvas.png" alt="AI Agent Team Cartoon" class="canvas-image">
+        
+        <div class="agents-grid">
+            <!-- Research Agent -->
+            <div class="agent-card research">
+                <h2><span class="emoji">🔍</span> Research Agent</h2>
+                <h3>"The Knowledge Hunter"</h3>
+                <ul class="duties">
+                    <li>Web Search via DuckDuckGo API</li>
+                    <li>Content Fetching & Extraction</li>
+                    <li>Multi-Source Research</li>
+                    <li>Question Answering System</li>
+                    <li>Auto-Save JSON & Text Reports</li>
+                </ul>
+                <div class="tech-stack">
+                    <h4>Tech Stack</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">DuckDuckGo</span>
+                        <span class="tech-tag">CLI</span>
+                        <span class="tech-tag">Library</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bug Bot -->
+            <div class="agent-card bug">
+                <h2><span class="emoji">🐛</span> Bug Bot</h2>
+                <h3>"The Bug Detective"</h3>
+                <ul class="duties">
+                    <li>Automated Bug Detection</li>
+                    <li>Security Vulnerability Scanning</li>
+                    <li>Multi-Language Support (Py, JS, TS)</li>
+                    <li>Severity Classification</li>
+                    <li>Fix Suggestions & Reports</li>
+                </ul>
+                <div class="tech-stack">
+                    <h4>Tech Stack</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Regex Patterns</span>
+                        <span class="tech-tag">Security</span>
+                        <span class="tech-tag">CI/CD Ready</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PR Review Bot -->
+            <div class="agent-card review">
+                <h2><span class="emoji">🤖</span> PR Review Bot</h2>
+                <h3>"The Code Quality Guardian"</h3>
+                <ul class="duties">
+                    <li>Automated Code Review</li>
+                    <li>Reinforcement Learning</li>
+                    <li>Quality Scoring (0-10)</li>
+                    <li>Smart Categorization</li>
+                    <li>Learning Analytics & Reports</li>
+                </ul>
+                <div class="tech-stack">
+                    <h4>Tech Stack</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">GitHub CLI</span>
+                        <span class="tech-tag">Machine Learning</span>
+                        <span class="tech-tag">Pattern Analysis</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Booster Agent -->
+            <div class="agent-card booster">
+                <h2><span class="emoji">🚀</span> Booster Agent</h2>
+                <h3>"The Trend Intelligence Master"</h3>
+                <ul class="duties">
+                    <li>Live Trend Capture (Hashtags, URLs)</li>
+                    <li>Correlation & Why-Now Analysis</li>
+                    <li>Age Group Translation (Kids → Boomers)</li>
+                    <li>Campaign Intelligence</li>
+                    <li>Product Improvisation (P0/P1/P2)</li>
+                </ul>
+                <div class="tech-stack">
+                    <h4>Tech Stack</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">TypeScript</span>
+                        <span class="tech-tag">D3.js</span>
+                        <span class="tech-tag">API</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <h3>🎨 Built with AI & Creativity</h3>
+            <p>Part of the <strong>PulseMap</strong> Trend Analysis Project</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com/snagaram3/grokhackx" target="_blank">View on GitHub</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
