@@ -218,6 +218,10 @@ class BugDetector:
         """Scan a single file for bugs."""
         bugs = []
         
+        # Skip scanning the bug bot itself to avoid false positives from pattern definitions
+        if 'bug_bot.py' in file_path or 'review_bot.py' in file_path:
+            return bugs
+        
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
