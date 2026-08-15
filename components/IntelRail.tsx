@@ -1,7 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { BoosterPayload, Topic } from "@/lib/types";
-import TopicDetailPanel from "@/components/TopicDetailPanel";
+
+const TopicDetailPanel = dynamic(() => import("@/components/TopicDetailPanel"), {
+  ssr: false,
+});
 
 interface IntelRailProps {
   selected: Topic | null;

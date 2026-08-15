@@ -7,8 +7,8 @@ banned_hype: true
 checkout:
   read:
     - README.md
-    - docs/CORE_IDEA.md
-    - docs/research/trend_analysis_dashboard_research.md
+    - docs/presentation/CORE_IDEA.md
+    - docs/presentation/research/trend_analysis_dashboard_research.md
     - agents/booster-agent/IMPROVISATIONS.md
     - package.json
     - app/api
@@ -26,7 +26,7 @@ one_pager:
     - The proposal
   word_min: 380
   word_max: 900
-  publish: docs/VC_ONE_PAGER.md
+  publish: docs/presentation/VC_ONE_PAGER.md
 
 reports:
   save_json: true

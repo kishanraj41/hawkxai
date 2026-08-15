@@ -32,7 +32,7 @@ Any HawkAI / grokhackx work: capture, clustering, map UI, Ask box, campaign copy
 - Brain (CLI / reports): `agents/booster-agent/booster_agent.py`
 - Live path: `lib/booster.ts` → `GET /api/booster`
 - UI: `BoosterBriefBar` (global) + `BoosterInsights` (per topic)
-- North star: `docs/CORE_IDEA.md`
+- North star: `docs/presentation/CORE_IDEA.md`
 - Living backlog: `agents/booster-agent/IMPROVISATIONS.md`
 
 ## Rules
@@ -51,5 +51,5 @@ Any HawkAI / grokhackx work: capture, clustering, map UI, Ask box, campaign copy
 
 ## Additional resources
 
-- [CORE_IDEA.md](../../../docs/CORE_IDEA.md)
+- [CORE_IDEA.md](../../../docs/presentation/CORE_IDEA.md)
 - [booster agent README](../../../agents/booster-agent/README.md)

@@ -247,7 +247,7 @@ export default function TrendMap({
       .append("circle")
       .attr("class", "viz")
       .attr("r", 0)
-      .attr("fill", (d) => fillFor(d, topics))
+      .attr("fill", (d) => fillFor(d))
       .attr("fill-opacity", (d) => fillOpacityFor(d, selectedIdRef.current))
       .attr("stroke", (d) =>
         strokeFor(d, selectedIdRef.current, highlightedIdsRef.current, hoverIdRef.current),
@@ -461,7 +461,7 @@ export default function TrendMap({
   );
 }
 
-function fillFor(d: d3.HierarchyCircularNode<PackDatum>, _topics: Topic[]): string {
+function fillFor(d: d3.HierarchyCircularNode<PackDatum>): string {
   if (d.data.topic) return "url(#orb-fill)";
   if (d.data.platform) return "url(#core-fill)";
   return "rgba(255,255,255,0.06)";

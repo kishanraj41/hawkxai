@@ -21,7 +21,7 @@ python3 agents/booster-agent/booster_agent.py --self-check
 python3 agents/booster-agent/booster_agent.py --file agents/booster-agent/fixtures/sample_trends.json
 ```
 
-[See full documentation →](booster-agent/README.md) · [Core idea →](../docs/CORE_IDEA.md)
+[See full documentation →](booster-agent/README.md) · [Core idea →](../docs/presentation/CORE_IDEA.md)
 
 ### 2. PR Review Bot (`pr-review-bot/`)
 
@@ -64,7 +64,7 @@ python3 agents/smartsalesguy/smartsalesguy.py --self-check
 python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
-Canonical page: [docs/VC_ONE_PAGER.md](../docs/VC_ONE_PAGER.md) · [Agent docs →](smartsalesguy/README.md)
+Canonical page: [docs/presentation/VC_ONE_PAGER.md](../docs/presentation/VC_ONE_PAGER.md) · [Agent docs →](smartsalesguy/README.md)
 
 ---
 

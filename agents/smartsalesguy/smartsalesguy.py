@@ -27,7 +27,15 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
 DEFAULT_RUNS = HERE / "runs"
-CANONICAL_ONE_PAGER = REPO_ROOT / "docs" / "VC_ONE_PAGER.md"
+CANONICAL_ONE_PAGER = REPO_ROOT / "docs" / "presentation" / "VC_ONE_PAGER.md"
+CORE_IDEA_RELS = (
+    "docs/presentation/CORE_IDEA.md",
+    "docs/CORE_IDEA.md",
+)
+RESEARCH_RELS = (
+    "docs/presentation/research/trend_analysis_dashboard_research.md",
+    "docs/research/trend_analysis_dashboard_research.md",
+)
 
 BANNED = (
     "excited to share",
@@ -187,6 +195,17 @@ def _git_show(root: Path, rel: str, refs: Sequence[str] = PRODUCT_REFS) -> Tuple
         if blob:
             return blob[:80_000], f"{rel} @{ref}"
     return "", rel
+
+
+def _git_show_first(root: Path, rels: Sequence[str], refs: Sequence[str] = PRODUCT_REFS) -> Tuple[str, str]:
+    """Prefer the current presentation path; fall back to pre-move locations on older refs."""
+    last = rels[0] if rels else ""
+    for rel in rels:
+        text, ev = _git_show(root, rel, refs)
+        if text and not text.lstrip().startswith("Moved to"):
+            return text, ev
+        last = rel
+    return "", last
 
 
 def _file_exists(root: Path, rel: str) -> bool:
@@ -357,7 +376,7 @@ def _future_features(root: Path) -> List[Feature]:
                 status="next",
             )
         )
-    core, core_ev = _git_show(root, "docs/CORE_IDEA.md")
+    core, core_ev = _git_show_first(root, CORE_IDEA_RELS)
     wave = core.split("## Next-wave improvisations", 1)[-1] if "Next-wave improvisations" in core else ""
     skip_stems = ("capture", "analyze", "correlate", "translate", "arm competitor", "improvise")
     existing = {f.name.lower() for f in future}
@@ -392,8 +411,7 @@ def _future_features(root: Path) -> List[Feature]:
 
 
 def _market(root: Path) -> List[MarketSlice]:
-    rel = "docs/research/trend_analysis_dashboard_research.md"
-    text, source = _git_show(root, rel)
+    text, source = _git_show_first(root, RESEARCH_RELS)
     slices: List[MarketSlice] = []
     patterns = (
         (r"\*\*Your intersection:\*\*\s*(~?\$[^\n]+)", "TAM (intersection)"),
@@ -409,7 +427,7 @@ def _market(root: Path) -> List[MarketSlice]:
 
 
 def _core_copy(root: Path) -> Tuple[str, str, str]:
-    core, _ = _git_show(root, "docs/CORE_IDEA.md")
+    core, _ = _git_show_first(root, CORE_IDEA_RELS)
     readme, _ = _git_show(root, "README.md")
     idea = _first_paragraphs(core, 1)
     product_para = ""
@@ -433,10 +451,12 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
     agents = _discover_agents(root)
     market = _market(root)
     stack = _package_stack(root)
+    _, core_src = _git_show_first(root, CORE_IDEA_RELS)
+    _, research_src = _git_show_first(root, RESEARCH_RELS)
     sources = [
         "README.md",
-        "docs/CORE_IDEA.md",
-        "docs/research/trend_analysis_dashboard_research.md",
+        core_src.split(" @", 1)[0] or CORE_IDEA_RELS[0],
+        research_src.split(" @", 1)[0] or RESEARCH_RELS[0],
         "agents/README.md",
         "agents/booster-agent/IMPROVISATIONS.md",
         "package.json",
@@ -484,7 +504,7 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "and the campaign move that follows."
     )
     if product_para:
-        sources.append("docs/CORE_IDEA.md#product")
+        sources.append(f"{(core_src.split(' @', 1)[0] or CORE_IDEA_RELS[0])}#product")
     return Dossier(
         product="HawkAI",
         one_liner=one_liner,
@@ -721,7 +741,7 @@ Examples:
     parser.add_argument("--runs-dir", default=str(DEFAULT_RUNS))
     parser.add_argument("--self-check", action="store_true")
     parser.add_argument("--stdout", action="store_true", help="Print the one-pager only")
-    parser.add_argument("--no-publish", action="store_true", help="Do not write docs/VC_ONE_PAGER.md")
+    parser.add_argument("--no-publish", action="store_true", help="Do not write docs/presentation/VC_ONE_PAGER.md")
     args = parser.parse_args(argv)
 
     root = Path(args.root)

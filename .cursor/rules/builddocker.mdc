@@ -6,4 +6,6 @@ alwaysApply: false
 
 When the user invokes `/builddocker` or asks to rebuild the HawkAI image, follow `grokhackx/.cursor/skills/builddocker/SKILL.md`.
 
-build the dockerfile and update docker run. Tag `hawkai:latest`. Restart the `hawkai` container on host 3001 unless told otherwise.
+On a 5-minute loop / PR-merge watch, follow `grokhackx/.cursor/skills/rebuild-on-merge/SKILL.md` first — rebuild only when a PR merged to `main`.
+
+build the dockerfile and update docker run. Tag `hawkai:latest`. Reuse the running `hawkai` host port (often 3002 if 3001 is `next dev`).
