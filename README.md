@@ -1,238 +1,99 @@
-# Research Agent 🤖
+# PulseMap (hackathon)
 
-An intelligent AI-powered research assistant that searches the web, fetches content, and organizes research findings.
+Live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters topics. Divergence is computed in code: a topic exploding on one platform is a different story than one rising everywhere.
 
-## Features
+Repo: https://github.com/snagaram3/grokhackx
 
-- 🔍 **Web Search**: Search the web using DuckDuckGo API (no API key needed)
-- 📥 **Content Fetching**: Fetch and extract content from URLs
-- 📊 **Comprehensive Research**: Conduct multi-source research on any topic
-- 💡 **Question Answering**: Ask questions and get researched answers
-- 📚 **Research History**: Track and review past research sessions
-- 💾 **Auto-Save**: Automatically save all research to JSON and text files
-- 🎯 **CLI & Library**: Use as a command-line tool or Python library
+## Team split
 
-## Installation
+| Person | Owns | Do not touch |
+|---|---|---|
+| Backend | `lib/*`, `app/api/*` | D3 map UI |
+| Map | `app/page.tsx`, `components/` (new) | Grok prompts, fetchers |
+| Polish | top bar, Ask box, detail panel, Vercel | pipeline timeouts |
 
-1. Clone the repository:
+**No extra features.** If you are behind, cut tickers and peak-hour — never the map, never `/api/trends`.
+
+## Setup (everyone)
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/snagaram3/grokhackx.git
 cd grokhackx
+git pull
+npm install
+cp .env.example .env.local
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
+Put the xAI key only in `.env.local` (gitignored). Never commit it, never paste it in Discord.
+
 ```
-
-## Quick Start
-
-### As a Command-Line Tool
-
-```bash
-# Research a topic
-python cli.py research "artificial intelligence trends"
-
-# Search the web
-python cli.py search "python best practices" --results 10
-
-# Ask a question
-python cli.py ask "what is machine learning?"
-
-# View research history
-python cli.py history
-
-# Fetch content from a URL
-python cli.py fetch https://example.com/article
+XAI_API_KEY=xai-...
 ```
-
-### As a Python Library
-
-```python
-from research_agent import ResearchAgent
-
-# Create an agent
-agent = ResearchAgent()
-
-# Research a topic
-research = agent.research_topic("quantum computing", depth=3)
-print(research['summary'])
-
-# Search the web
-results = agent.search_web("python tutorials", num_results=5)
-
-# Ask a question
-answer = agent.ask_question("What is cloud computing?")
-print(answer)
-
-# View research history
-history = agent.list_research_history()
-```
-
-## Usage Examples
-
-Run the example script to see all features in action:
 
 ```bash
-python example_usage.py
+npm run dev
 ```
 
-Or run the built-in demo:
+- App: http://localhost:3000
+- Data: http://localhost:3000/api/trends
+- Force refresh: http://localhost:3000/api/trends?refresh=1
+- Ask: `POST /api/ask` body `{ "q": "what's blowing up in Austin?" }`
 
-```bash
-python research_agent.py
+First `/api/trends` can take ~60–90s (Grok cluster). After that it caches **5 minutes**.
+
+## Map teammate — payload contract
+
+`GET /api/trends` returns:
+
+```ts
+{
+  topics: Topic[]
+  updatedAt: string
+  sources: { x: boolean; reddit: boolean; hn: boolean }
+  degraded: string[]   // e.g. ["reddit offline"]
+}
 ```
 
-## Project Structure
+Each `Topic`:
 
-```
-grokhackx/
-├── research_agent.py    # Main research agent library
-├── cli.py              # Command-line interface
-├── config.py           # Configuration settings
-├── example_usage.py    # Usage examples
-├── requirements.txt    # Python dependencies
-├── README.md          # This file
-└── research_output/   # Auto-generated research files (gitignored)
-```
+- `id` — slug, use as React key
+- `label` — human phrase
+- `platforms.x | reddit | hn` — `{ score: 0-100, posts: Post[] }`
+- `velocity` — `"rising" | "peaking" | "fading"`
+- `divergence` — `0` = everywhere, `1` = single-platform bubble
+- `tickers` — may be `[]` (cut until map is live)
+- `peakHourCT` — optional, e.g. `"7pm"`
+- `why` — optional; omit if missing (never fake)
 
-## CLI Commands
+`Post`: `{ platform, title, url, score, createdAt }`
 
-### Research Command
-Conduct comprehensive research on a topic:
-```bash
-python cli.py research "topic" --depth 3
-```
+**UI spec (do this next):**
 
-Options:
-- `--depth`: Number of sources to analyze (default: 3)
-- `--output-dir`: Custom output directory
+- Full-viewport D3 v7 **circle packing** SVG
+- Outer circle = topic, sized by `x.score + reddit.score + hn.score`
+- Inner circles = platforms: X `#ffffff`, Reddit `#ff4500`, HN `#ff6600` on `#0a0e14`
+- Glow on `velocity === "rising"`
+- Click zooms 600ms; right panel: label, velocity, divergence one-liner (`"X-only bubble"` / `"spreading"` / `"everywhere"`), 3 receipt links from `posts`, ticker chips
+- Top bar: logo, `updatedAt`, refresh (`?refresh=1`), Ask box
+- Loading: skeleton circles, never a blank screen
+- If `degraded` has `"reddit offline"`, show a small pill — still render the other sources
 
-### Search Command
-Search the web:
-```bash
-python cli.py search "query" --results 5
-```
+Ask box: `POST /api/ask` → `{ answer, topicIds[] }` → highlight + zoom those nodes. Make zoom smooth before making it clever.
 
-Options:
-- `--results`: Number of results to return (default: 5)
+D3 is already in `package.json`.
 
-### Ask Command
-Ask a question and get a researched answer:
-```bash
-python cli.py ask "your question here"
-```
+## Known degradations (expected)
 
-### History Command
-View past research sessions:
-```bash
-python cli.py history
-```
+- **Reddit** may 403 on some networks. Pill: `reddit offline`. Try venue wifi.
+- **X live search** can time out. Clustering still runs on HN (+ Reddit when available).
+- **Tickers** are skipped until the map boots.
 
-### Fetch Command
-Fetch content from a URL:
-```bash
-python cli.py fetch https://example.com
-```
+Never invent posts or a fake WHY.
 
-## API Reference
+## Deploy
 
-### ResearchAgent Class
+Push a hello-world to Vercel as soon as `npm run build` works. Set `XAI_API_KEY` in Vercel env. First deploy at 2:40 is how this dies.
 
-#### `__init__(output_dir='research_output')`
-Initialize the research agent.
+## Stack
 
-#### `search_web(query, num_results=5)`
-Search the web for a query.
-
-#### `fetch_content(url)`
-Fetch and extract content from a URL.
-
-#### `research_topic(topic, depth=3)`
-Conduct comprehensive research on a topic.
-
-#### `ask_question(question)`
-Answer a question using research capabilities.
-
-#### `list_research_history()`
-List all past research sessions.
-
-## Output Format
-
-Research results are automatically saved in two formats:
-
-1. **JSON file**: Complete research data including all sources and metadata
-2. **Text summary**: Human-readable summary of findings
-
-Files are saved to `research_output/` by default.
-
-## Configuration
-
-Edit `config.py` to customize:
-- Output directory
-- Search result limits
-- Request timeouts
-- Content size limits
-- And more...
-
-## Requirements
-
-- Python 3.7+
-- requests library
-
-## How It Works
-
-1. **Search Phase**: Queries DuckDuckGo API for relevant sources
-2. **Fetch Phase**: Retrieves content from top search results
-3. **Analysis Phase**: Organizes and summarizes findings
-4. **Save Phase**: Stores research in JSON and text formats
-
-## Features in Detail
-
-### Web Search
-Uses DuckDuckGo's free API to search the web without requiring API keys. Returns titles, URLs, and snippets for each result.
-
-### Content Fetching
-Fetches full content from URLs with proper error handling and rate limiting to be respectful to web servers.
-
-### Research Reports
-Generates comprehensive research reports including:
-- Search query and timestamp
-- List of sources with URLs
-- Content previews from each source
-- Human-readable summary
-
-### Research History
-Maintains a history of all research sessions with easy access to past research data.
-
-## Contributing
-
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-
-## License
-
-See LICENSE file for details.
-
-## Tips
-
-- Start with a depth of 3-5 sources for most research tasks
-- Use specific search queries for better results
-- Check `research_output/` directory for saved research
-- Use the CLI for quick tasks, the library for integration
-
-## Future Enhancements
-
-Potential improvements:
-- Additional search engines (Google, Bing)
-- Advanced content extraction (BeautifulSoup, newspaper3k)
-- AI-powered summarization
-- PDF and document support
-- Citation management
-- Export to various formats (PDF, Markdown, HTML)
-
----
-
-Built with ❤️ for researchers, students, and knowledge seekers
+Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · no database · no auth
