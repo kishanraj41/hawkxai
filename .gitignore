@@ -67,6 +67,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Agent CI reports (regenerated on each run)
+agents/docker-ci/reports/
+
 # Booster Agent generated briefings
 agents/booster-agent/runs/*.json
 agents/booster-agent/runs/*.md
+
+# SmartSalesGuy generated pitches
+agents/smartsalesguy/runs/*.json
+agents/smartsalesguy/runs/*.md

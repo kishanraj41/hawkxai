@@ -107,6 +107,18 @@ Never invent posts or a fake WHY.
 
 Push a hello-world to Vercel as soon as `npm run build` works. Set `XAI_API_KEY` in Vercel env. First deploy at 2:40 is how this dies.
 
+Every PR commit and every merge to `main` builds the production `Dockerfile` and runs Bug Bot (`agents/docker-ci`, `.github/workflows/docker-ci.yml`).
+
 ## Stack
 
 Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · no database · no auth
+
+## SmartSalesGuy (VC one-pager)
+
+Unicorn-founder sales agent. Checks out this repo and writes a one-page venture proposal: problem, solution, what's live, what's next.
+
+```bash
+python3 agents/smartsalesguy/smartsalesguy.py
+```
+
+Canonical page: [docs/VC_ONE_PAGER.md](docs/VC_ONE_PAGER.md)

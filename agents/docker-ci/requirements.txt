@@ -1,0 +1,5 @@
+# Docker CI agent uses the Python standard library only.
+# Runtime tools expected on the machine / runner:
+#   docker (or docker buildx)
+#   curl
+#   gh (optional — posts a sticky PR comment when GITHUB_TOKEN is set)

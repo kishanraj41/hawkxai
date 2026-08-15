@@ -1,6 +1,9 @@
 # Documentation
 
-This directory contains research, analysis, and planning documents for the grokhackx project.
+This directory contains research, analysis, planning, and investor documents for PulseMap.
+
+- **[VC one-pager](./VC_ONE_PAGER.md)** — SmartSalesGuy investor proposal (problem, solution, live / next)
+- **[SmartSalesGuy](../agents/smartsalesguy/README.md)** — checkout the repo, write the one-pager
 
 ## Core idea
 

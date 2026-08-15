@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "booster": "python3 agents/booster-agent/booster_agent.py --self-check"
+    "booster": "python3 agents/booster-agent/booster_agent.py --self-check",
+    "sales": "python3 agents/smartsalesguy/smartsalesguy.py --self-check"
   },
   "dependencies": {
     "d3": "^7.9.0",
