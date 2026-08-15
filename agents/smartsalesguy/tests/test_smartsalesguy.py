@@ -33,6 +33,19 @@ class SmartSalesGuyTests(unittest.TestCase):
         names = " ".join(f.name.lower() for f in dossier.current)
         self.assertTrue("trend" in names or "booster" in names, names)
 
+    def test_agents_list_comes_from_checkout(self):
+        agents = self.proposal.dossier.agents
+        slugs = " ".join(feat.evidence.lower() for feat in agents)
+        names = " ".join(feat.name.lower() for feat in agents)
+        self.assertGreaterEqual(len(agents), 5, names)
+        self.assertIn("booster-agent", slugs)
+        self.assertIn("smartsalesguy", slugs)
+        self.assertIn("docker-ci", slugs)
+        pager = self.proposal.one_pager.lower()
+        self.assertIn("## agents", pager)
+        self.assertIn("smartsalesguy", pager)
+        self.assertIn("booster agent", pager)
+
     def test_future_comes_from_backlog_not_fiction(self):
         names = " ".join(f.name.lower() for f in self.proposal.dossier.future)
         self.assertTrue(

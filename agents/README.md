@@ -4,6 +4,14 @@ This directory contains autonomous AI agents that enhance the development workfl
 
 ## Available Agents
 
+| # | Agent | Role | Run |
+|---|---|---|---|
+| 1 | [`booster-agent`](booster-agent/README.md) | Core idea: capture → correlate → campaign | `python3 agents/booster-agent/booster_agent.py --self-check` |
+| 2 | [`pr-review-bot`](pr-review-bot/README.md) | AI PR review with quality scoring | `python3 agents/pr-review-bot/review_bot.py <pr>` |
+| 3 | [`bug-bot`](bug-bot/README.md) | Security and logic scan | `python3 agents/bug-bot/bug_bot.py` |
+| 4 | [`docker-ci`](docker-ci/README.md) | Production image build, smoke test, Bug Bot | `python3 agents/docker-ci/ci_agent.py` |
+| 5 | [`smartsalesguy`](smartsalesguy/README.md) | VC one-pager from this checkout | `python3 agents/smartsalesguy/smartsalesguy.py` |
+
 ### 1. Booster Agent (`booster-agent/`) — **core idea**
 
 Captures trending hashtags, QRs, phrases, and URLs; correlates why they are trending; translates insights for every age group and for campaign competitors; and keeps improvising the dashboard.
@@ -33,25 +41,11 @@ An AI-powered code review agent with reinforcement learning capabilities.
 
 Intelligent bug detection and tracking agent that finds security vulnerabilities and logic errors.
 
-**Quick Start:**
 ```bash
-# PR Review Bot
-python3 agents/pr-review-bot/review_bot.py 2
-
-# Booster Agent
-python3 agents/booster-agent/booster_agent.py --self-check
-
-# Bug Bot
 python3 agents/bug-bot/bug_bot.py
-
-# Docker CI agent
-python3 agents/docker-ci/ci_agent.py
-
-# SmartSalesGuy (VC one-pager)
-python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
-[See full documentation →](pr-review-bot/README.md) | [Bug Bot docs →](bug-bot/README.md) | [Docker CI docs →](docker-ci/README.md) | [SmartSalesGuy docs →](smartsalesguy/README.md)
+[See full documentation →](bug-bot/README.md)
 
 ### 4. Docker CI Agent (`docker-ci/`)
 
@@ -170,12 +164,12 @@ agents/
 
 ## Future Agents (Ideas)
 
-Potential agents to build:
+Shipped (do not rebuild): Booster, PR Review Bot, Bug Bot, Docker CI, SmartSalesGuy.
+
+Still worth building:
 - **Test Coverage Agent** - Ensure adequate test coverage
-- **Security Audit Agent** - Deep security analysis
 - **Performance Profiler** - Find performance bottlenecks
 - **Dependency Updater** - Keep dependencies current
-- **Documentation Generator** - Auto-generate docs
 - **Code Refactoring Agent** - Suggest refactorings
 - **API Design Reviewer** - Review API consistency
 - **Accessibility Checker** - Ensure accessibility standards
