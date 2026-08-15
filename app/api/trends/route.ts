@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet, cachePeek, cacheSet } from "@/lib/cache";
-import { clusterTopics } from "@/lib/cluster";
-import { collectSignals } from "@/lib/signals";
+import { attachXPosts, clusterTopics } from "@/lib/cluster";
+import { beginSignals } from "@/lib/signals";
 import { grokJson } from "@/lib/grok";
 import { tickerListSchema } from "@/lib/schemas";
 import type { Topic, TrendsPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 90;
+export const maxDuration = 120;
 
 const CACHE_KEY = "trends:v1";
 
@@ -50,15 +50,33 @@ export async function GET(req: NextRequest) {
   }
 
   const prev = cachePeek<TrendsPayload>(CACHE_KEY)?.topics;
-  const signals = await collectSignals();
-  const topics = await clusterTopics(signals, prev);
+  const { core, x: xP } = beginSignals();
+  const { reddit, hn } = await core;
+  const sources = { x: false, reddit: reddit.length > 0, hn: hn.length > 0 };
+  const degraded: string[] = [];
+  if (!sources.reddit) degraded.push("reddit offline");
+  if (!sources.hn) degraded.push("hn offline");
+
+  const [topics, xPosts] = await Promise.all([
+    clusterTopics({ reddit, hn, x: [], sources, degraded }, prev),
+    xP,
+  ]);
+  if (xPosts.length) {
+    sources.x = true;
+    attachXPosts(topics, xPosts);
+  } else {
+    degraded.push("x offline");
+  }
+  console.log(
+    `[signals] reddit=${reddit.length} hn=${hn.length} x=${xPosts.length} degraded=${degraded.join(",") || "none"}`,
+  );
   // Tickers cut until map is live.
 
   const payload: TrendsPayload = {
     topics,
     updatedAt: new Date().toISOString(),
-    sources: signals.sources,
-    degraded: signals.degraded,
+    sources,
+    degraded,
   };
   cacheSet(CACHE_KEY, payload);
   console.log(`[trends] ${topics.length} topics @ ${payload.updatedAt}`);
