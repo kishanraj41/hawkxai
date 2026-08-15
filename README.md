@@ -105,9 +105,14 @@ Never invent posts or a fake WHY.
 
 ## Deploy
 
-Push a hello-world to Vercel as soon as `npm run build` works. Set `XAI_API_KEY` in Vercel env. First deploy at 2:40 is how this dies.
+Public URL: host on **Vercel**. Step-by-step: [docs/VERCEL.md](docs/VERCEL.md).
 
-Every PR commit and every merge to `main` builds the production `Dockerfile` and runs Bug Bot (`agents/docker-ci`, `.github/workflows/docker-ci.yml`).
+1. Import `snagaram3/grokhackx` at [vercel.com/new](https://vercel.com/new)
+2. Framework: Next.js · root: `.`
+3. Env: `XAI_API_KEY` (Production + Preview)
+4. Deploy. First `/api/trends` can take up to ~60s.
+
+Do not commit `.env.local`. Docker CI still builds the production image on every PR (`agents/docker-ci`).
 
 ## Stack
 

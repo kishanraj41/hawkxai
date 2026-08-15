@@ -58,7 +58,7 @@ interface TopicDetailPanelProps {
   onClose: () => void;
 }
 
-export default function TopicDetailPanel({ topic, brief }: TopicDetailPanelProps) {
+export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailPanelProps) {
   const reduce = useReducedMotion();
   const receipts = topPosts(topic);
   const platformScores = (["x", "reddit", "hn"] as const).filter(
@@ -66,7 +66,7 @@ export default function TopicDetailPanel({ topic, brief }: TopicDetailPanelProps
   );
 
   return (
-    <motion.aside
+    <motion.div
       key={topic.id}
       initial={{ opacity: 0, x: reduce ? 0 : motionTokens.distance.lg }}
       animate={{ opacity: 1, x: 0 }}
@@ -75,12 +75,20 @@ export default function TopicDetailPanel({ topic, brief }: TopicDetailPanelProps
         duration: motionTokens.duration.normal,
         ease: motionTokens.easing.smooth,
       }}
-      className="absolute right-3 top-3 z-10 flex h-[calc(100%-1.5rem)] w-full max-w-sm flex-col rounded-[4px] border border-[#1c2333] bg-[#0a0e17] p-5"
+      className="relative flex h-full w-full flex-col p-5"
     >
       <span
         aria-hidden
         className="absolute left-0 top-5 h-4 w-0.5 bg-[#ffb24d]"
       />
+
+      <button
+        type="button"
+        onClick={onClose}
+        className="signal-label mb-3 self-end text-[#7c8598] hover:text-[#f4f1ea]"
+      >
+        Close
+      </button>
 
       <motion.h2
         className="text-balance text-2xl font-medium leading-snug tracking-tight text-[#f4f1ea]"
@@ -164,6 +172,6 @@ export default function TopicDetailPanel({ topic, brief }: TopicDetailPanelProps
           ))}
         </div>
       ) : null}
-    </motion.aside>
+    </motion.div>
   );
 }
