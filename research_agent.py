@@ -6,10 +6,17 @@ Searches the web, fetches content, and organizes research findings.
 import os
 import json
 import requests
+import logging
 from datetime import datetime
 from typing import List, Dict, Optional
 from urllib.parse import quote_plus
 import time
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s'
+)
 
 
 class ResearchAgent:
@@ -42,7 +49,7 @@ class ResearchAgent:
         Returns:
             List of search results with title, url, and snippet
         """
-        print(f"🔍 Searching for: {query}")
+        logging.info(f"🔍 Searching for: {query}")
         
         # Using DuckDuckGo HTML search (no API key needed)
         try:
@@ -84,11 +91,11 @@ class ResearchAgent:
                     'snippet': 'Search query processed. Visit DuckDuckGo for full results.'
                 }]
                 
-            print(f"✅ Found {len(results)} results")
+            logging.info(f"✅ Found {len(results)} results")
             return results[:num_results]
             
         except Exception as e:
-            print(f"⚠️ Search error: {str(e)}")
+            logging.warning(f"⚠️ Search error: {str(e)}")
             return [{
                 'title': f'Search for: {query}',
                 'url': f'https://duckduckgo.com/?q={quote_plus(query)}',
@@ -106,7 +113,7 @@ class ResearchAgent:
         Returns:
             Extracted text content or None if failed
         """
-        print(f"📥 Fetching content from: {url}")
+        logging.info(f"📥 Fetching content from: {url}")
         
         try:
             headers = {
@@ -117,11 +124,11 @@ class ResearchAgent:
             
             # Basic text extraction (in production, use BeautifulSoup or newspaper3k)
             content = response.text[:5000]  # Limit content size
-            print(f"✅ Fetched {len(content)} characters")
+            logging.info(f"✅ Fetched {len(content)} characters")
             return content
             
         except Exception as e:
-            print(f"⚠️ Fetch error: {str(e)}")
+            logging.warning(f"⚠️ Fetch error: {str(e)}")
             return None
     
     def research_topic(self, topic: str, depth: int = 3) -> Dict:
@@ -135,7 +142,7 @@ class ResearchAgent:
         Returns:
             Research report dictionary
         """
-        print(f"\n🎯 Starting research on: {topic}\n")
+        logging.info(f"\n🎯 Starting research on: {topic}\n")
         
         timestamp = datetime.now().isoformat()
         research_data = {
@@ -151,7 +158,7 @@ class ResearchAgent:
         
         # Phase 2: Fetch content from top results
         for idx, result in enumerate(search_results[:depth], 1):
-            print(f"\n📄 Processing source {idx}/{depth}")
+            logging.info(f"\n📄 Processing source {idx}/{depth}")
             
             source = {
                 'title': result['title'],
@@ -176,7 +183,7 @@ class ResearchAgent:
         self._save_research(research_data)
         self.research_history.append(research_data)
         
-        print(f"\n✅ Research completed! Results saved to {self.output_dir}")
+        logging.info(f"\n✅ Research completed! Results saved to {self.output_dir}")
         return research_data
     
     def _generate_summary(self, research_data: Dict) -> str:
@@ -244,7 +251,7 @@ class ResearchAgent:
         Returns:
             Answer based on web research
         """
-        print(f"\n❓ Question: {question}\n")
+        logging.info(f"\n❓ Question: {question}\n")
         
         # Research the question
         research = self.research_topic(question, depth=3)
