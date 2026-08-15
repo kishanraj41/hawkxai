@@ -23,9 +23,9 @@ export default function MapStage({ topics, loading, children }: MapStageProps) {
 
   return (
     <section className="signal-glass relative flex min-h-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-[#1c2333] px-4 py-3">
+      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-white/15 px-4 py-3">
         <div>
-          <h1 className="text-[15px] font-medium tracking-tight text-[#f4f1ea]">
+          <h1 className="text-[15px] font-medium tracking-tight text-white drop-shadow-md">
             Live trend signal map
           </h1>
           <p className="mt-0.5 text-xs text-[#7c8598]">
@@ -44,7 +44,7 @@ export default function MapStage({ topics, loading, children }: MapStageProps) {
 
       <div className="relative min-h-0 flex-1">{children}</div>
 
-      <div className="grid shrink-0 grid-cols-1 gap-3 border-t border-[#1c2333] px-4 py-3 sm:grid-cols-2">
+      <div className="grid shrink-0 grid-cols-1 gap-3 border-t border-white/15 px-4 py-3 sm:grid-cols-2">
         <div>
           <p className="signal-label mb-2">Topic intensity</p>
           <div className="flex h-12 items-end gap-[3px]">
@@ -80,7 +80,7 @@ export default function MapStage({ topics, loading, children }: MapStageProps) {
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="min-w-[88px] rounded-xl border border-[#1c2333] bg-[#05060a]/60 px-3 py-2">
+    <div className="min-w-[88px] rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md">
       <p className="signal-label">{label}</p>
       <p className="mt-1 text-lg font-medium leading-none text-[#ffb24d] signal-glow">
         {value}

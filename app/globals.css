@@ -3,18 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --void: #05060a;
-  --panel: #0a0e17;
-  --line: #1c2333;
-  --ink: #f4f1ea;
-  --mute: #7c8598;
+  --void: #0a0a0a;
+  --panel: rgba(255, 255, 255, 0.1);
+  --line: rgba(255, 255, 255, 0.15);
+  --ink: #ffffff;
+  --mute: rgba(255, 255, 255, 0.6);
   --slate-fill: #2a3245;
-  --slate-stroke: #46506b;
+  --slate-stroke: rgba(255, 255, 255, 0.35);
   --amber: #ffb24d;
   --amber-hot: #ff7a18;
-  --grid: rgba(148, 163, 184, 0.05);
-  --background: #05060a;
-  --foreground: #f4f1ea;
+  --grid: rgba(255, 255, 255, 0.06);
+  --background: #0a0a0a;
+  --foreground: #ffffff;
 }
 
 html {
@@ -23,14 +23,15 @@ html {
 }
 
 body {
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
   color: var(--ink);
   background: var(--void);
   caret-color: var(--amber);
 }
 
 ::selection {
-  background: rgba(255, 178, 77, 0.22);
-  color: var(--ink);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 :focus-visible {
@@ -58,10 +59,10 @@ body {
 }
 
 .signal-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
   font-size: 11px;
   line-height: 1;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--mute);
 }
@@ -73,14 +74,11 @@ body {
 }
 
 .signal-glass {
-  background: rgba(10, 14, 23, 0.78);
-  border: 1px solid rgba(70, 80, 107, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
-  backdrop-filter: blur(20px);
-  box-shadow:
-    0 0 0 1px rgba(255, 178, 77, 0.04),
-    0 28px 80px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(244, 241, 234, 0.04);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .signal-glow {

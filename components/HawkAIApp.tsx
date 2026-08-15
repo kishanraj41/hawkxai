@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
+import CinematicVideo from "@/components/CinematicVideo";
 import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
 import OverviewRail from "@/components/OverviewRail";
@@ -10,6 +11,7 @@ import { boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
 import type { BoosterPayload, Topic, TrendsPayload } from "@/lib/types";
+import { Hexagon } from "lucide-react";
 
 function MapSkeleton() {
   const blobs = [
@@ -154,16 +156,18 @@ export default function HawkAIApp() {
   }
 
   return (
-    <main className="relative flex h-screen flex-col overflow-hidden bg-[#05060a] text-[#f4f1ea]">
+    <main className="relative flex h-screen flex-col overflow-hidden bg-transparent text-white">
+      <CinematicVideo />
       <AmbientBackground />
 
-      <header className="relative z-20 mx-3 mt-3 flex shrink-0 flex-wrap items-center gap-3 rounded-2xl border border-[#1c2333] bg-[#0a0e17]/85 px-4 py-3 backdrop-blur-xl">
+      <header className="reveal relative z-50 mx-3 mt-3 flex shrink-0 flex-wrap items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <span className="flex shrink-0 items-center gap-2">
-            <span className="signal-live" aria-label="Live" />
-            <span className="text-[15px] font-medium tracking-tight text-[#f4f1ea]">
-              HAWKAI <span className="text-[#ffb24d]">&gt;</span>
+            <Hexagon size={24} strokeWidth={1.5} className="text-white" aria-hidden />
+            <span className="text-lg font-medium tracking-tight text-white drop-shadow-md sm:text-xl">
+              hawkai
             </span>
+            <span className="signal-live" aria-label="Live" />
           </span>
           <span className="signal-label truncate tabular-nums">
             {loading
@@ -184,7 +188,7 @@ export default function HawkAIApp() {
           value={city}
           onChange={(e) => setCity(e.target.value as CityId)}
           aria-label="City"
-          className="signal-label shrink-0 rounded-lg border border-[#1c2333] bg-[#05060a] px-2 py-1.5 text-[#f4f1ea] focus:border-[#ffb24d] focus:outline-none"
+          className="signal-label shrink-0 rounded-md border border-white/20 bg-white/10 px-2 py-1.5 text-white focus:border-white focus:outline-none"
         >
           {CITY_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
@@ -198,12 +202,12 @@ export default function HawkAIApp() {
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
             placeholder="Search by topic, city, campaign…"
-            className="w-full rounded-lg border border-[#1c2333] bg-[#05060a] px-3 py-1.5 text-sm text-[#f4f1ea] placeholder:text-[#7c8598] focus:border-[#ffb24d] focus:outline-none focus:ring-1 focus:ring-[#ffb24d]"
+            className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none"
           />
           <button
             type="submit"
             disabled={asking || !askQuery.trim()}
-            className="signal-label shrink-0 rounded-lg border border-[#1c2333] px-3 py-1.5 text-[#f4f1ea] disabled:opacity-40"
+            className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition-colors duration-300 hover:bg-white/85 disabled:opacity-40"
           >
             Ask
           </button>
