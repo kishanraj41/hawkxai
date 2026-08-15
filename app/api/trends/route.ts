@@ -13,7 +13,8 @@ import { geoAgent, trendsCacheKey } from "@/lib/geo";
 import type { TrendsPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+// Hobby (no Fluid) max is 60s. 120 requires Pro and fails the production deploy.
+export const maxDuration = 60;
 
 const LAST_KEY = "trends:v1";
 const inflight = new Map<string, Promise<TrendsPayload>>();

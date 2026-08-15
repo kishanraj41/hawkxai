@@ -2,7 +2,7 @@
 
 The app is Next.js 14 (App Router). Demo locally with `npm run dev`. Use Vercel for a public URL.
 
-`GET /api/trends` can take **45–90s** on a cold collect (Grok cluster + WHY). Hobby functions cap at **60s**. If the first load times out, hit the URL again — in-memory cache will not survive across serverless instances, so prefer **Vercel Pro** (`maxDuration` 300) for a live demo, or warm the function once before judges walk in.
+`GET /api/trends` can take **45–90s** on a cold collect (Grok cluster + WHY). Without Fluid Compute, Hobby `maxDuration` is **60s** — do not set 120 (that fails the production deploy and asks for Pro). If the first load times out, refresh once, or enable **Fluid Compute** in the Vercel project (Hobby then allows up to 300s). In-memory cache will not survive across serverless instances.
 
 ## 1. Prerequisites
 
