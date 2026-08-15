@@ -132,6 +132,10 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
         </div>
       </div>
 
+      {topic.why ? (
+        <p className="mt-4 text-pretty text-sm leading-relaxed text-white/55">{topic.why}</p>
+      ) : null}
+
       {topic.peakHourCT ? (
         <p className="signal-label mt-2 tabular-nums">Peak {topic.peakHourCT} CT</p>
       ) : null}

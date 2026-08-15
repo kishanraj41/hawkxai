@@ -291,7 +291,7 @@ def campaign_move(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Campa
     )
 
 
-def age_translations(topic: Dict[str, Any]) -> List[AgeTranslation]:
+def age_translations(topic: Dict[str, Any], _why: str) -> List[AgeTranslation]:
     label = topic.get("label") or "this topic"
     velocity = topic.get("velocity") or "peaking"
     takes = {
@@ -313,7 +313,7 @@ def boost_topic(topic: Dict[str, Any]) -> TopicBrief:
         why_trending=why,
         confidence=confidence,
         artifacts=artifacts,
-        audiences=age_translations(topic),
+        audiences=age_translations(topic, why),
         campaign=campaign_move(topic, artifacts),
     )
 

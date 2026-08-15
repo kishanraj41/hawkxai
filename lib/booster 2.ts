@@ -214,7 +214,7 @@ export function campaignMove(topic: Topic, artifacts: CapturedArtifact[]): Campa
       forCompetitors: `Use "${hot}" as context in an explainer. Do not drop a new campaign into a cooling wave.`,
       risk: risky ? "high" : "medium",
       timing: "fading",
-      hook: "Recap what changed. Do not launch into a cooling wave.",
+      hook: `What ${topic.label} actually changed — in one screen.`,
     };
   }
   if (topic.divergence >= 0.66) {
@@ -223,7 +223,7 @@ export function campaignMove(topic: Topic, artifacts: CapturedArtifact[]): Campa
       forCompetitors: `Stay native to the ${divergenceLabel(topic)}. Bridge to a product need — don't copy the post.`,
       risk: risky ? "high" : "low",
       timing: topic.velocity,
-      hook: "Still local. Be useful on the source that's moving first.",
+      hook: `${hot} is still local. Be useful there before it goes mainstream.`,
     };
   }
   return {
@@ -231,11 +231,11 @@ export function campaignMove(topic: Topic, artifacts: CapturedArtifact[]): Campa
     forCompetitors: `Answer the job behind "${topic.label}" (speed, trust, status, safety). Repeating the phrase without proof looks late.`,
     risk: risky ? "high" : topic.velocity === "peaking" ? "medium" : "low",
     timing: topic.velocity,
-    hook: `${topic.velocity[0].toUpperCase()}${topic.velocity.slice(1)} — lead with a proof point, not a slogan.`,
+    hook: `${hot} is ${topic.velocity}. Show the proof the category still owes people.`,
   };
 }
 
-export function ageTranslations(topic: Topic): AgeTranslation[] {
+export function ageTranslations(topic: Topic, _why: string): AgeTranslation[] {
   const label = topic.label;
   return (Object.keys(AGE_META) as AgeLens[]).map((lens) => {
     const meta = AGE_META[lens];
@@ -269,7 +269,7 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
     whyTrending: why,
     confidence,
     artifacts,
-    audiences: ageTranslations(topic),
+    audiences: ageTranslations(topic, why),
     campaign: campaignMove(topic, artifacts),
   };
 }

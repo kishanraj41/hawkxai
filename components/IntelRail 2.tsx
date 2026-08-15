@@ -45,7 +45,7 @@ export default function IntelRail({
     <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-4">
       <p className="text-sm font-medium tracking-tight">Desk</p>
       <p className="mt-2 line-clamp-3 text-pretty text-xs leading-relaxed text-white/50">
-        {booster?.summary ?? "Waiting on live sources."}
+        {booster?.summary ?? "Load the tape to capture hashtags, QRs, and the next play."}
       </p>
 
       <div className="mt-4">

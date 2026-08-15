@@ -52,7 +52,10 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | File | Use in the deck |
 |---|---|
 | `app/page.tsx` | App entry |
-| `components/HawkAIApp.tsx` | Three-column glass dashboard shell |
+| `components/HawkAIApp.tsx` | Live desk shell: ticker, map, rails, risk board |
+| `components/TickerTape.tsx` | Scrolling topic ticker |
+| `components/Sparkline.tsx` | Mini velocity sparkline |
+| `components/RiskBoard.tsx` | Risk board (low / medium / high) |
 | `components/CinematicVideo.tsx` | Scrubbed video backdrop |
 | `components/MapStage.tsx` | Center map stage |
 | `components/OverviewRail.tsx` | Left overview rail |
