@@ -1,0 +1,6 @@
+# macOS Finder duplicate copies
+**/* 2.*
+**/* 3.*
+**/* 4.*
+node_modules
+.next
