@@ -1,28 +1,54 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { divergenceLabel, PLATFORM_COLOR, topPosts } from "@/lib/ui-helpers";
+import { motion, useReducedMotion } from "framer-motion";
+import { divergenceLabel, topPosts } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
 import BoosterInsights from "@/components/BoosterInsights";
-import type { BoosterTopicBrief, Topic } from "@/lib/types";
+import type { BoosterTopicBrief, Platform, Topic } from "@/lib/types";
 
-function VelocityBadge({ velocity }: { velocity: Topic["velocity"] }) {
-  const styles = {
-    rising: "text-sky-300 border-sky-400/40 bg-sky-400/10",
-    peaking: "text-amber-200 border-amber-400/40 bg-amber-400/10",
-    fading: "text-zinc-400 border-zinc-500/40 bg-zinc-500/10",
-  }[velocity];
+function VelocityMark({ velocity }: { velocity: Topic["velocity"] }) {
+  if (velocity === "rising") {
+    return <span className="signal-label text-[#ffb24d]">Rising</span>;
+  }
+  if (velocity === "fading") {
+    return <span className="signal-label opacity-45">Fading</span>;
+  }
+  return <span className="signal-label">Peaking</span>;
+}
 
+function DivergenceMeter({ value }: { value: number }) {
+  const filled = Math.max(1, Math.round(value * 24));
   return (
-    <motion.span
-      layout
-      className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-wide ${styles}`}
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: motionTokens.duration.fast }}
-    >
-      {velocity}
-    </motion.span>
+    <div className="flex h-4 items-end gap-px" aria-hidden>
+      {Array.from({ length: 24 }, (_, i) => (
+        <span
+          key={i}
+          className="w-px"
+          style={{
+            height: i % 4 === 0 ? 14 : 9,
+            background: i < filled ? "#f4f1ea" : "#2a3245",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SourceMark({ platform }: { platform: Platform }) {
+  const dash =
+    platform === "reddit" ? "5 3" : platform === "hn" ? "1.5 2.4" : undefined;
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden className="shrink-0">
+      <circle
+        cx="7"
+        cy="7"
+        r="4.5"
+        fill="none"
+        stroke="#46506b"
+        strokeWidth="1.4"
+        strokeDasharray={dash}
+      />
+    </svg>
   );
 }
 
@@ -32,7 +58,7 @@ interface TopicDetailPanelProps {
   onClose: () => void;
 }
 
-export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailPanelProps) {
+export default function TopicDetailPanel({ topic, brief }: TopicDetailPanelProps) {
   const reduce = useReducedMotion();
   const receipts = topPosts(topic);
   const platformScores = (["x", "reddit", "hn"] as const).filter(
@@ -65,124 +91,78 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
         {topic.label}
       </motion.h2>
 
-      <div className="mt-4 flex items-center gap-3">
-        <VelocityBadge velocity={topic.velocity} />
-        <span className="signal-label">{divergenceLabel(topic)}</span>
+      <div className="mt-5 space-y-4">
+        <div>
+          <p className="signal-label">Detected</p>
+          <div className="mt-2">
+            <VelocityMark velocity={topic.velocity} />
+          </div>
+        </div>
+        <div>
+          <p className="signal-label">Spread</p>
+          <div className="mt-2 flex items-center gap-3">
+            <DivergenceMeter value={topic.divergence} />
+            <span className="signal-label text-[#f4f1ea]">{divergenceLabel(topic)}</span>
+          </div>
+        </div>
+        <div>
+          <p className="signal-label">Sources</p>
+          <div className="mt-2 flex gap-3">
+            {platformScores.map((p) => (
+              <div key={p} className="flex items-center gap-1.5">
+                <SourceMark platform={p} />
+                <span className="signal-label tabular-nums text-[#f4f1ea]">
+                  {topic.platforms[p].score}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <motion.div
-        className="mt-4 flex gap-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.14 }}
-      >
-        {platformScores.map((p, i) => (
-          <motion.div
-            key={p}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15 + i * motionTokens.stagger }}
-            className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] uppercase tracking-wide text-zinc-300"
-          >
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ backgroundColor: PLATFORM_COLOR[p] }}
-            />
-            {topic.platforms[p].score}
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <AnimatePresence mode="wait">
-        {topic.why ? (
-          <motion.p
-            key="why"
-            initial={{ opacity: 0, y: motionTokens.distance.sm }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="mt-4 text-pretty text-sm leading-relaxed text-zinc-400"
-          >
-            {topic.why}
-          </motion.p>
-        ) : null}
-      </AnimatePresence>
+      {topic.why ? (
+        <p className="mt-4 text-pretty text-sm leading-relaxed text-[#7c8598]">{topic.why}</p>
+      ) : null}
 
       {topic.peakHourCT ? (
-        <p className="mt-2 text-xs tabular-nums text-zinc-500">
-          Peak hour CT: {topic.peakHourCT}
-        </p>
+        <p className="signal-label mt-2 tabular-nums">Peak {topic.peakHourCT} CT</p>
       ) : null}
 
       <div className="mt-6 min-h-0 flex-1 overflow-y-auto">
         <p className="signal-label">Receipts</p>
-        <motion.div
-          className="mt-3 space-y-3"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: motionTokens.stagger, delayChildren: 0.18 } },
-          }}
-        >
+        <div className="mt-3 space-y-3">
           {receipts.length === 0 ? (
-            <motion.p variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }} className="text-sm text-zinc-500">
-              No posts attached.
-            </motion.p>
+            <p className="signal-label">No posts attached</p>
           ) : (
             receipts.map((post) => (
-              <motion.a
+              <a
                 key={post.url}
                 href={post.url}
                 target="_blank"
                 rel="noreferrer"
-                variants={{
-                  hidden: { opacity: 0, y: motionTokens.distance.md, filter: "blur(6px)" },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    filter: "blur(0px)",
-                    transition: { duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth },
-                  },
-                }}
-                whileHover={{
-                  y: -2,
-                  borderColor: "rgba(255,255,255,0.22)",
-                  backgroundColor: "rgba(255,255,255,0.07)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                className="block rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-zinc-200 shadow-[0_8px_32px_rgba(0,0,0,0.25)]"
+                className="flex items-start gap-2 text-sm text-[#f4f1ea] hover:underline hover:decoration-[#ffb24d] hover:underline-offset-4"
               >
-                <span className="text-[10px] uppercase text-zinc-500">{post.platform}</span>
-                <p className="mt-1 line-clamp-2 text-pretty">{post.title}</p>
-                <p className="mt-1 text-xs tabular-nums text-zinc-500">score {post.score}</p>
-              </motion.a>
+                <SourceMark platform={post.platform} />
+                <span className="min-w-0">
+                  <span className="line-clamp-2 text-pretty">{post.title}</span>
+                  <span className="signal-label mt-1 block tabular-nums">{post.score}</span>
+                </span>
+              </a>
             ))
           )}
-        </motion.div>
+        </div>
 
         {brief ? <BoosterInsights brief={brief} /> : null}
       </div>
 
       {topic.tickers.length > 0 ? (
-        <motion.div
-          className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
-        >
-          {topic.tickers.map((t, i) => (
-            <motion.span
-              key={t.symbol}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.38 + i * motionTokens.stagger }}
-              whileHover={{ scale: 1.05 }}
-              className="rounded-full border border-white/15 bg-white/5 px-2 py-1 text-xs tabular-nums text-zinc-200"
-            >
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-[#1c2333] pt-4">
+          {topic.tickers.map((t) => (
+            <span key={t.symbol} className="signal-label tabular-nums text-[#f4f1ea]">
               {t.symbol} · {t.sentiment}
-            </motion.span>
+            </span>
           ))}
-        </motion.div>
+        </div>
       ) : null}
     </motion.aside>
   );

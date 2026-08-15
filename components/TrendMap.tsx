@@ -3,8 +3,13 @@
 import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 import { motionDuration, motionTokens } from "@/lib/motionTokens";
-import { PLATFORM_COLOR, totalScore } from "@/lib/ui-helpers";
+import { totalScore } from "@/lib/ui-helpers";
 import type { Platform, Topic } from "@/lib/types";
+
+const INK = "#f4f1ea";
+const SLATE_STROKE = "#46506b";
+const AMBER = "#ffb24d";
+const AMBER_HOT = "#ff7a18";
 
 interface PackDatum {
   id?: string;
@@ -68,6 +73,7 @@ export default function TrendMap({
   const hoverIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef(selectedId);
   const highlightedIdsRef = useRef(highlightedIds);
+  const hadSelectionRef = useRef(Boolean(selectedId));
 
   selectedIdRef.current = selectedId;
   highlightedIdsRef.current = highlightedIds;
@@ -151,17 +157,16 @@ export default function TrendMap({
       .append("circle")
       .attr("class", "viz")
       .attr("r", 0)
-      .attr("fill", (d) => {
-        if (d.data.platform) return PLATFORM_COLOR[d.data.platform];
-        return "rgba(255,255,255,0.05)";
-      })
+      .attr("fill", (d) => fillFor(d, topics))
+      .attr("fill-opacity", (d) => fillOpacityFor(d, selectedIdRef.current))
       .attr("stroke", (d) =>
         strokeFor(d, selectedIdRef.current, highlightedIdsRef.current, hoverIdRef.current),
       )
       .attr("stroke-width", (d) =>
         strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, hoverIdRef.current),
       )
-      .attr("filter", (d) => filterFor(d, hoverIdRef.current));
+      .attr("stroke-dasharray", (d) => dashFor(d))
+      .attr("opacity", (d) => (d.data.topic?.velocity === "fading" ? 0.45 : 1));
 
     node
       .filter((d) => Boolean(d.data.topic))
@@ -183,7 +188,8 @@ export default function TrendMap({
       .append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
-      .attr("fill", "#e4e4e7")
+      .attr("fill", INK)
+      .attr("fill-opacity", 0.92)
       .attr("font-size", (d) => Math.min(14, d.r / 4))
       .attr("pointer-events", "none")
       .attr("opacity", 0)
@@ -208,8 +214,7 @@ export default function TrendMap({
           .transition()
           .duration(hoverMs)
           .attr("stroke", strokeFor(d, selectedIdRef.current, highlightedIdsRef.current, d.data.topic!.id))
-          .attr("stroke-width", strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, d.data.topic!.id) + 0.5)
-          .attr("filter", filterFor(d, d.data.topic.id));
+          .attr("stroke-width", strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, d.data.topic!.id));
         d3.select(this).raise();
       })
       .on("mouseleave", function (_event, d) {
@@ -219,8 +224,7 @@ export default function TrendMap({
           .transition()
           .duration(hoverMs)
           .attr("stroke", strokeFor(d, selectedIdRef.current, highlightedIdsRef.current, null))
-          .attr("stroke-width", strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, null))
-          .attr("filter", filterFor(d, null));
+          .attr("stroke-width", strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, null));
       })
       .on("click", (event, d) => {
         event.stopPropagation();
@@ -259,7 +263,11 @@ export default function TrendMap({
       .ease(d3.easeCubicOut)
       .attr("stroke", (d) => strokeFor(d, selectedId, highlightedIds, hoverIdRef.current))
       .attr("stroke-width", (d) => strokeWidthFor(d, selectedId, highlightedIds, hoverIdRef.current))
-      .attr("filter", (d) => filterFor(d, hoverIdRef.current));
+      .attr("fill-opacity", (d) => fillOpacityFor(d, selectedId));
+
+    g.selectAll<SVGGElement, d3.HierarchyCircularNode<PackDatum>>("g.node")
+      .filter((d) => Boolean(d.data.topic && d.data.topic.id === selectedId))
+      .raise();
 
     if (highlightedIds.length > 0) {
       const matches = root
@@ -274,7 +282,10 @@ export default function TrendMap({
     if (selectedId) {
       const match = root.descendants().find((d) => d.data.topic?.id === selectedId);
       if (match) zoomToNode(svg, zoom, match, width, height);
+    } else if (hadSelectionRef.current) {
+      zoomToNode(svg, zoom, root, width, height);
     }
+    hadSelectionRef.current = Boolean(selectedId);
   }, [selectedId, highlightedIds]);
 
   return (
@@ -284,19 +295,55 @@ export default function TrendMap({
   );
 }
 
+function scoreT(d: d3.HierarchyCircularNode<PackDatum>, topics: Topic[]): number {
+  const max = Math.max(1, d3.max(topics, (t) => totalScore(t)) ?? 1);
+  if (d.data.topic) return totalScore(d.data.topic) / max;
+  if (d.data.platform && d.parent?.data.topic) {
+    return d.data.topic ? 1 : (d.value ?? 1) / Math.max(1, d.parent.value ?? 1);
+  }
+  return 0.4;
+}
+
+function fillFor(d: d3.HierarchyCircularNode<PackDatum>, topics: Topic[]): string {
+  const t = scoreT(d, topics);
+  const lift = Math.round(t * 28);
+  const r = 42 + lift;
+  const g = 50 + lift;
+  const b = 69 + lift;
+  return `rgb(${r},${g},${b})`;
+}
+
+function fillOpacityFor(
+  d: d3.HierarchyCircularNode<PackDatum>,
+  selectedId: string | null,
+): number {
+  if (!selectedId) return d.data.platform ? 0.92 : 0.88;
+  const id = d.data.topic?.id ?? d.parent?.data.topic?.id;
+  if (id === selectedId) return 1;
+  return 0.38;
+}
+
+function dashFor(d: d3.HierarchyCircularNode<PackDatum>): string | null {
+  if (d.data.platform === "x") return null;
+  if (d.data.platform === "reddit") return "5 3";
+  if (d.data.platform === "hn") return "1.5 2.4";
+  return null;
+}
+
 function strokeFor(
   d: d3.HierarchyCircularNode<PackDatum>,
   selectedId: string | null,
   highlightedIds: string[],
   hoverId: string | null,
 ): string {
-  if (d.data.platform) return "rgba(0,0,0,0.35)";
-  const id = d.data.topic?.id;
-  if (id && id === selectedId) return "rgba(125, 211, 252, 0.95)";
-  if (id && highlightedIds.includes(id)) return "#fbbf24";
-  if (id && id === hoverId) return "rgba(255,255,255,0.75)";
-  if (d.data.topic?.velocity === "rising") return "rgba(96, 165, 250, 0.9)";
-  return "rgba(255,255,255,0.14)";
+  const topic = d.data.topic ?? d.parent?.data.topic;
+  const id = topic?.id;
+  if (d.data.platform) return SLATE_STROKE;
+  if (id && highlightedIds.includes(id)) return AMBER;
+  if (id && id === hoverId) return INK;
+  if (topic?.velocity === "rising") return AMBER_HOT;
+  if (id && id === selectedId) return INK;
+  return SLATE_STROKE;
 }
 
 function strokeWidthFor(
@@ -306,19 +353,11 @@ function strokeWidthFor(
   hoverId: string | null,
 ): number {
   const id = d.data.topic?.id;
-  if (id && (id === selectedId || highlightedIds.includes(id))) return 3.5;
-  if (id && id === hoverId) return 2.5;
-  return d.data.topic ? 1.5 : 1;
-}
-
-function filterFor(
-  d: d3.HierarchyCircularNode<PackDatum>,
-  hoverId: string | null,
-): string | null {
-  const id = d.data.topic?.id;
-  if (id && id === hoverId) return "url(#hover-glow)";
-  if (d.data.topic?.velocity === "rising") return "url(#rising-glow)";
-  return null;
+  if (id && highlightedIds.includes(id)) return 2.75;
+  if (id && id === selectedId) return 2.4;
+  if (id && id === hoverId) return 2.1;
+  if (d.data.topic?.velocity === "rising") return 2.2;
+  return d.data.topic ? 1.4 : 1.1;
 }
 
 function zoomToNode(
@@ -336,8 +375,8 @@ function zoomToNode(
 
   svg
     .transition()
-    .duration(motionDuration(motionTokens.duration.zoom) * 1000)
-    .ease(d3.easeCubicInOut)
+    .duration(prefersReducedMotion() ? 0 : 650)
+    .ease(d3.easeCubicOut)
     .call(zoom.transform, transform);
 }
 
@@ -363,7 +402,7 @@ function zoomToNodes(
 
   svg
     .transition()
-    .duration(motionDuration(motionTokens.duration.zoom) * 1000)
-    .ease(d3.easeCubicInOut)
+    .duration(prefersReducedMotion() ? 0 : 650)
+    .ease(d3.easeCubicOut)
     .call(zoom.transform, transform);
 }
