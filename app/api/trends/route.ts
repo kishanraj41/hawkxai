@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
   console.log(
     `[signals] reddit=${reddit.length} hn=${hn.length} x=${xPosts.length} degraded=${degraded.join(",") || "none"}`,
   );
-  // Tickers cut until map is live.
+  await attachTickers(topics);
 
   const payload: TrendsPayload = {
     topics,
