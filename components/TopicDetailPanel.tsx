@@ -42,43 +42,33 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
   return (
     <motion.aside
       key={topic.id}
-      initial={{ opacity: 0, x: reduce ? 0 : motionTokens.distance.lg, filter: "blur(8px)" }}
-      animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, x: reduce ? 0 : motionTokens.distance.md, filter: "blur(4px)" }}
+      initial={{ opacity: 0, x: reduce ? 0 : motionTokens.distance.lg }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: reduce ? 0 : motionTokens.distance.md }}
       transition={{
         duration: motionTokens.duration.normal,
         ease: motionTokens.easing.smooth,
       }}
-      className="absolute right-0 top-0 z-10 flex h-full w-full max-w-sm flex-col border-l border-white/10 bg-[#0a0e14]/80 p-5 shadow-[-24px_0_80px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+      className="absolute right-3 top-3 z-10 flex h-[calc(100%-1.5rem)] w-full max-w-sm flex-col rounded-[4px] border border-[#1c2333] bg-[#0a0e17] p-5"
     >
-      <motion.button
-        type="button"
-        onClick={onClose}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        className="mb-4 self-end rounded-md px-2 py-1 text-xs text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300"
-      >
-        Close
-      </motion.button>
+      <span
+        aria-hidden
+        className="absolute left-0 top-5 h-4 w-0.5 bg-[#ffb24d]"
+      />
 
       <motion.h2
-        className="text-balance text-lg font-medium leading-snug text-zinc-50"
-        initial={{ opacity: 0, y: motionTokens.distance.sm }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05, duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
+        className="text-balance text-2xl font-medium leading-snug tracking-tight text-[#f4f1ea]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
       >
         {topic.label}
       </motion.h2>
 
-      <motion.div
-        className="mt-3 flex items-center gap-2"
-        initial={{ opacity: 0, y: motionTokens.distance.sm }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
-      >
+      <div className="mt-4 flex items-center gap-3">
         <VelocityBadge velocity={topic.velocity} />
-        <span className="text-pretty text-xs text-zinc-400">{divergenceLabel(topic)}</span>
-      </motion.div>
+        <span className="signal-label">{divergenceLabel(topic)}</span>
+      </div>
 
       <motion.div
         className="mt-4 flex gap-2"
@@ -124,7 +114,7 @@ export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailP
       ) : null}
 
       <div className="mt-6 min-h-0 flex-1 overflow-y-auto">
-        <p className="text-xs uppercase tracking-wide text-zinc-500">Receipts</p>
+        <p className="signal-label">Receipts</p>
         <motion.div
           className="mt-3 space-y-3"
           initial="hidden"
