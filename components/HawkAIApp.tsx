@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
 import AmbientBackground from "@/components/AmbientBackground";
-import BoosterBriefBar from "@/components/BoosterBriefBar";
-import TopicDetailPanel from "@/components/TopicDetailPanel";
+import IntelRail from "@/components/IntelRail";
+import MapStage from "@/components/MapStage";
+import OverviewRail from "@/components/OverviewRail";
 import TrendMap from "@/components/TrendMap";
 import { boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
@@ -23,7 +23,7 @@ function MapSkeleton() {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <p className="absolute left-1/2 top-[42%] z-10 w-max -translate-x-1/2 text-sm text-zinc-400">
+      <p className="absolute left-1/2 top-[42%] z-10 w-max -translate-x-1/2 text-sm text-[#7c8598]">
         Clustering live signals… first load can take about a minute.
       </p>
       {blobs.map((b, i) => (
@@ -147,16 +147,22 @@ export default function HawkAIApp() {
 
   const topics = payload?.topics ?? [];
 
+  function pickTopicId(id: string) {
+    const topic = topics.find((t) => t.id === id) ?? null;
+    setSelected(topic);
+    if (topic) setHighlightedIds([topic.id]);
+  }
+
   return (
     <main className="relative flex h-screen flex-col overflow-hidden bg-[#05060a] text-[#f4f1ea]">
       <AmbientBackground />
 
-      <header className="relative z-20 flex shrink-0 flex-wrap items-center gap-3 border-b border-[#1c2333] bg-[#0a0e17] px-4 py-3">
+      <header className="relative z-20 mx-3 mt-3 flex shrink-0 flex-wrap items-center gap-3 rounded-2xl border border-[#1c2333] bg-[#0a0e17]/85 px-4 py-3 backdrop-blur-xl">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <span className="flex shrink-0 items-center gap-2">
             <span className="signal-live" aria-label="Live" />
-            <span className="text-[13px] font-medium tracking-tight text-[#f4f1ea]">
-              HAWKAI
+            <span className="text-[15px] font-medium tracking-tight text-[#f4f1ea]">
+              HAWKAI <span className="text-[#ffb24d]">&gt;</span>
             </span>
           </span>
           <span className="signal-label truncate tabular-nums">
@@ -164,15 +170,10 @@ export default function HawkAIApp() {
               ? "clustering live signals"
               : `${topics.length} / ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
           </span>
-          {payload?.pipeline ? (
-            <span className="signal-label hidden max-w-xl truncate lg:inline" title={payload.pipeline}>
-              {payload.pipeline}
-            </span>
-          ) : null}
           {payload?.degraded.map((msg) => (
             <span
               key={msg}
-              className="signal-label rounded-[4px] border border-[#1c2333] px-2 py-1"
+              className="signal-label rounded-md border border-[#1c2333] px-2 py-1"
             >
               {noSignalLabel(msg)}
             </span>
@@ -183,7 +184,7 @@ export default function HawkAIApp() {
           value={city}
           onChange={(e) => setCity(e.target.value as CityId)}
           aria-label="City"
-          className="signal-label shrink-0 rounded-[4px] border border-[#1c2333] bg-[#05060a] px-2 py-1.5 text-[#f4f1ea] focus:border-[#ffb24d] focus:outline-none"
+          className="signal-label shrink-0 rounded-lg border border-[#1c2333] bg-[#05060a] px-2 py-1.5 text-[#f4f1ea] focus:border-[#ffb24d] focus:outline-none"
         >
           {CITY_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
@@ -196,13 +197,13 @@ export default function HawkAIApp() {
           <input
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="ask /"
-            className="w-full rounded-[4px] border border-[#1c2333] bg-[#05060a] px-3 py-1.5 font-mono text-sm text-[#f4f1ea] placeholder:text-[#7c8598] focus:border-[#ffb24d] focus:outline-none focus:ring-1 focus:ring-[#ffb24d]"
+            placeholder="Search by topic, city, campaign…"
+            className="w-full rounded-lg border border-[#1c2333] bg-[#05060a] px-3 py-1.5 text-sm text-[#f4f1ea] placeholder:text-[#7c8598] focus:border-[#ffb24d] focus:outline-none focus:ring-1 focus:ring-[#ffb24d]"
           />
           <button
             type="submit"
             disabled={asking || !askQuery.trim()}
-            className="signal-label shrink-0 rounded-[4px] border border-[#1c2333] px-3 py-1.5 text-[#f4f1ea] disabled:opacity-40"
+            className="signal-label shrink-0 rounded-lg border border-[#1c2333] px-3 py-1.5 text-[#f4f1ea] disabled:opacity-40"
           >
             Ask
           </button>
@@ -219,49 +220,48 @@ export default function HawkAIApp() {
       </header>
 
       {askAnswer ? (
-        <div className="relative z-20 border-b border-[#1c2333] bg-[#0a0e17]">
-          <p className="px-4 py-2 font-mono text-sm text-[#f4f1ea]">{askAnswer}</p>
+        <div className="relative z-20 mx-3 mt-2 rounded-xl border border-[#1c2333] bg-[#0a0e17]/85 px-4 py-2 backdrop-blur-xl">
+          <p className="font-mono text-sm text-[#f4f1ea]">{askAnswer}</p>
         </div>
       ) : null}
 
-      {booster ? <BoosterBriefBar booster={booster} /> : null}
-
       {error ? (
-        <div className="relative z-20 border-b border-[#1c2333] bg-[#0a0e17] px-4 py-2">
+        <div className="relative z-20 mx-3 mt-2 rounded-xl border border-[#1c2333] bg-[#0a0e17]/85 px-4 py-2">
           <p className="signal-label">{error}</p>
         </div>
       ) : null}
 
-      <div className="relative min-h-0 flex-1">
-        {loading ? (
-          <div className="absolute inset-0">
+      <div className="relative z-10 grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+        <OverviewRail
+          payload={payload}
+          topics={topics}
+          selectedId={selected?.id ?? null}
+          onSelect={setSelected}
+        />
+
+        <MapStage topics={topics} loading={loading}>
+          {loading ? (
             <MapSkeleton />
-          </div>
-        ) : topics.length > 0 ? (
-          <div className="absolute inset-0">
+          ) : topics.length > 0 ? (
             <TrendMap
               topics={topics}
               selectedId={selected?.id ?? null}
               highlightedIds={highlightedIds}
               onSelect={setSelected}
             />
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <p className="signal-label">No topics — refresh</p>
-          </div>
-        )}
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p className="signal-label">No topics — refresh</p>
+            </div>
+          )}
+        </MapStage>
 
-        <AnimatePresence mode="wait">
-          {selected ? (
-            <TopicDetailPanel
-              key={selected.id}
-              topic={selected}
-              brief={booster?.briefs.find((b) => b.topicId === selected.id)}
-              onClose={() => setSelected(null)}
-            />
-          ) : null}
-        </AnimatePresence>
+        <IntelRail
+          selected={selected}
+          booster={booster}
+          onSelect={setSelected}
+          onPickId={pickTopicId}
+        />
       </div>
     </main>
   );

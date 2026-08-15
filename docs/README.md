@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains research, analysis, planning, and investor documents for PulseMap.
+This directory contains research, analysis, planning, and investor documents for HawkAI.
 
 - **[VC one-pager](./VC_ONE_PAGER.md)** — SmartSalesGuy investor proposal (problem, solution, live / next)
 - **[SmartSalesGuy](../agents/smartsalesguy/README.md)** — checkout the repo, write the one-pager
@@ -12,6 +12,7 @@ HawkAI's north star is the **Booster Agent**: capture hashtags / QRs / phrases /
 - **[Core idea](./CORE_IDEA.md)** — product contract
 - **[Booster Agent](../agents/booster-agent/README.md)** — capture → correlate → campaign → improvise
 - **[Improvisations](../agents/booster-agent/IMPROVISATIONS.md)** — living upgrade backlog
+- **[Vercel hosting](./VERCEL.md)** — import the GitHub repo, set `XAI_API_KEY`, deploy
 
 ## Research
 
