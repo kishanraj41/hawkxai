@@ -1,10 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { divergenceLabel, topPosts } from "@/lib/ui-helpers";
+import { divergenceLabel, PLATFORM_COLOR, topPosts } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
-import type { Topic } from "@/lib/types";
-import { PLATFORM_COLOR } from "@/lib/ui-helpers";
+import BoosterInsights from "@/components/BoosterInsights";
+import type { BoosterTopicBrief, Topic } from "@/lib/types";
 
 function VelocityBadge({ velocity }: { velocity: Topic["velocity"] }) {
   const styles = {
@@ -28,10 +28,11 @@ function VelocityBadge({ velocity }: { velocity: Topic["velocity"] }) {
 
 interface TopicDetailPanelProps {
   topic: Topic;
+  brief?: BoosterTopicBrief;
   onClose: () => void;
 }
 
-export default function TopicDetailPanel({ topic, onClose }: TopicDetailPanelProps) {
+export default function TopicDetailPanel({ topic, brief, onClose }: TopicDetailPanelProps) {
   const reduce = useReducedMotion();
   const receipts = topPosts(topic);
   const platformScores = (["x", "reddit", "hn"] as const).filter(
@@ -168,6 +169,8 @@ export default function TopicDetailPanel({ topic, onClose }: TopicDetailPanelPro
             ))
           )}
         </motion.div>
+
+        {brief ? <BoosterInsights brief={brief} /> : null}
       </div>
 
       {topic.tickers.length > 0 ? (

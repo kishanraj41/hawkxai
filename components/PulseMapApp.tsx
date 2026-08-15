@@ -3,11 +3,13 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import AmbientBackground from "@/components/AmbientBackground";
+import BoosterBriefBar from "@/components/BoosterBriefBar";
 import TopicDetailPanel from "@/components/TopicDetailPanel";
 import TrendMap from "@/components/TrendMap";
+import { boostTrends } from "@/lib/booster";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
-import type { Topic, TrendsPayload } from "@/lib/types";
+import type { BoosterPayload, Topic, TrendsPayload } from "@/lib/types";
 
 function MapSkeleton() {
   const blobs = [
@@ -57,6 +59,7 @@ export default function PulseMapApp() {
   const [askQuery, setAskQuery] = useState("");
   const [askAnswer, setAskAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
+  const [booster, setBooster] = useState<BoosterPayload | null>(null);
 
   const loadTrends = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -68,6 +71,7 @@ export default function PulseMapApp() {
       if (!res.ok) throw new Error(`Trends failed (${res.status})`);
       const data = (await res.json()) as TrendsPayload;
       setPayload(data);
+      setBooster(boostTrends(data));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load trends");
     } finally {
@@ -202,6 +206,10 @@ export default function PulseMapApp() {
         ) : null}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {booster ? <BoosterBriefBar key="booster" booster={booster} /> : null}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {error ? (
           <motion.div
@@ -261,6 +269,7 @@ export default function PulseMapApp() {
             <TopicDetailPanel
               key={selected.id}
               topic={selected}
+              brief={booster?.briefs.find((b) => b.topicId === selected.id)}
               onClose={() => setSelected(null)}
             />
           ) : null}

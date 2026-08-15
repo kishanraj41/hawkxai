@@ -1,0 +1,28 @@
+import { NextResponse } from "next/server";
+import { boostTrends } from "@/lib/booster";
+import { cacheGet, cacheSet } from "@/lib/cache";
+import type { BoosterPayload, TrendsPayload } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+const TRENDS_KEY = "trends:v1";
+const BOOSTER_KEY = "booster:v1";
+
+export async function GET() {
+  const trends = cacheGet<TrendsPayload>(TRENDS_KEY);
+  if (!trends) {
+    return NextResponse.json(
+      { error: "no trends yet — hit GET /api/trends first" },
+      { status: 409 },
+    );
+  }
+
+  const cached = cacheGet<BoosterPayload>(BOOSTER_KEY);
+  if (cached && cached.sourceUpdatedAt === trends.updatedAt) {
+    return NextResponse.json(cached);
+  }
+
+  const payload = boostTrends(trends);
+  cacheSet(BOOSTER_KEY, payload);
+  return NextResponse.json(payload);
+}
