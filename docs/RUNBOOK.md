@@ -46,7 +46,7 @@ Rollback: revert the Vercel deployment to the previous production alias.
 
 ## CI
 
-`.github/workflows/docker-ci.yml` runs on every PR commit and every push to `main`:
+`.github/workflows/docker-ci.yml` runs on every PR commit, every feature-branch push (opens a PR against `main` if missing), and every push to `main`:
 
 1. Dockerfile contract tests
 2. Hadolint (advisory)
@@ -54,6 +54,7 @@ Rollback: revert the Vercel deployment to the previous production alias.
 4. Smoke-test `GET /`
 5. Bug Bot `--fail-on critical` on `app/`, `lib/`, `components/`
 6. PR Review Bot (advisory) + sticky comment on pull requests
+7. Auto-open a PR against `main` on feature-branch pushes when none exists
 
 Failure of build, smoke, or critical Bug Bot blocks merge.
 

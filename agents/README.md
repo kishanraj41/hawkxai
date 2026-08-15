@@ -49,7 +49,7 @@ python3 agents/bug-bot/bug_bot.py
 
 ### 4. Docker CI Agent (`docker-ci/`)
 
-Builds the production Dockerfile, smoke-tests the image, and gates every PR commit and every merge to `main` with Bug Bot.
+Builds the production Dockerfile, smoke-tests the image, gates every PR commit and every merge to `main` with Bug Bot, and opens a PR on every feature-branch push if one is missing.
 
 Runs via `.github/workflows/docker-ci.yml`.
 
@@ -180,7 +180,7 @@ Still worth building:
 
 ### CI/CD Integration
 
-Docker builds and Bug Bot already run on every PR commit and every push to `main`:
+Docker builds and Bug Bot already run on every PR commit, every feature-branch push (which also opens a PR if missing), and every push to `main`:
 
 ```yaml
 # .github/workflows/docker-ci.yml
