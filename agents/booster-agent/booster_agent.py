@@ -1,5 +1,5 @@
 """
-Booster Agent — PulseMap's core intelligence layer.
+Booster Agent — HawkAI's core intelligence layer.
 
 Captures the current trend hashtags/ QRs/phrases/URLs etc and analyze them
 and co-relate them on why they are treanding and collect this information
@@ -373,7 +373,7 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
 
 
 def fetch_trends(url: str, timeout: int = 90) -> Dict[str, Any]:
-    req = urllib.request.Request(url, headers={"User-Agent": "PulseMap-Booster/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "HawkAI-Booster/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as res:
         return json.loads(res.read().decode("utf-8"))
 
@@ -487,7 +487,7 @@ Examples:
   python3 agents/booster-agent/booster_agent.py --self-check
         """,
     )
-    parser.add_argument("--url", default=os.environ.get("PULSEMAP_TRENDS_URL", "http://localhost:3000/api/trends"))
+    parser.add_argument("--url", default=os.environ.get("HAWKAI_TRENDS_URL", "http://localhost:3000/api/trends"))
     parser.add_argument("--file", help="Trends JSON file (skips live fetch)")
     parser.add_argument("--runs-dir", default=DEFAULT_RUNS)
     parser.add_argument("--self-check", action="store_true")

@@ -1,10 +1,10 @@
-# PulseMap Core Idea
+# HawkAI Core Idea
 
 Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
 
 ## What this means in product terms
 
-PulseMap is not only a live circle-pack of topics. The **Booster Agent** is the intelligence layer that:
+HawkAI is not only a live circle-pack of topics. The **Booster Agent** is the intelligence layer that:
 
 1. **Captures** live artifacts — hashtags, QR / short-link campaign codes, phrases, URLs, cashtags.
 2. **Analyzes** them against velocity, platform divergence, and receipt posts.
