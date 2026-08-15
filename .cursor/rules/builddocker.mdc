@@ -1,0 +1,9 @@
+---
+description: PulseMap /builddocker — build the Dockerfile and update docker run
+globs: grokhackx/{Dockerfile,.dockerignore,docs/RUNBOOK.md}
+alwaysApply: false
+---
+
+When the user invokes `/builddocker` or asks to rebuild the PulseMap image, follow `grokhackx/.cursor/skills/builddocker/SKILL.md`.
+
+build the dockerfile and update docker run. Tag `pulsemap:latest`. Restart the `pulsemap` container on host 3001 unless told otherwise.
