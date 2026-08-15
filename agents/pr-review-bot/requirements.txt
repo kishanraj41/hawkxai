@@ -1,0 +1,18 @@
+# PR Review Bot Requirements
+# Uses Python standard library + GitHub CLI
+
+# Core dependencies (all standard library)
+# - json
+# - re
+# - os
+# - subprocess
+# - dataclasses
+# - typing
+# - datetime
+
+# External dependencies
+pyyaml>=6.0  # For config.yaml parsing (optional)
+
+# GitHub CLI must be installed separately
+# Install: https://cli.github.com/
+# Authenticate: gh auth login
