@@ -1,0 +1,78 @@
+# PR Review Bot Configuration
+
+# Review Settings
+review_settings:
+  min_confidence_threshold: 0.6  # Only show comments with confidence >= this
+  auto_comment_on_pr: false  # Whether to automatically post comments on GitHub
+  learning_enabled: true  # Enable reinforcement learning
+  
+# Severity Thresholds
+severity_thresholds:
+  critical:
+    block_merge: true
+    notify_immediately: true
+  major:
+    block_merge: false
+    notify_immediately: false
+  minor:
+    block_merge: false
+    notify_immediately: false
+
+# Review Patterns (can be extended)
+custom_patterns:
+  python:
+    - pattern: "import \\*"
+      severity: major
+      message: "Avoid wildcard imports - be explicit about what you import"
+      category: best-practice
+    
+    - pattern: "password.*=.*['\"].*['\"]"
+      severity: critical
+      message: "Hardcoded password detected - use environment variables"
+      category: security
+  
+  javascript:
+    - pattern: "dangerouslySetInnerHTML"
+      severity: major
+      message: "Using dangerouslySetInnerHTML - ensure content is sanitized"
+      category: security
+
+# File Exclusions
+exclude_patterns:
+  - "*.min.js"
+  - "*.min.css"
+  - "node_modules/**"
+  - "venv/**"
+  - "*.lock"
+  - "package-lock.json"
+  - "yarn.lock"
+  - "*.pyc"
+  - "__pycache__/**"
+
+# Size Thresholds
+pr_size_thresholds:
+  small: 50      # <= 50 lines
+  medium: 250    # <= 250 lines
+  large: 500     # <= 500 lines
+  xlarge: 1000   # > 1000 lines (warn)
+
+# Learning Settings
+learning:
+  feedback_weight: 0.3  # How much to weight new feedback (0.0 to 1.0)
+  min_samples_for_adjustment: 5  # Min feedback samples before adjusting confidence
+  decay_factor: 0.95  # Decay old learnings over time
+
+# Scoring Weights
+scoring:
+  critical: -3.0
+  major: -1.5
+  minor: -0.5
+  suggestion: -0.2
+  base_score: 10.0
+
+# Report Settings
+reports:
+  save_json: true
+  save_markdown: true
+  include_learning_stats: true
+  output_directory: "agents/pr-review-bot/reviews"
