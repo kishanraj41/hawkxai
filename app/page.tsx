@@ -1,5 +1,5 @@
-import PulseMapApp from "@/components/PulseMapApp";
+import HawkAIApp from "@/components/HawkAIApp";
 
 export default function Home() {
-  return <PulseMapApp />;
+  return <HawkAIApp />;
 }

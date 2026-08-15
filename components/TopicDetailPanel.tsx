@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { divergenceLabel, PLATFORM_COLOR, topPosts } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
 import BoosterInsights from "@/components/BoosterInsights";

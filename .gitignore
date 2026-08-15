@@ -48,7 +48,7 @@ htmlcov/
 # Logs
 *.log
 
-# Next.js / PulseMap
+# Next.js / HawkAI
 /node_modules
 /.pnp
 .pnp.js

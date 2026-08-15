@@ -21,19 +21,32 @@ interface TrendMapProps {
   onSelect: (topic: Topic | null) => void;
 }
 
+function scoreRadius(topics: Topic[]): (score: number) => number {
+  const maxScore = d3.max(topics, (t) => totalScore(t)) ?? 1;
+  return d3.scaleSqrt<number, number>().domain([0, Math.max(maxScore, 1)]).range([18, 90]);
+}
+
 function buildHierarchy(topics: Topic[]): PackDatum {
+  const rOf = scoreRadius(topics);
   return {
-    children: topics.map((topic) => ({
-      id: topic.id,
-      topic,
-      children: (["x", "reddit", "hn"] as Platform[])
-        .filter((p) => topic.platforms[p].score > 0)
-        .map((p) => ({
-          platform: p,
-          value: Math.max(1, topic.platforms[p].score),
-        })),
-      value: Math.max(1, totalScore(topic)),
-    })),
+    children: topics.map((topic) => {
+      const tot = Math.max(totalScore(topic), 1);
+      const area = rOf(tot) ** 2;
+      const slices = (["x", "reddit", "hn"] as Platform[]).filter(
+        (p) => topic.platforms[p].score > 0,
+      );
+      return {
+        id: topic.id,
+        topic,
+        children:
+          slices.length > 0
+            ? slices.map((p) => ({
+                platform: p,
+                value: area * (topic.platforms[p].score / tot),
+              }))
+            : [{ value: area }],
+      };
+    }),
   };
 }
 
@@ -136,6 +149,7 @@ export default function TrendMap({
 
     const circles = node
       .append("circle")
+      .attr("class", "viz")
       .attr("r", 0)
       .attr("fill", (d) => {
         if (d.data.platform) return PLATFORM_COLOR[d.data.platform];
@@ -148,6 +162,14 @@ export default function TrendMap({
         strokeWidthFor(d, selectedIdRef.current, highlightedIdsRef.current, hoverIdRef.current),
       )
       .attr("filter", (d) => filterFor(d, hoverIdRef.current));
+
+    node
+      .filter((d) => Boolean(d.data.topic))
+      .append("circle")
+      .attr("class", "hit")
+      .attr("fill", "transparent")
+      .attr("stroke", "none")
+      .attr("r", (d) => Math.max(d.r, 18));
 
     circles
       .transition()
@@ -182,7 +204,7 @@ export default function TrendMap({
         if (!d.data.topic) return;
         hoverIdRef.current = d.data.topic.id;
         d3.select(this)
-          .select("circle")
+          .select("circle.viz")
           .transition()
           .duration(hoverMs)
           .attr("stroke", strokeFor(d, selectedIdRef.current, highlightedIdsRef.current, d.data.topic!.id))
@@ -193,7 +215,7 @@ export default function TrendMap({
       .on("mouseleave", function (_event, d) {
         hoverIdRef.current = null;
         d3.select(this)
-          .select("circle")
+          .select("circle.viz")
           .transition()
           .duration(hoverMs)
           .attr("stroke", strokeFor(d, selectedIdRef.current, highlightedIdsRef.current, null))
@@ -231,7 +253,7 @@ export default function TrendMap({
     const height = containerRef.current.clientHeight;
     const tMs = motionDuration(motionTokens.duration.normal) * 1000;
 
-    g.selectAll<SVGCircleElement, d3.HierarchyCircularNode<PackDatum>>("circle")
+    g.selectAll<SVGCircleElement, d3.HierarchyCircularNode<PackDatum>>("circle.viz")
       .transition()
       .duration(tMs)
       .ease(d3.easeCubicOut)
@@ -257,7 +279,7 @@ export default function TrendMap({
 
   return (
     <div ref={containerRef} className="absolute inset-0">
-      <svg ref={svgRef} className="h-full w-full" role="img" aria-label="Trend map" />
+      <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkAI trend map" />
     </div>
   );
 }

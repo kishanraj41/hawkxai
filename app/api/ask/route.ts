@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet } from "@/lib/cache";
-import { grokJson } from "@/lib/grok";
+import { grokChat } from "@/lib/grok";
+import { geoAgent, trendsCacheKey } from "@/lib/geo";
 import type { TrendsPayload } from "@/lib/types";
 import { z } from "zod";
 
@@ -11,14 +12,32 @@ const answerSchema = z.object({
   topicIds: z.array(z.string()),
 });
 
+function parseJsonObject(raw: string): unknown {
+  const t = raw.trim();
+  try {
+    return JSON.parse(t);
+  } catch {
+    const start = t.indexOf("{");
+    const end = t.lastIndexOf("}");
+    if (start >= 0 && end > start) return JSON.parse(t.slice(start, end + 1));
+    throw new Error("no json object");
+  }
+}
+
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as { q?: string };
+  const body = (await req.json().catch(() => ({}))) as {
+    q?: string;
+    city?: string;
+  };
   const q = (body.q ?? "").trim();
   if (!q) {
     return NextResponse.json({ error: "q required" }, { status: 400 });
   }
 
-  const trends = cacheGet<TrendsPayload>("trends:v1");
+  const city = geoAgent(body.city).city;
+  const trends =
+    cacheGet<TrendsPayload>(trendsCacheKey(city)) ??
+    cacheGet<TrendsPayload>("trends:v1");
   if (!trends) {
     return NextResponse.json(
       { error: "no trends yet — hit GET /api/trends first" },
@@ -34,13 +53,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const parsed = await grokJson(
+    const raw = await grokChat(
       `User question: ${q}
-Current topics JSON: ${JSON.stringify(trends.topics.map((t) => ({ id: t.id, label: t.label, divergence: t.divergence, velocity: t.velocity })))}
-Return strict JSON: {"answer":"2-4 sentences","topicIds":["id"]}`,
-      (raw) => answerSchema.parse(JSON.parse(raw)),
-      true,
+Answer from these cached topics only. 2-4 sentences. Cite topic labels, not URLs.
+Return JSON: {"answer":"","topicIds":["id"]}
+Topics: ${JSON.stringify(trends.topics.map((t) => ({ id: t.id, label: t.label, divergence: t.divergence, velocity: t.velocity, why: t.why ?? "" })))}`,
+      15_000,
     );
+    const parsed = answerSchema.parse(parseJsonObject(raw));
     const known = new Set(trends.topics.map((t) => t.id));
     parsed.topicIds = parsed.topicIds.filter((id) => known.has(id));
     return NextResponse.json(parsed);

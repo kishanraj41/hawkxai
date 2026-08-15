@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PulseMap",
+  title: "HawkAI",
   description: "Live cross-platform trend intelligence map",
 };
 
