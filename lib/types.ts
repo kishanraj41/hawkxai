@@ -1,4 +1,6 @@
-export type Platform = "x" | "reddit" | "hn";
+export const PLATFORMS = ["x", "reddit", "hn", "public"] as const;
+
+export type Platform = (typeof PLATFORMS)[number];
 
 export interface Post {
   platform: Platform;
@@ -6,6 +8,7 @@ export interface Post {
   url: string;
   score: number;
   createdAt: string;
+  sourceApi?: string;
 }
 
 export interface PlatformSlice {
@@ -34,6 +37,15 @@ export interface SourceHealth {
   x: boolean;
   reddit: boolean;
   hn: boolean;
+  public: boolean;
+}
+
+export interface PublicApiIngest {
+  catalog: number;
+  live: number;
+  attempted: number;
+  categories: string[];
+  sources: string[];
 }
 
 export interface TrendsPayload {
@@ -42,9 +54,53 @@ export interface TrendsPayload {
   sources: SourceHealth;
   degraded: string[];
   pipeline?: string;
+  publicApis?: PublicApiIngest;
 }
 
 export type AgeLens = "kids" | "gen-z" | "millennial" | "gen-x" | "boomer";
+
+export const CATEGORIES = [
+  "markets",
+  "news",
+  "weather",
+  "tech",
+  "sports",
+  "health",
+  "security",
+  "campaigns",
+  "culture",
+] as const;
+
+export type CategoryId = (typeof CATEGORIES)[number];
+
+export type DeskCategory = CategoryId | "all";
+
+export interface CausationDriver {
+  id: string;
+  label: string;
+  weight: number;
+  evidence: string;
+}
+
+export interface CausationReport {
+  topicId: string;
+  firstAt: string | null;
+  firstPlatform: Platform | null;
+  lagHours: number | null;
+  peakAt: string | null;
+  drivers: CausationDriver[];
+  thin: boolean;
+}
+
+export interface TimeBucket {
+  t: string;
+  label: string;
+  x: number;
+  reddit: number;
+  hn: number;
+  public: number;
+  total: number;
+}
 
 export type ArtifactKind = "hashtag" | "phrase" | "url" | "qr" | "ticker";
 
@@ -73,9 +129,11 @@ export interface BoosterTopicBrief {
   topicId: string;
   whyTrending: string;
   confidence: number;
+  category: CategoryId;
   artifacts: CapturedArtifact[];
   audiences: AgeTranslation[];
   campaign: CampaignMove;
+  causation: CausationReport;
 }
 
 export interface Improvisation {
@@ -97,6 +155,7 @@ export interface RawSignals {
   reddit: Post[];
   hn: Post[];
   x: Post[];
+  public: Post[];
   sources: SourceHealth;
   degraded: string[];
 }

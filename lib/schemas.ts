@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const platformSchema = z.enum(["x", "reddit", "hn"]);
+export const platformSchema = z.enum(["x", "reddit", "hn", "public"]);
 
 export const postSchema = z.object({
   platform: platformSchema,
@@ -8,6 +8,7 @@ export const postSchema = z.object({
   url: z.string(),
   score: z.number(),
   createdAt: z.string(),
+  sourceApi: z.string().optional(),
 });
 
 export const platformSliceSchema = z.object({
@@ -22,6 +23,7 @@ export const clusteredTopicSchema = z.object({
     x: platformSliceSchema,
     reddit: platformSliceSchema,
     hn: platformSliceSchema,
+    public: platformSliceSchema.optional().default({ score: 0, posts: [] }),
   }),
 });
 

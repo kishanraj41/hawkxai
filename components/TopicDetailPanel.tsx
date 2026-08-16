@@ -2,10 +2,13 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import BoosterInsights from "@/components/BoosterInsights";
+import CausationChart from "@/components/desk/CausationChart";
 import Sparkline from "@/components/Sparkline";
+import TimeseriesChart from "@/components/desk/TimeseriesChart";
+import { buildTimeseries, CATEGORY_LABEL } from "@/lib/desk";
 import { divergenceLabel, sparkValues, topPosts } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
-import type { AgeLens, BoosterTopicBrief, Platform, Topic } from "@/lib/types";
+import { PLATFORMS, type AgeLens, type BoosterTopicBrief, type Platform, type Topic } from "@/lib/types";
 
 function VelocityMark({ velocity }: { velocity: Topic["velocity"] }) {
   if (velocity === "rising") {
@@ -37,7 +40,13 @@ function DivergenceMeter({ value }: { value: number }) {
 
 function SourceMark({ platform }: { platform: Platform }) {
   const dash =
-    platform === "reddit" ? "5 3" : platform === "hn" ? "1.5 2.4" : undefined;
+    platform === "reddit"
+      ? "5 3"
+      : platform === "hn"
+        ? "1.5 2.4"
+        : platform === "public"
+          ? "2 3"
+          : undefined;
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden className="shrink-0">
       <circle
@@ -63,9 +72,7 @@ interface TopicDetailPanelProps {
 export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicDetailPanelProps) {
   const reduce = useReducedMotion();
   const receipts = topPosts(topic);
-  const platformScores = (["x", "reddit", "hn"] as const).filter(
-    (p) => topic.platforms[p].score > 0,
-  );
+  const platformScores = PLATFORMS.filter((p) => (topic.platforms[p]?.score ?? 0) > 0);
 
   return (
     <motion.div
@@ -97,7 +104,11 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
         {topic.label}
       </motion.h2>
 
-      <div className="mt-5 space-y-4">
+        {brief ? (
+          <p className="signal-label mt-2">{CATEGORY_LABEL[brief.category]}</p>
+        ) : null}
+
+        <div className="mt-5 space-y-4">
         <div>
           <p className="signal-label">Tape</p>
           <div className="mt-2 flex items-center gap-3">
@@ -137,7 +148,21 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
       ) : null}
 
       <div className="mt-6 min-h-0 flex-1 overflow-y-auto">
-        <p className="signal-label">Print</p>
+        <p className="signal-label">Occurrence</p>
+        <div className="mt-2">
+          <TimeseriesChart series={buildTimeseries([topic])} firstAt={brief?.causation.firstAt} />
+        </div>
+
+        {brief?.causation ? (
+          <div className="mt-4">
+            <p className="signal-label">Causation</p>
+            <div className="mt-2">
+              <CausationChart report={brief.causation} />
+            </div>
+          </div>
+        ) : null}
+
+        <p className="signal-label mt-5">Print</p>
         <div className="mt-3 space-y-3">
           {receipts.length === 0 ? (
             <p className="signal-label">No posts attached</p>
@@ -153,7 +178,10 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
                 <SourceMark platform={post.platform} />
                 <span className="min-w-0">
                   <span className="line-clamp-2 text-pretty">{post.title}</span>
-                  <span className="signal-label mt-1 block tabular-nums">{post.score}</span>
+                  <span className="signal-label mt-1 block tabular-nums">
+                    {post.sourceApi ? `${post.sourceApi} · ` : ""}
+                    {post.score}
+                  </span>
                 </span>
               </a>
             ))

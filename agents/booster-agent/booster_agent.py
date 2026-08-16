@@ -47,6 +47,50 @@ CONTROVERSY = (
     "lawsuit", "ban", "hack", "leak", "crash", "layoff", "war", "scam",
     "outage", "recall", "boycott", "protest", "death", "killed", "abuse",
 )
+
+CATEGORIES = (
+    "markets", "news", "weather", "tech", "sports", "health", "security", "campaigns", "culture",
+)
+SOURCE_CATEGORY = {
+    "gdelt": "news",
+    "wikipedia": "culture",
+    "coingecko": "markets",
+    "usgs": "weather",
+    "nasa eonet": "weather",
+    "national weather service": "weather",
+    "open-meteo": "weather",
+    "tvmaze": "culture",
+    "open library": "culture",
+    "dev.to": "tech",
+    "github": "tech",
+    "spaceflight news": "tech",
+    "fbi wanted": "security",
+    "disease.sh": "health",
+    "thesportsdb": "sports",
+    "espn": "sports",
+    "spacex": "tech",
+    "frankfurter": "markets",
+    "cheapshark": "markets",
+    "jikan": "culture",
+    "carbon intensity": "weather",
+    "itunes": "culture",
+    "mastodon": "culture",
+    "lobsters": "tech",
+    "open food facts": "health",
+    "nager.date": "culture",
+    "cisa": "security",
+}
+KEYWORDS = {
+    "markets": ("bitcoin", "crypto", "nasdaq", "earnings", "inflation", "etf", "ipo", "stock"),
+    "news": ("election", "congress", "sanctions", "treaty", "breaking"),
+    "weather": ("hurricane", "earthquake", "wildfire", "tornado", "flood", "storm", "heatwave", "forecast"),
+    "tech": ("github", "openai", "chatgpt", "kernel", "gpu", "spacex", "llm"),
+    "sports": ("nba", "nfl", "mlb", "nhl", "playoff", "soccer", "espn"),
+    "health": ("vaccine", "outbreak", "fda", "covid", "hospital"),
+    "security": ("ransomware", "cve", "breach", "exploit", "hacked", "vulnerability"),
+    "campaigns": ("utm_medium=qr", "qrco.de"),
+    "culture": ("wikipedia", "album", "anime", "tvmaze"),
+}
 AGE_LENSES = (
     ("kids", "Family"),
     ("gen-z", "18–24"),
@@ -86,14 +130,35 @@ class AgeTranslation:
 
 
 @dataclass
+class CausationDriver:
+    id: str
+    label: str
+    weight: int
+    evidence: str
+
+
+@dataclass
+class CausationReport:
+    topic_id: str
+    first_at: Optional[str]
+    first_platform: Optional[str]
+    lag_hours: Optional[float]
+    peak_at: Optional[str]
+    drivers: List[CausationDriver]
+    thin: bool
+
+
+@dataclass
 class TopicBrief:
     topic_id: str
     label: str
     why_trending: str
     confidence: float
+    category: str
     artifacts: List[Artifact]
     audiences: List[AgeTranslation]
     campaign: CampaignMove
+    causation: CausationReport
 
 
 @dataclass
@@ -150,7 +215,7 @@ def _divergence_label(topic: Dict[str, Any]) -> str:
 
 def _total_score(topic: Dict[str, Any]) -> float:
     plats = topic.get("platforms") or {}
-    return sum((plats.get(p) or {}).get("score") or 0 for p in ("x", "reddit", "hn"))
+    return sum((slice or {}).get("score") or 0 for slice in plats.values())
 
 
 def _domain(url: str) -> Optional[str]:
@@ -214,6 +279,156 @@ def capture_artifacts(topic: Dict[str, Any]) -> List[Artifact]:
             break
 
     return sorted(counts.values(), key=lambda a: a.mentions, reverse=True)[:12]
+
+
+def _valid_ts(iso: str) -> Optional[datetime]:
+    if not iso:
+        return None
+    try:
+        return datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def classify_topic(topic: Dict[str, Any], artifacts: Optional[Sequence[Artifact]] = None) -> str:
+    arts = list(artifacts or [])
+    if topic.get("tickers"):
+        return "markets"
+    tags = [a for a in arts if a.kind == "hashtag"]
+    qrs = [a for a in arts if a.kind == "qr"]
+    if qrs or len(tags) >= 2:
+        return "campaigns"
+
+    votes: Dict[str, int] = {}
+
+    def bump(cat: str, n: int = 1) -> None:
+        votes[cat] = votes.get(cat, 0) + n
+
+    for post in _posts(topic):
+        src = str(post.get("sourceApi") or "").lower()
+        if not src:
+            continue
+        if src in SOURCE_CATEGORY:
+            bump(SOURCE_CATEGORY[src], 2)
+            continue
+        for name, cat in SOURCE_CATEGORY.items():
+            if name in src:
+                bump(cat, 2)
+                break
+
+    blob = _blob(topic).lower()
+    for cat, words in KEYWORDS.items():
+        if any(w in blob for w in words):
+            bump(cat, 1)
+    if HASHTAG_RE.search(_blob(topic)):
+        bump("campaigns", 1)
+
+    if votes:
+        return max(votes.items(), key=lambda kv: kv[1])[0]
+    plats = topic.get("platforms") or {}
+    hn = (plats.get("hn") or {}).get("score") or 0
+    x = (plats.get("x") or {}).get("score") or 0
+    if hn > 20 and hn >= x:
+        return "tech"
+    if (plats.get("public") or {}).get("score"):
+        return "news"
+    return "culture"
+
+
+def build_causation(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> CausationReport:
+    posts = _posts(topic)
+    dated = []
+    for post in posts:
+        ts = _valid_ts(str(post.get("createdAt") or ""))
+        if ts:
+            dated.append((ts, post))
+    dated.sort(key=lambda row: row[0])
+    first = dated[0][1] if dated else None
+    first_at = dated[0][0].isoformat() if dated else None
+
+    first_by_plat: Dict[str, datetime] = {}
+    for ts, post in dated:
+        plat = str(post.get("platform") or "")
+        if plat and plat not in first_by_plat:
+            first_by_plat[plat] = ts
+    lag: Optional[float] = None
+    if len(first_by_plat) >= 2:
+        times = sorted(first_by_plat.values())
+        lag = round((times[1] - times[0]).total_seconds() / 3600, 1)
+
+    peak_at = None
+    if dated:
+        best = max(dated, key=lambda row: float(row[1].get("score") or 0))
+        peak_at = best[0].isoformat()
+
+    drivers: List[CausationDriver] = []
+    plats = topic.get("platforms") or {}
+    for name, slice_ in plats.items():
+        score = float((slice_ or {}).get("score") or 0)
+        if score <= 0:
+            continue
+        n = len((slice_ or {}).get("posts") or [])
+        drivers.append(CausationDriver(f"heat-{name}", f"{name} heat", int(score), f"{n} receipts · score {int(score)}"))
+
+    if first:
+        div = float(topic.get("divergence") or 0)
+        drivers.append(
+            CausationDriver(
+                "first-print",
+                f"First print · {first.get('platform')}",
+                36 if div >= 0.66 else 22,
+                f"{str(first.get('title') or '')[:80]}",
+            )
+        )
+
+    velocity = topic.get("velocity") or "peaking"
+    if velocity == "rising":
+        drivers.append(CausationDriver("velocity", "Rising velocity", 24, "Still accelerating vs last ingest."))
+    elif velocity == "peaking":
+        drivers.append(CausationDriver("velocity", "At peak", 14, "Heat is high but no longer accelerating."))
+    else:
+        drivers.append(CausationDriver("velocity", "Cooling", 8, "Better as a recap than a new launch."))
+
+    if lag is not None:
+        drivers.append(
+            CausationDriver(
+                "lag",
+                "Cross-source in <2h" if lag < 2 else f"Second source +{lag}h",
+                22 if lag < 2 else 12,
+                "Hours between the first two platforms that printed.",
+            )
+        )
+
+    tags = [a for a in artifacts if a.kind == "hashtag"]
+    qrs = [a for a in artifacts if a.kind == "qr"]
+    tickers = [a for a in artifacts if a.kind == "ticker"]
+    if tags:
+        drivers.append(CausationDriver("hashtags", "Hashtag load", min(28, 8 + len(tags) * 6), " ".join(a.value for a in tags[:3])))
+    if qrs:
+        drivers.append(CausationDriver("qr", "QR / short-link campaign", 26, qrs[0].value[:80]))
+    if tickers:
+        drivers.append(CausationDriver("tickers", "Ticker overlay", 18, " ".join(a.value for a in tickers)))
+
+    blob = _blob(topic).lower()
+    hit = next((w for w in CONTROVERSY if w in blob), None)
+    if hit:
+        drivers.append(CausationDriver("risk", f"Risk word · {hit}", 16, "Present in receipts — treat as a risk driver, not a slogan."))
+
+    max_w = max((d.weight for d in drivers), default=1)
+    scaled = [
+        CausationDriver(d.id, d.label, max(4, round(d.weight / max_w * 100)), d.evidence)
+        for d in drivers
+    ]
+    scaled.sort(key=lambda d: d.weight, reverse=True)
+    return CausationReport(
+        topic_id=str(topic.get("id") or "topic"),
+        first_at=first_at,
+        first_platform=str(first.get("platform")) if first else None,
+        lag_hours=lag,
+        peak_at=peak_at,
+        drivers=scaled[:8],
+        thin=len(posts) < 2,
+    )
 
 
 def why_trending(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Tuple[str, float]:
@@ -312,9 +527,11 @@ def boost_topic(topic: Dict[str, Any]) -> TopicBrief:
         label=topic.get("label") or "",
         why_trending=why,
         confidence=confidence,
+        category=classify_topic(topic, artifacts),
         artifacts=artifacts,
         audiences=age_translations(topic),
         campaign=campaign_move(topic, artifacts),
+        causation=build_causation(topic, artifacts),
     )
 
 
@@ -333,6 +550,8 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P0", "Stabilize X ingest", "Hashtag and QR campaigns mostly start on X. Offline X blinds the booster.", "Keep x_search, add a Google Trends fallback so capture still runs."))
     if any("reddit" in d for d in degraded):
         items.append(Improvisation("P0", "Reddit fallback (OAuth or last-good cache)", "403s wipe phrase capture from the largest long-form platform.", "Authenticated Reddit client + cache last-good posts for 15m."))
+    if not payload.get("sources", {}).get("public"):
+        items.append(Improvisation("P0", "Public-API ingest is offline", "News, weather, crypto, and sports receipts come from the public-apis catalog. Without them WHY stays social-only.", "Retry GDELT/NWS/CoinGecko feeds; keep catalog cache so the allowlist still configures the desk."))
     if len(hashtags) < 3:
         items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.", "Add a caption scraper (or Grok search for TikTok-named trends) into capture."))
     if not qr_decoded:
@@ -343,7 +562,10 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P1", "Audience toggle on the map", "The same rising cluster reads differently for family, 18–24, and a brand CMO.", "Compose five caption variants from BoosterInsights; filter map labels by lens."))
     if not any((t.get("tickers") or []) for t in topics):
         items.append(Improvisation("P1", "Finance overlay even without explicit tickers", "Competitors still need category peers when $TICKER is absent.", "Map topic labels to a small industry lexicon — never invent symbols."))
-    items.append(Improvisation("P2", "News + disaster time-lag correlation", "Why-trending is still social-only. Campaigns miss weather, outages, and filings.", "Join GDELT/NOAA on a 0–24h lag next to velocity."))
+    thin = sum(1 for b in briefs if b.causation.thin)
+    if thin >= 3:
+        items.append(Improvisation("P1", "Persist ingest snapshots for multi-day occurrence charts", f"{thin} topics have fewer than two dated receipts — the timeseries cannot show a peak, only a point.", "Write hourly topic-score snapshots and join them on the area chart next to live posts."))
+    items.append(Improvisation("P2", "News + disaster markers on the same timeseries", "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.", "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY."))
     items.append(Improvisation("P2", "Export a one-page competitor brief", "CMOs will not live inside the circle pack. They want a PDF/Slack card.", "From the booster payload, render hook / risk / age takes / three receipts."))
     rank = {"P0": 0, "P1": 1, "P2": 2}
     items.sort(key=lambda i: rank.get(i.priority, 9))
@@ -403,8 +625,12 @@ def report_markdown(report: BoosterReport) -> str:
     for brief in report.briefs:
         lines.append(f"### {brief.label}")
         lines.append("")
-        lines.append(f"Confidence {int(brief.confidence * 100)}%. {brief.why_trending}")
+        lines.append(f"Category `{brief.category}`. Confidence {int(brief.confidence * 100)}%. {brief.why_trending}")
         lines.append("")
+        if brief.causation.drivers:
+            top_d = brief.causation.drivers[0]
+            lines.append(f"Lead driver: {top_d.label} ({top_d.weight}). {top_d.evidence}")
+            lines.append("")
         if brief.artifacts:
             arts = ", ".join(f"`{a.value}`" if a.kind in ("hashtag", "ticker") else f"{a.kind}: {a.value}" for a in brief.artifacts[:8])
             lines.append(arts)
@@ -468,6 +694,8 @@ def self_check() -> int:
     assert "url" in kinds, kinds
     assert report.improvisations, "expected improvisations"
     assert all(len(b.audiences) == 5 for b in report.briefs)
+    assert all(b.category in CATEGORIES for b in report.briefs)
+    assert all(b.causation.drivers for b in report.briefs)
     print("self-check ok")
     print(f"  briefs={len(report.briefs)} captured={report.captured}")
     print(f"  top={report.briefs[0].label}")
