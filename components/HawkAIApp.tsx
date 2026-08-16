@@ -67,21 +67,55 @@ function MapSkeleton() {
   );
 }
 
+function goHome() {
+  window.location.assign("/");
+}
+
+function HomeMark() {
+  return (
+    <a
+      href="/"
+      aria-label="hawkai home"
+      className="flex shrink-0 items-center gap-2 hover:text-white"
+      onClick={(e) => {
+        e.preventDefault();
+        goHome();
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-white">
+        <polygon
+          points="8,1.5 14.5,5 14.5,11 8,14.5 1.5,11 1.5,5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.2"
+        />
+      </svg>
+      <span className="text-sm font-medium tracking-tight">hawkai</span>
+      <span className="signal-live" aria-label="Live" />
+    </a>
+  );
+}
+
 function DeskSwitch({ desk }: { desk: DeskKind }) {
   if (desk === "trends") {
     return (
       <a
         href="/footprint"
-        target="_blank"
-        rel="noreferrer"
-        className="signal-label flex h-9 shrink-0 items-center gap-1 px-2 hover:text-white"
+        className="signal-label flex h-9 shrink-0 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white"
       >
-        Footprint <span aria-hidden>↗</span>
+        Footprint
       </a>
     );
   }
   return (
-    <a href="/" className="signal-label flex h-9 shrink-0 items-center px-2 hover:text-white">
+    <a
+      href="/"
+      className="signal-label flex h-9 shrink-0 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white"
+      onClick={(e) => {
+        e.preventDefault();
+        goHome();
+      }}
+    >
       Trends
     </a>
   );
@@ -375,18 +409,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       <header className="no-print relative z-50 mx-3 mt-3 shrink-0 rounded-lg border border-white/8 bg-[#0c0d10]">
         <div className="flex items-center gap-2 overflow-x-auto px-3 py-2">
         <div className="flex shrink-0 items-center gap-3">
-          <span className="flex shrink-0 items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-white">
-              <polygon
-                points="8,1.5 14.5,5 14.5,11 8,14.5 1.5,11 1.5,5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.2"
-              />
-            </svg>
-            <span className="text-sm font-medium tracking-tight">hawkai</span>
-            <span className="signal-live" aria-label="Live" />
-          </span>
+          <HomeMark />
           <span className="font-mono text-[11px] tabular-nums text-white/50">
             {loading
               ? footprint
