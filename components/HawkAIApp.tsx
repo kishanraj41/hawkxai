@@ -135,6 +135,13 @@ export default function HawkAIApp() {
   }, [payload, velocityFilter, artifactsById]);
 
   useEffect(() => {
+    if (selected && !topics.some((t) => t.id === selected.id)) {
+      setSelected(null);
+      setHighlightedIds([]);
+    }
+  }, [topics, selected]);
+
+  useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const typing =

@@ -1,3 +1,6 @@
+"use client";
+
+import { useId } from "react";
 import { PLATFORM_COLOR } from "@/lib/ui-helpers";
 import { PLATFORMS, type Platform, type TimeBucket } from "@/lib/types";
 
@@ -10,11 +13,9 @@ interface TimeseriesChartProps {
 function stackedPath(
   series: TimeBucket[],
   width: number,
-  height: number,
   yOf: (bucket: TimeBucket) => { y0: number; y1: number },
-  maxTotal: number,
 ): string {
-  if (series.length === 0 || maxTotal <= 0) return "";
+  if (series.length === 0) return "";
   const step = series.length === 1 ? width : width / (series.length - 1);
   const top: string[] = [];
   const bottom: string[] = [];
@@ -24,10 +25,11 @@ function stackedPath(
     top.push(`${i === 0 ? "M" : "L"}${x.toFixed(1)},${y1.toFixed(1)}`);
     bottom.push(`${x.toFixed(1)},${y0.toFixed(1)}`);
   });
-  return `${top.join(" ")} L${bottom.toReversed().join(" L")} Z`;
+  return `${top.join(" ")} L${[...bottom].reverse().join(" L")} Z`;
 }
 
 export default function TimeseriesChart({ series, firstAt = null, height = 128 }: TimeseriesChartProps) {
+  const uid = useId().replace(/:/g, "");
   const width = 480;
   const padY = 4;
   const maxTotal = Math.max(...series.map((b) => b.total), 1);
@@ -50,11 +52,7 @@ export default function TimeseriesChart({ series, firstAt = null, height = 128 }
 
   const order: Platform[] = ["public", "hn", "reddit", "x"];
   const paths = order.map((platform) => {
-    const d = stackedPath(
-      series,
-      width,
-      height,
-      (bucket) => {
+    const d = stackedPath(series, width, (bucket) => {
         let y0count = 0;
         for (const p of order) {
           if (p === platform) break;
@@ -65,7 +63,6 @@ export default function TimeseriesChart({ series, firstAt = null, height = 128 }
         const y1 = height - padY - (y1count / maxTotal) * (height - padY * 2);
         return { y0, y1 };
       },
-      maxTotal,
     );
     return { platform, d };
   });
@@ -83,7 +80,7 @@ export default function TimeseriesChart({ series, firstAt = null, height = 128 }
     >
       <defs>
         {PLATFORMS.map((p) => (
-          <linearGradient key={p} id={`ts-${p}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient key={p} id={`ts-${uid}-${p}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={PLATFORM_COLOR[p]} stopOpacity="0.35" />
             <stop offset="100%" stopColor={PLATFORM_COLOR[p]} stopOpacity="0" />
           </linearGradient>
@@ -91,7 +88,7 @@ export default function TimeseriesChart({ series, firstAt = null, height = 128 }
       </defs>
       {paths.map(({ platform, d }) =>
         d ? (
-          <path key={platform} d={d} fill={`url(#ts-${platform})`} stroke={PLATFORM_COLOR[platform]} strokeWidth="1" />
+          <path key={platform} d={d} fill={`url(#ts-${uid}-${platform})`} stroke={PLATFORM_COLOR[platform]} strokeWidth="1" />
         ) : null,
       )}
       {markerX !== null ? (

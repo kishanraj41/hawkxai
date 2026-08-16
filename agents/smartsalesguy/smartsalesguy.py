@@ -52,17 +52,17 @@ BANNED = (
 )
 
 FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
-    ("app/api/trends/route.ts", "Live multi-source trend graph", "GET /api/trends clusters X, Reddit, and HN with velocity + divergence"),
+    ("app/api/trends/route.ts", "Live multi-source trend graph", "GET /api/trends clusters X, Reddit, HN, and public APIs with velocity + divergence"),
     ("app/api/ask/route.ts", "Natural-language Ask", "POST /api/ask answers live questions and zooms the matching topics"),
     ("app/api/booster/route.ts", "Booster intelligence API", "GET /api/booster returns artifacts, why-trending, age lenses, campaign moves"),
-    ("components/TrendMap.tsx", "Interactive D3 circle-pack map", "Full-viewport topic map; rising topics glow; click zooms to receipts"),
-    ("components/BoosterBriefBar.tsx", "Global booster briefing", "Always-on strip: what is hot, why, and the campaign implication"),
-    ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
-    ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence one-liner, ticker chips, source posts"),
-    ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
-    ("lib/desk.ts", "Category desk brain", "Classifies topics, graphs measured causation drivers, bins occurrence timeseries"),
     ("components/ChartDesk.tsx", "Plug-and-play category dashboard", "Drop in a category; trends, causation bars, and occurrence area chart fill from receipts"),
+    ("lib/desk.ts", "Category desk brain", "Classifies topics, graphs measured causation drivers, bins occurrence timeseries"),
+    ("components/TrendMap.tsx", "Interactive D3 circle-pack map", "Full-viewport topic map; rising topics glow; click zooms to receipts"),
+    ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
+    ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
     ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Timeseries / Causation / Trends — same parts in the rail"),
+    ("components/BoosterBriefBar.tsx", "Global booster briefing", "Always-on strip: what is hot, why, and the campaign implication"),
+    ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence, occurrence chart, causation drivers, source posts"),
     ("lib/cluster.ts", "Grok topic clustering", "xAI Grok 4.6 clusters raw posts into topics; divergence is computed in code"),
     ("agents/booster-agent/booster_agent.py", "Booster Agent (CLI brain)", "Offline/live capture of hashtags, QRs, phrases, URLs; improvises the backlog"),
     ("agents/pr-review-bot/review_bot.py", "PR Review Bot", "AI code review with 0-10 scoring and JSON/Markdown reports"),
@@ -474,14 +474,13 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "the need underneath it has already moved."
     )
     solution = (
-        "HawkAI is a plug-and-play category desk on live topics across X, Reddit, "
-        "Hacker News, and public APIs. Plug Markets or Weather or Campaigns — the "
-        "same modules fill: current trends, a causation graph of measured drivers "
-        "(first print, source heat, lag, artifacts — never an invented WHY), and an "
-        "occurrence timeseries. Beside it sits the Booster Agent: capture artifacts "
-        "from real posts only, translate five age lenses, arm competitors with hook, "
-        "timing, and risk, and improvise after every run. The map is one more module. "
-        "Booster is the intelligence layer that turns attention into a campaign."
+        "HawkAI is a plug-and-play category desk on live topics across X, Reddit, HN, "
+        "and public APIs. Plug Markets or Weather or Campaigns — the same modules fill: "
+        "current trends, a causation graph of measured drivers (first print, source heat, "
+        "lag, artifacts — never an invented WHY), and an occurrence timeseries. The "
+        "Booster Agent captures artifacts from real posts only, translates five age "
+        "lenses, and arms competitors with hook, timing, and risk. The map is one more "
+        "module. Booster turns attention into a campaign."
     )
     if idea:
         # keep founder copy, but pin the north star in the dossier
@@ -493,10 +492,10 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "phrases, URLs, cashtags, with receipts — is the wedge, and it is already running."
     )
     wedge = (
-        "We do not sell another listening dashboard. We sell the missing layer: "
-        "why it is trending, who it lands on, and the campaign move that does not "
-        "clone the meme. That loop is encoded in the Booster Agent and the live map, "
-        "not a slide."
+        "We do not sell another listening dashboard. We sell a category desk you "
+        "plug in: why it is trending (measured, never invented), when it printed, "
+        "who it lands on, and the campaign move that does not clone the meme. "
+        "That loop is encoded in the Booster Agent and the live desk, not a slide."
     )
     stage = (
         "Working product. Honest stage: hackathon-grade wedge with a live map, a live "
