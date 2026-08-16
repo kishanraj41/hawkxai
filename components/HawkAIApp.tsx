@@ -370,9 +370,9 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               value={surface}
               onChange={(id) => setSurface(id as Surface)}
               options={[
-                { id: "mind", label: "Mind", hint: "G" },
-                { id: "desk", label: "Desk", hint: "D" },
-                { id: "map", label: "Map", hint: "M" },
+                { id: "mind", label: "Mind", hint: "G", blurb: "Receipt map" },
+                { id: "desk", label: "Desk", hint: "D", blurb: "Charts and facts" },
+                { id: "map", label: "Map", hint: "M", blurb: "Where it landed" },
               ]}
             />
             <FieldSelect
@@ -397,7 +397,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               ))}
             </FieldSelect>
             <FieldSelect
-              label="City"
+              label="Place"
               value={city}
               onChange={(v) => setCity(v as CityId)}
             >
@@ -517,8 +517,13 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
 
       <DeskWorkspace
         listLabel="Watch"
+        listBlurb="Starred names"
         stageLabel={surface === "mind" ? "Mind" : surface === "desk" ? "Desk" : "Map"}
+        stageBlurb={
+          surface === "mind" ? "Receipt map" : surface === "desk" ? "Charts and facts" : "Where it landed"
+        }
         detailLabel="Intel"
+        detailBlurb="This print"
         jumpToDetailKey={selected?.id ?? null}
         preferStage={Boolean(footprint && !plugged && !loading)}
         list={

@@ -11,6 +11,9 @@ interface DeskWorkspaceProps {
   listLabel?: string;
   stageLabel?: string;
   detailLabel?: string;
+  listBlurb?: string;
+  stageBlurb?: string;
+  detailBlurb?: string;
   /** When this changes to a non-null value, mobile jumps to the detail pane. */
   jumpToDetailKey?: string | null;
   /** Prefer stage on first paint / when key clears (e.g. empty lookup). */
@@ -24,6 +27,9 @@ export default function DeskWorkspace({
   listLabel = "List",
   stageLabel = "Stage",
   detailLabel = "Detail",
+  listBlurb,
+  stageBlurb,
+  detailBlurb,
   jumpToDetailKey = null,
   preferStage = false,
 }: DeskWorkspaceProps) {
@@ -37,10 +43,10 @@ export default function DeskWorkspace({
     if (jumpToDetailKey) setPane("detail");
   }, [jumpToDetailKey]);
 
-  const tabs: { id: DeskPane; label: string }[] = [
-    { id: "list", label: listLabel },
-    { id: "stage", label: stageLabel },
-    { id: "detail", label: detailLabel },
+  const tabs: { id: DeskPane; label: string; blurb?: string }[] = [
+    { id: "list", label: listLabel, blurb: listBlurb },
+    { id: "stage", label: stageLabel, blurb: stageBlurb },
+    { id: "detail", label: detailLabel, blurb: detailBlurb },
   ];
 
   return (
@@ -52,10 +58,13 @@ export default function DeskWorkspace({
             type="button"
             role="tab"
             aria-selected={pane === tab.id}
+            aria-label={tab.blurb ? `${tab.label}: ${tab.blurb}` : tab.label}
+            title={tab.blurb ? `${tab.label}: ${tab.blurb}` : tab.label}
             onClick={() => setPane(tab.id)}
             className={`desk-workspace__tab ${pane === tab.id ? "desk-workspace__tab--active" : ""}`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            {tab.blurb ? <span className="desk-workspace__blurb">{tab.blurb}</span> : null}
           </button>
         ))}
       </div>

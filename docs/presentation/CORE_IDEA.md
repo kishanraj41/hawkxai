@@ -74,7 +74,7 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 4. Overlay GDELT / NWS events as lagged markers on the same timeseries (never as an invented WHY).
 5. Age-group toggle on the map itself — **shipped:** header lens composes desk, map hover, mind subtitle, and the keepable brief.
 6. Brand-risk radar (controversy vs ride-along).
-7. Geo / city pulse (Ask already hints at Austin-style questions).
+7. Geo / city pulse — **shipped:** default tape is worldwide (news, weather, Reddit, YouTube, X). Place filter still zooms to a metro.
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
 10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens from the trend desk; trending words stay on `/`.

@@ -1,4 +1,5 @@
 import { grokChat } from "./grok";
+import { PLACE_NEEDLES } from "./geo";
 import { CATEGORIES, type CategoryId, type QueryInsight, type QueryKind, type SentimentReport, type Topic } from "./types";
 
 export interface QueryIntent {
@@ -46,8 +47,6 @@ const EVENT_WORDS = [
   "super bowl", "world cup", "f1", "grand opening", "test drive",
   "campaign", "drop", "premiere",
 ];
-
-const PLACE_WORDS = ["austin", "nyc", "sf", "san francisco", "new york"];
 
 const STOP = new Set(["the", "and", "for", "with", "this", "that", "a", "an", "of", "to"]);
 
@@ -141,7 +140,7 @@ export function inferQueryIntent(raw: string): QueryIntent {
     kind = "product";
     category = product.category;
     aliases.push(...product.aliases);
-  } else if (PLACE_WORDS.some((w) => q.toLowerCase().includes(w))) {
+  } else if (PLACE_NEEDLES.some((w) => q.toLowerCase().includes(w))) {
     kind = "place";
     category = "news";
   }

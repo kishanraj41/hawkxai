@@ -49,4 +49,5 @@ Last run: 2026-08-16T21:05:00+00:00
 - Federal Register documents (SEC.gov blocks serverless IPs).
 - NHTSA recalls when the plugged phrase is a vehicle (Camry → Toyota Camry).
 - YouTube Data v3 only when `YOUTUBE_API_KEY` is set.
-- Core tape is pinned (Wikipedia, news RSS, NWS, CoinGecko, Bluesky, Federal Register); bandit fills the rest.
+- Core tape is pinned (Wikipedia, world news RSS, NWS, GDACS, CoinGecko, Bluesky, Federal Register); bandit fills the rest.
+- Default geo is **world**, not Austin / SF / NYC. Place filter still zooms a metro.

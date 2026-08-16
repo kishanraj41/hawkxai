@@ -269,8 +269,11 @@ export default function ResearchDesk() {
 
       <DeskWorkspace
         listLabel="Sources"
+        listBlurb="Cited receipts"
         stageLabel="Brief"
+        stageBlurb="What they say"
         detailLabel="Inspect"
+        detailBlurb="One source"
         jumpToDetailKey={selectedId}
         preferStage={empty}
         list={

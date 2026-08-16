@@ -1,5 +1,6 @@
 import { cacheGet, cacheSet } from "./cache";
 import type { CityId } from "./geo";
+import { tvCountry, weatherSpots, youtubeRegions } from "./geo";
 import { pickFeeds, recordPulls } from "./rl";
 import type { Post, PublicApiFeedStat, PublicApiIngest } from "./types";
 
@@ -22,9 +23,11 @@ const CORE_TAPE = [
   "Google News",
   "BBC",
   "Guardian",
-  "NPR",
-  "NYT",
+  "Reuters",
+  "Al Jazeera",
+  "NHK World",
   "National Weather Service",
+  "GDACS",
   "CoinGecko",
   "Bluesky",
   "Federal Register",
@@ -54,11 +57,22 @@ interface Feed {
   run: (city: CityId, topic?: string) => Promise<Post[]>;
 }
 
-const CITY_COORDS: Record<Exclude<CityId, "all">, { lat: number; lon: number; label: string }> = {
-  austin: { lat: 30.27, lon: -97.74, label: "Austin" },
-  sf: { lat: 37.77, lon: -122.42, label: "San Francisco" },
-  nyc: { lat: 40.71, lon: -74.01, label: "NYC" },
-};
+function googleNewsRss(q: string, edition = "hl=en&gl=GB&ceid=GB:en"): string {
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&${edition}`;
+}
+
+function youtubeItems(data: unknown): Post[] {
+  return asArray(asRecord(data)?.items)
+    .map((row) => {
+      const item = asRecord(row);
+      const snippet = asRecord(item?.snippet);
+      const title = str(snippet?.title);
+      const id = str(asRecord(item?.id)?.videoId) || str(item?.id);
+      if (!title || !id) return null;
+      return post(title, `https://www.youtube.com/watch?v=${id}`, 60, "YouTube", str(snippet?.publishedAt) || undefined);
+    })
+    .filter((p): p is Post => Boolean(p));
+}
 
 function post(
   title: string,
@@ -566,31 +580,50 @@ const FEEDS: Feed[] = [
     },
   },
   {
+    name: "GDACS",
+    category: "Weather",
+    match: ["gdacs", "disaster"],
+    run: async () => parseRss(await getText("https://www.gdacs.org/xml/rss.xml"), "GDACS"),
+  },
+  {
     name: "Open-Meteo",
     category: "Weather",
     match: ["open-meteo", "open meteo"],
     run: async (city) => {
-      const spots =
-        city === "all" ? Object.values(CITY_COORDS) : [CITY_COORDS[city]];
-      const rows = await Promise.all(
-        spots.map(async (c) => {
-          const data = asRecord(
-            await getJson(
-              `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,weather_code,wind_speed_10m`,
-            ),
-          );
-          const cur = asRecord(data?.current);
-          if (!cur) return null;
+      const spots = weatherSpots(city);
+      const data = await getJson(
+        `https://api.open-meteo.com/v1/forecast?latitude=${spots.map((s) => s.lat).join(",")}&longitude=${spots.map((s) => s.lon).join(",")}&current=temperature_2m,weather_code,wind_speed_10m`,
+      );
+      const rows = Array.isArray(data) ? data : [data];
+      const fromRows = rows
+        .map((row, i) => {
+          const rec = asRecord(row);
+          const cur = asRecord(rec?.current);
+          const spot = spots[i] ?? spots[0];
+          if (!cur || !spot || Array.isArray(cur.temperature_2m)) return null;
           return post(
-            `${c.label} ${num(cur.temperature_2m)}°C wind ${num(cur.wind_speed_10m)}`,
-            `https://open-meteo.com/en/docs#latitude=${c.lat}&longitude=${c.lon}`,
+            `${spot.label} ${num(cur.temperature_2m)}°C wind ${num(cur.wind_speed_10m)}`,
+            `https://open-meteo.com/en/docs#latitude=${spot.lat}&longitude=${spot.lon}`,
             40,
             "Open-Meteo",
             str(cur.time) || undefined,
           );
-        }),
-      );
-      return rows.filter((p): p is Post => Boolean(p));
+        })
+        .filter((p): p is Post => Boolean(p));
+      if (fromRows.length) return fromRows.slice(0, city === "all" ? 12 : PER_FEED);
+      const cur = asRecord(asRecord(rows[0])?.current);
+      if (!cur || !Array.isArray(cur.temperature_2m)) return [];
+      return spots
+        .map((spot, i) =>
+          post(
+            `${spot.label} ${num(asArray(cur.temperature_2m)[i])}°C wind ${num(asArray(cur.wind_speed_10m)[i])}`,
+            `https://open-meteo.com/en/docs#latitude=${spot.lat}&longitude=${spot.lon}`,
+            40,
+            "Open-Meteo",
+            str(asArray(cur.time)[i]) || undefined,
+          ),
+        )
+        .slice(0, city === "all" ? 12 : PER_FEED);
     },
   },
   {
@@ -613,11 +646,18 @@ const FEEDS: Feed[] = [
           .filter((p): p is Post => Boolean(p))
           .slice(0, PER_FEED);
       }
-      const rows = asArray(await getJson("https://api.tvmaze.com/schedule?country=US"));
+      const country = tvCountry(_city);
+      const rows = asArray(
+        await getJson(
+          country
+            ? `https://api.tvmaze.com/schedule?country=${encodeURIComponent(country)}`
+            : "https://api.tvmaze.com/schedule/web",
+        ),
+      );
       return rows
         .map((row) => {
           const r = asRecord(row);
-          const show = asRecord(r?.show);
+          const show = asRecord(r?.show) || asRecord(asRecord(r?._embedded)?.show);
           const name = str(show?.name);
           if (!name) return null;
           const ep = str(r?.name);
@@ -880,25 +920,32 @@ const FEEDS: Feed[] = [
     category: "Sports & Fitness",
     match: ["espn"],
     run: async () => {
-      const data = asRecord(
-        await getJson("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"),
-      );
-      return asArray(data?.events)
-        .map((row) => {
+      const urls = [
+        "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard",
+        "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard",
+        "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+      ];
+      const settled = await Promise.allSettled(urls.map((u) => getJson(u)));
+      const posts: Post[] = [];
+      for (const item of settled) {
+        if (item.status !== "fulfilled") continue;
+        for (const row of asArray(asRecord(item.value)?.events)) {
           const e = asRecord(row);
           const name = str(e?.name);
-          if (!name) return null;
+          if (!name) continue;
           const status = str(asRecord(asRecord(e?.status)?.type)?.description);
-          return post(
-            status ? `${name} (${status})` : name,
-            "https://www.espn.com/nfl/scoreboard",
-            58,
-            "ESPN",
-            str(e?.date) || undefined,
+          posts.push(
+            post(
+              status ? `${name} (${status})` : name,
+              "https://www.espn.com/",
+              58,
+              "ESPN",
+              str(e?.date) || undefined,
+            ),
           );
-        })
-        .filter((p): p is Post => Boolean(p))
-        .slice(0, PER_FEED);
+        }
+      }
+      return posts.slice(0, PER_FEED);
     },
   },
   {
@@ -1209,11 +1256,11 @@ const FEEDS: Feed[] = [
     match: ["google news"],
     topicAware: true,
     run: async (_city, topic) => {
-      const q = topic?.trim() || "world";
+      if (topic?.trim()) {
+        return parseRss(await getText(googleNewsRss(topic.trim())), "Google News");
+      }
       return parseRss(
-        await getText(
-          `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`,
-        ),
+        await getText("https://news.google.com/rss/headlines/section/topic/WORLD?hl=en&gl=GB&ceid=GB:en"),
         "Google News",
       );
     },
@@ -1225,14 +1272,9 @@ const FEEDS: Feed[] = [
     topicAware: true,
     run: async (_city, topic) => {
       if (topic?.trim()) {
-        return parseRss(
-          await getText(
-            `https://news.google.com/rss/search?q=${encodeURIComponent(`${topic.trim()} site:bbc.com`)}&hl=en-US&gl=US&ceid=US:en`,
-          ),
-          "BBC",
-        );
+        return parseRss(await getText(googleNewsRss(`${topic.trim()} site:bbc.com`)), "BBC");
       }
-      return parseRss(await getText("https://feeds.bbci.co.uk/news/rss.xml"), "BBC");
+      return parseRss(await getText("https://feeds.bbci.co.uk/news/world/rss.xml"), "BBC");
     },
   },
   {
@@ -1240,6 +1282,44 @@ const FEEDS: Feed[] = [
     category: "News",
     match: ["guardian"],
     run: async () => parseRss(await getText("https://www.theguardian.com/world/rss"), "Guardian"),
+  },
+  {
+    name: "Reuters",
+    category: "News",
+    match: ["reuters"],
+    topicAware: true,
+    run: async (_city, topic) =>
+      parseRss(
+        await getText(
+          googleNewsRss(topic?.trim() ? `${topic.trim()} site:reuters.com` : "site:reuters.com when:1d"),
+        ),
+        "Reuters",
+      ),
+  },
+  {
+    name: "Al Jazeera",
+    category: "News",
+    match: ["al jazeera", "aljazeera"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        return parseRss(await getText(googleNewsRss(`${topic.trim()} site:aljazeera.com`)), "Al Jazeera");
+      }
+      return parseRss(await getText("https://www.aljazeera.com/xml/rss/all.xml"), "Al Jazeera");
+    },
+  },
+  {
+    name: "NHK World",
+    category: "News",
+    match: ["nhk"],
+    topicAware: true,
+    run: async (_city, topic) =>
+      parseRss(
+        await getText(
+          googleNewsRss(topic?.trim() ? `${topic.trim()} site:nhk.or.jp` : "site:nhk.or.jp when:1d"),
+        ),
+        "NHK World",
+      ),
   },
   {
     name: "NYT",
@@ -1523,25 +1603,35 @@ const FEEDS: Feed[] = [
     match: ["youtube"],
     topicAware: true,
     include: () => Boolean(youtubeKey()),
-    run: async (_city, topic) => {
+    run: async (city, topic) => {
       const key = youtubeKey();
       if (!key) return [];
       const q = topic?.trim();
-      const url = q
-        ? `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${PER_FEED}&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`
-        : `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=US&maxResults=${PER_FEED}&key=${encodeURIComponent(key)}`;
-      const data = asRecord(await getJson(url));
-      return asArray(data?.items)
-        .map((row) => {
-          const item = asRecord(row);
-          const snippet = asRecord(item?.snippet);
-          const title = str(snippet?.title);
-          const id = str(asRecord(item?.id)?.videoId) || str(item?.id);
-          if (!title || !id) return null;
-          return post(title, `https://www.youtube.com/watch?v=${id}`, 60, "YouTube", str(snippet?.publishedAt) || undefined);
-        })
-        .filter((p): p is Post => Boolean(p))
-        .slice(0, PER_FEED);
+      if (q) {
+        return youtubeItems(
+          await getJson(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${PER_FEED}&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`,
+          ),
+        ).slice(0, PER_FEED);
+      }
+      const settled = await Promise.allSettled(
+        youtubeRegions(city).map((region) =>
+          getJson(
+            `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=${region}&maxResults=${PER_FEED}&key=${encodeURIComponent(key)}`,
+          ),
+        ),
+      );
+      const seen = new Set<string>();
+      const posts: Post[] = [];
+      for (const item of settled) {
+        if (item.status !== "fulfilled") continue;
+        for (const p of youtubeItems(item.value)) {
+          if (seen.has(p.url)) continue;
+          seen.add(p.url);
+          posts.push(p);
+        }
+      }
+      return posts.slice(0, PER_FEED);
     },
   },
 ];
