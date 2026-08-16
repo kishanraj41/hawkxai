@@ -1,6 +1,7 @@
 import { divergenceLabel } from "./ui-helpers";
 import { totalScore } from "./metrics";
 import { buildCausation, classifyTopic } from "./desk";
+import { buildSentiment } from "./sentiment";
 import {
   PLATFORMS,
   type AgeLens,
@@ -266,15 +267,25 @@ export function topicRisk(topic: Topic): CampaignMove["risk"] {
 export function boostTopic(topic: Topic): BoosterTopicBrief {
   const artifacts = captureArtifacts(topic);
   const { why, confidence } = whyTrending(topic, artifacts);
+  const sentiment = buildSentiment(topic);
+  const tone =
+    sentiment.lean === "pos"
+      ? ` Titles lean positive (${sentiment.overall.pos}/${sentiment.overall.n}).`
+      : sentiment.lean === "neg"
+        ? ` Titles lean negative (${sentiment.overall.neg}/${sentiment.overall.n}).`
+        : sentiment.thin
+          ? ""
+          : ` Titles are split (${sentiment.overall.pos} pos / ${sentiment.overall.neg} neg).`;
   return {
     topicId: topic.id,
-    whyTrending: why,
+    whyTrending: why + tone,
     confidence,
     category: classifyTopic(topic, artifacts),
     artifacts,
     audiences: ageTranslations(topic),
     campaign: campaignMove(topic, artifacts),
     causation: buildCausation(topic, artifacts),
+    sentiment,
   };
 }
 
@@ -384,7 +395,7 @@ export function boostTrends(payload: TrendsPayload): BoosterPayload {
   const top = briefs[0];
   const summary = top
     ? `${payload.topics.find((t) => t.id === top.topicId)?.label ?? "Lead"} · ${top.campaign.risk} risk · ${top.campaign.hook}`
-    : "No topics on the tape yet.";
+    : payload.query?.floor ?? "Nearest receipts are still loading.";
   return {
     updatedAt: new Date().toISOString(),
     sourceUpdatedAt: payload.updatedAt,

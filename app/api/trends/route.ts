@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet, cachePeek, cacheSet } from "@/lib/cache";
-import { attachPublicPosts, attachXPosts, clusterTopics, plugTopicFromPosts } from "@/lib/cluster";
+import { attachPublicPosts, attachXPosts, clusterTopics, neighborTopics, plugTopicFromPosts } from "@/lib/cluster";
 import {
   collectorAgent,
   collectorSummary,
@@ -10,7 +10,9 @@ import {
   whyAgent,
 } from "@/lib/agents";
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
+import { enrichQueryIntent, inferQueryIntent, toQueryInsight } from "@/lib/query";
 import { recordPulls } from "@/lib/rl";
+import { buildSentiment } from "@/lib/sentiment";
 import type { TrendsPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -87,26 +89,35 @@ async function runPlug(
   topic: string,
   cacheKey: string,
 ) {
-  const collected = collectorAgent(geo, topic);
-  const [redditR, hnR, xR, publicR] = await Promise.all([
+  const local = inferQueryIntent(topic);
+  const intentPromise = enrichQueryIntent(local);
+  const collected = collectorAgent(geo, local.search);
+  const [redditR, hnR, xR, publicR, intent] = await Promise.all([
     collected.reddit,
     collected.hn,
     collected.x,
     collected.public,
+    intentPromise,
   ]);
   const posts = [...redditR.posts, ...hnR.posts, ...xR.posts, ...publicR.posts];
-  const clustered = plugTopicFromPosts(topic, posts);
+  let clustered = plugTopicFromPosts(topic, posts, intent);
+  const used = new Set(clustered.map((t) => t.id));
+  const tape = cachePeek<TrendsPayload>(LAST_KEY)?.topics ?? [];
+  const neighbors = neighborTopics(topic, intent.aliases, tape).filter((t) => !used.has(t.id));
+  if (neighbors.length) clustered = [...clustered, ...neighbors];
   const { sources, degraded } = healthFrom([xR, redditR, hnR, publicR]);
   markPlatformPulls(sources);
 
   const collectorLog = collectorSummary([xR, redditR, hnR, publicR]);
-  const clusterLog = `plug: "${topic}" ${clustered.length} topics from ${posts.length} posts`;
+  const clusterLog = `plug: "${topic}" ${clustered.length} topics from ${posts.length} posts · ${intent.kind}/${intent.category}`;
   console.log(clusterLog);
 
   const validated = validatorAgent(clustered);
   const pipeline = `${geo.log} → ${collectorLog} → ${clusterLog} → ${validated.log}`;
   console.log(`[pipeline] ${pipeline}`);
 
+  const lead = validated.topics[0] ?? null;
+  const sentiment = lead ? buildSentiment(lead) : null;
   const payload: TrendsPayload = {
     topics: validated.topics,
     updatedAt: new Date().toISOString(),
@@ -115,6 +126,7 @@ async function runPlug(
     pipeline,
     publicApis: publicR.publicApis,
     plugged: topic,
+    query: toQueryInsight(intent, validated.topics, sentiment),
   };
   cacheSet(cacheKey, payload);
   cacheSet(LAST_KEY, payload);

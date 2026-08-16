@@ -76,8 +76,10 @@ export default function HawkAIApp() {
         setSelected(first);
         setHighlightedIds(data.topics.map((t) => t.id));
       }
+      return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load trends");
+      return null;
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -101,10 +103,10 @@ export default function HawkAIApp() {
     setSurface("desk");
     setCategory("all");
     try {
-      await loadTrends(true, q);
-      setAskAnswer(`Plugged “${q}” — desk graphs use live X, Reddit, HN, and public APIs.`);
+      const data = await loadTrends(true, q);
+      setAskAnswer(data?.query?.floor ?? `Nearest receipts for “${q}”.`);
     } catch {
-      setAskAnswer("Could not plug that topic.");
+      setAskAnswer("Search failed — try a close alias (Camry → Toyota Camry).");
     } finally {
       setAsking(false);
     }
@@ -120,8 +122,8 @@ export default function HawkAIApp() {
     setSurface("desk");
     setCategory("all");
     try {
-      await loadTrends(true, q);
-      setAskAnswer(`Plugged “${q}” — sources search that topic and the desk rebuilds.`);
+      const data = await loadTrends(true, q);
+      setAskAnswer(data?.query?.floor ?? `Nearest receipts for “${q}”.`);
     } finally {
       setAsking(false);
     }
@@ -330,7 +332,7 @@ export default function HawkAIApp() {
             ref={askRef}
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Plug any topic… ⌘K"
+            placeholder="Camry, #HeatWaveFit, launch event… ⌘K"
             className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
           />
           <button
@@ -408,6 +410,7 @@ export default function HawkAIApp() {
             hoverId={hoverId}
             booster={booster}
             loading={loading}
+            query={payload?.query ?? null}
             onSelect={pickTopic}
             onHover={setHoverId}
           />
@@ -433,7 +436,7 @@ export default function HawkAIApp() {
               />
             ) : (
               <div className="flex h-full items-center justify-center">
-                <p className="signal-label">No names in this category — plug All</p>
+                <p className="signal-label">Nearest names are in another plug — try All</p>
               </div>
             )}
           </MapStage>

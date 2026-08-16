@@ -236,7 +236,7 @@ export default function MindMapChart({
   if (!tree || graph.nodes.length <= 1) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="signal-label">No names in this category — plug All</p>
+        <p className="signal-label">Nearest names are in another plug — try All</p>
       </div>
     );
   }

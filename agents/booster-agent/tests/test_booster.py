@@ -12,8 +12,10 @@ from booster_agent import (
     boost_trends,
     build_causation,
     build_mind_map,
+    build_sentiment,
     capture_artifacts,
     classify_topic,
+    infer_query_intent,
     load_payload,
     why_trending,
 )
@@ -94,6 +96,38 @@ class BoosterTests(unittest.TestCase):
         for link in shared:
             self.assertIsNotNone(link.label)
             self.assertIn(link.label.lower(), real)
+
+    def test_query_intent_guesses_product_and_campaign(self):
+        camry = infer_query_intent("Camry")
+        self.assertEqual(camry["kind"], "product")
+        self.assertEqual(camry["category"], "markets")
+        self.assertTrue(any("toyota" in a.lower() for a in camry["aliases"]))
+        tag = infer_query_intent("#HeatWaveFit")
+        self.assertEqual(tag["kind"], "hashtag")
+        self.assertEqual(tag["category"], "campaigns")
+
+    def test_sentiment_from_titles_not_invented(self):
+        pos = {
+            "id": "camry-pos",
+            "label": "Camry",
+            "platforms": {
+                "x": {"score": 40, "posts": [{"platform": "x", "title": "Camry demand hits a record", "url": "https://x.com/1", "score": 40, "createdAt": "2026-08-16T12:00:00.000Z"}]},
+                "reddit": {"score": 20, "posts": [{"platform": "reddit", "title": "Great Camry launch, waitlist is real", "url": "https://reddit.com/1", "score": 20, "createdAt": "2026-08-16T12:10:00.000Z"}]},
+                "hn": {"score": 0, "posts": []},
+                "public": {"score": 0, "posts": []},
+            },
+            "velocity": "rising",
+            "divergence": 0.3,
+            "tickers": [],
+        }
+        sent = build_sentiment(pos)
+        self.assertEqual(sent.lean, "pos")
+        self.assertGreater(sent.overall.pos, sent.overall.neg)
+        blob = " ".join(d.evidence.lower() for d in sent.drivers)
+        self.assertNotIn("invent", blob)
+        brief = boost_topic(pos)
+        self.assertEqual(brief.sentiment.lean, "pos")
+        self.assertIn("positive", brief.why_trending.lower())
 
 
 if __name__ == "__main__":
