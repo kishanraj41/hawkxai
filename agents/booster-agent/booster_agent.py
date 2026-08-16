@@ -95,14 +95,14 @@ SOURCE_CATEGORY = {
     "cisa": "security",
 }
 KEYWORDS = {
-    "markets": ("bitcoin", "crypto", "nasdaq", "earnings", "inflation", "etf", "ipo", "stock"),
+    "markets": ("bitcoin", "crypto", "nasdaq", "earnings", "inflation", "etf", "ipo", "stock", "camry", "civic", "tesla", "mustang", "f-150", "toyota", "honda", "ford"),
     "news": ("election", "congress", "sanctions", "treaty", "breaking"),
     "weather": ("hurricane", "earthquake", "wildfire", "tornado", "flood", "storm", "heatwave", "forecast"),
     "tech": ("github", "openai", "chatgpt", "kernel", "gpu", "spacex", "llm"),
     "sports": ("nba", "nfl", "mlb", "nhl", "playoff", "soccer", "espn"),
     "health": ("vaccine", "outbreak", "fda", "covid", "hospital"),
     "security": ("ransomware", "cve", "breach", "exploit", "hacked", "vulnerability"),
-    "campaigns": ("utm_medium=qr", "qrco.de"),
+    "campaigns": ("utm_medium=qr", "qrco.de", "launch event", "test drive", "drop"),
     "culture": ("wikipedia", "album", "anime", "tvmaze"),
 }
 AGE_LENSES = (
@@ -163,6 +163,24 @@ class CausationReport:
 
 
 @dataclass
+class SentimentMix:
+    pos: int
+    neg: int
+    risk: int
+    n: int
+
+
+@dataclass
+class SentimentReport:
+    topic_id: str
+    lean: str
+    overall: SentimentMix
+    drivers: List[CausationDriver]
+    quotes: List[str]
+    thin: bool
+
+
+@dataclass
 class TopicBrief:
     topic_id: str
     label: str
@@ -173,6 +191,7 @@ class TopicBrief:
     audiences: List[AgeTranslation]
     campaign: CampaignMove
     causation: CausationReport
+    sentiment: SentimentReport
 
 
 @dataclass
@@ -472,6 +491,98 @@ def build_causation(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Cau
     )
 
 
+POS_WORDS = (
+    "love", "great", "win", "wins", "record", "beat", "beats", "upgrade", "award",
+    "best", "demand", "waitlist", "sold", "launch", "reliable", "safe", "smooth",
+)
+NEG_WORDS = (
+    "fail", "fails", "failed", "outage", "crash", "crashes", "lawsuit", "recall",
+    "boycott", "scam", "delay", "delayed", "overpriced", "defect", "hate", "worst", "broken",
+)
+PRODUCT_ALIASES = {
+    "camry": ("toyota camry", "camry"),
+    "civic": ("honda civic", "civic"),
+    "tesla": ("tesla", "tsla", "model y"),
+    "cybertruck": ("tesla cybertruck",),
+    "f-150": ("ford f-150", "f150"),
+    "f150": ("ford f-150", "f-150"),
+    "mustang": ("ford mustang",),
+}
+
+
+def infer_query_intent(raw: str) -> Dict[str, Any]:
+    q = (raw or "").strip()
+    lower = q.lower()
+    kind, category, aliases = "generic", "culture", []
+    if re.search(r"\$[A-Z]{1,5}\b", q):
+        kind, category = "ticker", "markets"
+    elif re.search(r"utm_medium=qr|qrco\.de|scan this qr", q, re.I):
+        kind, category = "campaign", "campaigns"
+    elif HASHTAG_RE.search(q):
+        kind, category = "hashtag", "campaigns"
+        tag = HASHTAG_RE.search(q).group(0)
+        aliases = [tag, tag[1:]]
+    elif any(w in lower for w in ("launch", "recall", "earnings", "keynote", "ces", "drop")):
+        kind = "event"
+        category = "news" if "recall" in lower else "campaigns"
+    else:
+        for key, al in PRODUCT_ALIASES.items():
+            if key in lower:
+                kind, category, aliases = "product", "markets", list(al)
+                break
+    return {"raw": q, "kind": kind, "category": category, "aliases": aliases}
+
+
+def build_sentiment(topic: Dict[str, Any]) -> SentimentReport:
+    posts = _posts(topic)
+    pos = neg = risk = 0
+    quotes: List[str] = []
+    for post in posts:
+        title = str(post.get("title") or "")
+        blob = title.lower()
+        p = sum(1 for w in POS_WORDS if w in blob)
+        n = sum(1 for w in NEG_WORDS if w in blob)
+        r = sum(1 for w in CONTROVERSY if w in blob)
+        pos += p
+        neg += n
+        risk += r
+        if p + n + r:
+            quotes.append(title[:90])
+    n = len(posts)
+    if n < 2:
+        lean = "thin"
+    elif pos >= neg * 1.4 and pos > 0:
+        lean = "pos"
+    elif neg >= pos * 1.4 and neg > 0:
+        lean = "neg"
+    else:
+        lean = "mixed"
+    drivers: List[CausationDriver] = []
+    denom = max(pos + neg, 1)
+    if pos:
+        drivers.append(CausationDriver("sent-pos", "Positive titles", round(pos / denom * 100), f"{pos} positive word hits in {n} receipts"))
+    if neg:
+        drivers.append(CausationDriver("sent-neg", "Negative titles", round(neg / denom * 100), f"{neg} negative word hits in {n} receipts"))
+    if risk:
+        drivers.append(CausationDriver("sent-risk", "Risk words", min(100, 20 + risk * 12), f"{risk} controversy hits — treat as a floor risk, not a slogan"))
+    if not drivers:
+        drivers.append(CausationDriver("sent-thin", "No tone words in titles", 8, "Will not invent a mood."))
+    max_w = max((d.weight for d in drivers), default=1)
+    scaled = [
+        CausationDriver(d.id, d.label, max(6, round(d.weight / max_w * 100)), d.evidence)
+        for d in drivers
+    ]
+    scaled.sort(key=lambda d: d.weight, reverse=True)
+    return SentimentReport(
+        topic_id=str(topic.get("id") or "topic"),
+        lean=lean,
+        overall=SentimentMix(pos=pos, neg=neg, risk=risk, n=n),
+        drivers=scaled[:8],
+        quotes=quotes[:3],
+        thin=n < 2,
+    )
+
+
 def why_trending(topic: Dict[str, Any], artifacts: Sequence[Artifact]) -> Tuple[str, float]:
     posts = _posts(topic)
     if not posts:
@@ -563,6 +674,13 @@ def age_translations(topic: Dict[str, Any]) -> List[AgeTranslation]:
 def boost_topic(topic: Dict[str, Any]) -> TopicBrief:
     artifacts = capture_artifacts(topic)
     why, confidence = why_trending(topic, artifacts)
+    sentiment = build_sentiment(topic)
+    if sentiment.lean == "pos":
+        why += f" Titles lean positive ({sentiment.overall.pos}/{sentiment.overall.n})."
+    elif sentiment.lean == "neg":
+        why += f" Titles lean negative ({sentiment.overall.neg}/{sentiment.overall.n})."
+    elif not sentiment.thin:
+        why += f" Titles are split ({sentiment.overall.pos} pos / {sentiment.overall.neg} neg)."
     return TopicBrief(
         topic_id=topic.get("id") or "topic",
         label=topic.get("label") or "",
@@ -573,6 +691,7 @@ def boost_topic(topic: Dict[str, Any]) -> TopicBrief:
         audiences=age_translations(topic),
         campaign=campaign_move(topic, artifacts),
         causation=build_causation(topic, artifacts),
+        sentiment=sentiment,
     )
 
 
@@ -773,7 +892,7 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
     summary = (
         f"{top.label} · {top.campaign.risk} risk · {top.campaign.hook}"
         if top
-        else "No topics on the tape yet."
+        else "Nearest receipts are still loading."
     )
     return BoosterReport(
         timestamp=datetime.now(timezone.utc).isoformat(),

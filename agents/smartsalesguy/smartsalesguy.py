@@ -62,7 +62,7 @@ FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("components/TrendMap.tsx", "Interactive D3 circle-pack map", "Full-viewport topic map; rising topics glow; click zooms to receipts"),
     ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
     ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
-    ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Mind / Timeseries / Causation / Trends — same parts in the rail"),
+    ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Mind / Timeseries / Sentiment / Trends — same parts in the rail"),
     ("components/BoosterBriefBar.tsx", "Global booster briefing", "Always-on strip: what is hot, why, and the campaign implication"),
     ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence, occurrence chart, causation drivers, source posts"),
     ("lib/cluster.ts", "Grok topic clustering", "xAI Grok 4.6 clusters raw posts into topics; divergence is computed in code"),

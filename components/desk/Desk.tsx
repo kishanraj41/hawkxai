@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import CausationChart from "@/components/desk/CausationChart";
 import MindMapChart from "@/components/desk/MindMap";
+import SentimentChart from "@/components/desk/SentimentChart";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import { topicRisk } from "@/lib/booster";
 import { totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { CausationReport, DeskCategory, MindGraph, TimeBucket, Topic } from "@/lib/types";
+import type { CausationReport, DeskCategory, MindGraph, SentimentReport, TimeBucket, Topic } from "@/lib/types";
 
 interface DeskState {
   category: DeskCategory;
@@ -16,6 +16,7 @@ interface DeskState {
   hoverId: string | null;
   series: TimeBucket[];
   causation: CausationReport | null;
+  sentiment: SentimentReport | null;
   graph: MindGraph;
   loading: boolean;
 }
@@ -76,7 +77,7 @@ function Header() {
           {CATEGORY_LABEL[state.category]} desk
         </h1>
         <p className="mt-0.5 text-xs text-white/45">
-          Plug a category. Mind map of receipts, measured drivers, occurrence. Never an invented WHY.
+          Plug a category. Mind map of receipts, sentiment from titles, occurrence. Never an invented WHY.
         </p>
       </div>
       <div className="flex gap-4 font-mono text-[11px] tabular-nums">
@@ -140,13 +141,13 @@ function Timeseries() {
   );
 }
 
-function Causation() {
+function Sentiment() {
   const { state } = useDesk();
   return (
     <div className="rounded-lg border border-white/8 p-4">
       <div className="mb-2 flex items-baseline justify-between">
-        <p className="text-[13px] font-medium">Causation</p>
-        <p className="signal-label">measured drivers</p>
+        <p className="text-[13px] font-medium">Sentiment</p>
+        <p className="signal-label">title correlation · receipts only</p>
       </div>
       {state.loading ? (
         <div className="space-y-2">
@@ -155,7 +156,7 @@ function Causation() {
           ))}
         </div>
       ) : (
-        <CausationChart report={state.causation} />
+        <SentimentChart report={state.sentiment} />
       )}
     </div>
   );
@@ -174,7 +175,7 @@ function Trends() {
   }
   if (state.topics.length === 0) {
     return (
-      <p className="signal-label mt-4">No names in this category — plug All or another desk.</p>
+      <p className="signal-label mt-4">Nearest names are in another plug — try All.</p>
     );
   }
 
@@ -246,6 +247,7 @@ export const Desk = {
   Header,
   Mind,
   Timeseries,
-  Causation,
+  Sentiment,
+  Causation: Sentiment,
   Trends,
 };

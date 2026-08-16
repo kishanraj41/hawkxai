@@ -99,7 +99,10 @@ export default function OverviewRail({
         {payload?.sources.hn ? "HN" : "HN off"} · {payload?.sources.public ? "APIs" : "APIs off"}
       </p>
       {payload?.plugged ? (
-        <p className="mt-1 text-xs text-white/70">Plugged “{payload.plugged}”</p>
+        <p className="mt-1 text-xs text-white/70">
+          Plugged “{payload.plugged}”
+          {payload.query ? ` · ${payload.query.kind} · ${payload.query.match}` : ""}
+        </p>
       ) : null}
       {payload?.publicApis ? (
         <p className="mt-1 font-mono text-[10px] tabular-nums text-white/40">

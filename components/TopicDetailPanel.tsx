@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import BoosterInsights from "@/components/BoosterInsights";
-import CausationChart from "@/components/desk/CausationChart";
+import SentimentChart from "@/components/desk/SentimentChart";
 import Sparkline from "@/components/Sparkline";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
 import { buildTimeseries, CATEGORY_LABEL } from "@/lib/desk";
@@ -153,11 +153,11 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
           <TimeseriesChart series={buildTimeseries([topic])} firstAt={brief?.causation.firstAt} />
         </div>
 
-        {brief?.causation ? (
+        {brief?.sentiment ? (
           <div className="mt-4">
-            <p className="signal-label">Causation</p>
+            <p className="signal-label">Sentiment</p>
             <div className="mt-2">
-              <CausationChart report={brief.causation} />
+              <SentimentChart report={brief.sentiment} />
             </div>
           </div>
         ) : null}

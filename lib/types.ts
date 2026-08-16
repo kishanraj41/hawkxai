@@ -31,6 +31,7 @@ export interface Topic {
   peakHourCT?: string;
   tickers: Ticker[];
   why?: string;
+  match?: "exact" | "near" | "neighbor";
 }
 
 export interface SourceHealth {
@@ -64,6 +65,7 @@ export interface TrendsPayload {
   pipeline?: string;
   publicApis?: PublicApiIngest;
   plugged?: string;
+  query?: QueryInsight;
 }
 
 export type AgeLens = "kids" | "gen-z" | "millennial" | "gen-x" | "boomer";
@@ -99,6 +101,38 @@ export interface CausationReport {
   peakAt: string | null;
   drivers: CausationDriver[];
   thin: boolean;
+}
+
+export type QueryKind = "ticker" | "hashtag" | "campaign" | "event" | "product" | "place" | "generic";
+
+export type SentimentLean = "pos" | "neg" | "mixed" | "thin";
+
+export interface SentimentMix {
+  pos: number;
+  neg: number;
+  risk: number;
+  n: number;
+}
+
+export interface SentimentReport {
+  topicId: string;
+  lean: SentimentLean;
+  overall: SentimentMix;
+  byPlatform: Partial<Record<Platform, SentimentMix>>;
+  drivers: CausationDriver[];
+  quotes: string[];
+  thin: boolean;
+}
+
+export interface QueryInsight {
+  raw: string;
+  kind: QueryKind;
+  category: CategoryId;
+  aliases: string[];
+  search: string;
+  match: "exact" | "near" | "neighbor";
+  hitCount: number;
+  floor: string;
 }
 
 export interface TimeBucket {
@@ -170,6 +204,7 @@ export interface BoosterTopicBrief {
   audiences: AgeTranslation[];
   campaign: CampaignMove;
   causation: CausationReport;
+  sentiment: SentimentReport;
 }
 
 export interface Improvisation {

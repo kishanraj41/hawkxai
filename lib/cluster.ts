@@ -9,6 +9,7 @@ import {
   totalScore,
   velocityOf,
 } from "./metrics";
+import { needlesOf, titleHits, titleScore, type QueryIntent } from "./query";
 import { topicBoost } from "./rl";
 import { PLATFORMS, type Platform, type Post, type RawSignals, type Topic } from "./types";
 
@@ -26,6 +27,7 @@ function empty() {
 function hydrate(
   label: string,
   buckets: Record<Platform, Post[]>,
+  match?: Topic["match"],
 ): Topic {
   const platforms = {
     x: empty(),
@@ -49,6 +51,7 @@ function hydrate(
     divergence: divergenceOf({ platforms }),
     peakHourCT: peakHourCT(all),
     tickers: [],
+    match,
   };
 }
 
@@ -155,37 +158,71 @@ function matchesQuery(title: string, query: string): boolean {
   return overlap(qTok, tokens(title)) >= 0.18;
 }
 
-/** Build a desk-ready topic from any query + live posts. No invented WHY. */
-export function plugTopicFromPosts(query: string, posts: Post[]): Topic[] {
-  const label = query.trim() || "topic";
+function bucketPosts(posts: Post[], needles: string[], query: string): Record<Platform, Post[]> {
   const buckets: Record<Platform, Post[]> = { x: [], reddit: [], hn: [], public: [] };
-  const related: Post[] = [];
   for (const p of posts) {
-    if (matchesQuery(p.title, label)) buckets[p.platform].push(p);
-    else related.push(p);
+    if (titleHits(p.title, needles) || matchesQuery(p.title, query)) buckets[p.platform].push(p);
   }
-  const hitCount = PLATFORMS.reduce((n, p) => n + buckets[p].length, 0);
-  if (hitCount === 0) {
-    for (const p of posts.slice(0, 24)) buckets[p.platform].push(p);
+  return buckets;
+}
+
+function hitCountOf(buckets: Record<Platform, Post[]>): number {
+  return PLATFORMS.reduce((n, p) => n + buckets[p].length, 0);
+}
+
+/** Closest leftover receipts — never dump unrelated posts as if they matched. */
+function nearBuckets(posts: Post[], needles: string[]): Record<Platform, Post[]> {
+  const ranked = [...posts]
+    .map((p) => ({ p, s: titleScore(p.title, needles) }))
+    .filter((x) => x.s >= 1.2)
+    .toSorted((a, b) => b.s - a.s)
+    .slice(0, 16);
+  const buckets: Record<Platform, Post[]> = { x: [], reddit: [], hn: [], public: [] };
+  for (const { p } of ranked) buckets[p.platform].push(p);
+  return buckets;
+}
+
+export function neighborTopics(query: string, aliases: string[], tape: Topic[]): Topic[] {
+  const needles = needlesOf({ raw: query, aliases });
+  return tape
+    .filter((t) => titleHits(t.label, needles) || matchesQuery(t.label, query))
+    .slice(0, 8)
+    .map((t) => ({ ...t, match: "neighbor" as const }));
+}
+
+/** Build a desk-ready topic from any query + live posts. No invented WHY. */
+export function plugTopicFromPosts(query: string, posts: Post[], intent?: QueryIntent): Topic[] {
+  const label = query.trim() || "topic";
+  const needles = needlesOf({ raw: label, aliases: intent?.aliases ?? [] });
+  let buckets = bucketPosts(posts, needles, label);
+  let match: Topic["match"] = "exact";
+  if (hitCountOf(buckets) === 0) {
+    buckets = nearBuckets(posts, needles);
+    match = hitCountOf(buckets) > 0 ? "near" : "neighbor";
   }
-  const topic = hydrate(label, buckets);
+  const topic = hydrate(label, buckets, match);
   topic.platforms.public.posts = buckets.public.slice(0, 12);
   const apis = topic.platforms.public.posts.flatMap((p) => (p.sourceApi ? [p.sourceApi] : []));
   topic.platforms.public.score = Math.round(scalePosts(buckets.public) * topicBoost(apis));
   topic.divergence = divergenceOf(topic);
+
+  const usedTitles = new Set(PLATFORMS.flatMap((p) => buckets[p].map((x) => x.title)));
+  const leftover = posts
+    .filter((p) => !usedTitles.has(p.title))
+    .map((p) => ({ p, s: titleScore(p.title, needles) }))
+    .filter((x) => x.s >= 1.4)
+    .toSorted((a, b) => b.s - a.s)
+    .slice(0, 12);
+
   const topics: Topic[] = [topic];
-  const leftover = related
-    .filter((p) => !buckets[p.platform].includes(p))
-    .toSorted((a, b) => b.score - a.score)
-    .slice(0, 24);
   const used = new Set(topics.map((t) => t.id));
-  for (const p of leftover) {
+  for (const { p } of leftover) {
     const extra = hydrate(p.title, {
       x: p.platform === "x" ? [p] : [],
       reddit: p.platform === "reddit" ? [p] : [],
       hn: p.platform === "hn" ? [p] : [],
       public: p.platform === "public" ? [p] : [],
-    });
+    }, "near");
     if (used.has(extra.id)) continue;
     used.add(extra.id);
     topics.push(extra);

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     cacheGet<TrendsPayload>("trends:v1");
   if (!trends) {
     return NextResponse.json(
-      { error: "no trends yet — hit GET /api/trends first" },
+      { error: "Load the tape first (GET /api/trends), then plug a close alias." },
       { status: 409 },
     );
   }

@@ -28,7 +28,7 @@ export default function TopicPlug({ value, busy, onPlug, onClear }: TopicPlugPro
       <input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        placeholder="Any topic — bitcoin, NBA, Austin storms…"
+        placeholder="Camry, #HeatWaveFit, launch event…"
         aria-label="Plug a topic"
         className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
       />

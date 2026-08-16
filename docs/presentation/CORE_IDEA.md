@@ -8,9 +8,10 @@ A **category is a plug**. Drop Markets, News, Weather, Tech, Sports, Health, Sec
 
 1. **Mind map** — hub is the plug, branches are names plus captured artifacts / first print / top driver. Amber dashes are **shared artifacts only** (same hashtag, QR, URL, or ticker on two names). Never an invented bridge.
 2. **Trends in that category** — ranked names, velocity, risk.
-3. **Causation graph** — measured drivers only: first print, source heat, cross-source lag, hashtag/QR/ticker load, risk words. Never a generated story.
+3. **Sentiment correlation** — pos/neg/risk word hits in receipt titles, split by platform. Never a generated story. First print still marks the occurrence chart.
 4. **Occurrence timeseries** — when receipts actually landed (area by source, CT). First print is marked.
-5. **Campaign brief** — hook, timing, risk, five age lenses.
+5. **Floor facts** — for a plugged campaign or product (Camry, #HeatWaveFit), kind + category + nearest receipts a sales team can quote. Empty search returns a close match, not “no trend yet.”
+6. **Campaign brief** — hook, timing, risk, five age lenses.
 
 The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses Ask.
 
@@ -22,7 +23,7 @@ HawkAI is not only a live circle-pack of topics. The **Booster Agent** is the in
 
 1. **Captures** live artifacts — hashtags, QR / short-link campaign codes, phrases, URLs, cashtags.
 2. **Analyzes** them against velocity, platform divergence, and receipt posts.
-3. **Correlates** *why* something is trending (evidence only — never invent a WHY). Drivers are graphed, not narrated. Shared artifacts become mind-map bridges.
+3. **Correlates** *why* something is trending (evidence only — never invent a WHY). Sentiment is counted from titles, not narrated. Shared artifacts become mind-map bridges.
 4. **Plugs** the same signal into a category desk — mind map, current trends, causation bars, occurrence timeseries.
 5. **Translates** the same signal for every age group: kids, Gen Z, millennials, Gen X, boomers.
 6. **Arms competitors** with campaign moves: hook, timing, risk, and how to ride the need without copying the meme.
@@ -32,8 +33,9 @@ The map stays the map. Booster sits beside it: capture → correlate → **plug 
 
 ## Non-negotiables
 
-- Never invent posts or a fake WHY. If receipts are thin, the causation chart says so and lowers confidence.
-- `/api/trends` contract stays stable (additive fields only). Category, causation, timeseries, and the mind map are derived from receipts already on the topic.
+- Never invent posts or a fake WHY. If receipts are thin, sentiment says so and lowers confidence.
+- `/api/trends` contract stays stable (additive fields only). Category, sentiment, timeseries, and the mind map are derived from receipts already on the topic.
+- A plugged query with no exact print returns nearest receipts and neighbors from the last tape — never “no trend yet,” and never invented posts.
 - Mind-map bridges exist only when the same artifact key prints on two topics. Empty bridges stay empty.
 - If a source is degraded, say so — still boost the sources that worked.
 - Kids lens must prefer safety and plain language over slang.
@@ -46,7 +48,7 @@ The map stays the map. Booster sits beside it: capture → correlate → **plug 
 |---|---|
 | Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
 | Category plugs + desk | `components/desk/` + `components/ChartDesk.tsx` |
-| Occurrence + causation | `lib/desk.ts` (live) · `agents/booster-agent/` (CLI) |
+| Occurrence + sentiment | `lib/desk.ts` · `lib/sentiment.ts` (live) · `agents/booster-agent/` (CLI) |
 | Live map | `components/TrendMap.tsx` |
 | Topic receipts | `components/TopicDetailPanel.tsx` |
 | Booster briefing | `components/BoosterBriefBar.tsx` + `components/BoosterInsights.tsx` |

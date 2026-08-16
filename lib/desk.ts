@@ -59,14 +59,17 @@ const SOURCE_CATEGORY: Record<string, CategoryId> = {
 };
 
 const KEYWORDS: Record<CategoryId, string[]> = {
-  markets: ["bitcoin", "crypto", "nasdaq", "earnings", "inflation", "etf", "ipo", "stock", "forex", "coingecko"],
+  markets: [
+    "bitcoin", "crypto", "nasdaq", "earnings", "inflation", "etf", "ipo", "stock", "forex", "coingecko",
+    "camry", "civic", "tesla", "mustang", "f-150", "f150", "dealer", "msrp", "ev", "toyota", "honda", "ford",
+  ],
   news: ["election", "congress", "sanctions", "treaty", "breaking"],
   weather: ["hurricane", "earthquake", "wildfire", "tornado", "flood", "storm", "heatwave", "forecast"],
   tech: ["github", "openai", "chatgpt", "kernel", "gpu", "spacex", "llm"],
   sports: ["nba", "nfl", "mlb", "nhl", "playoff", "soccer", "espn"],
   health: ["vaccine", "outbreak", "fda", "covid", "hospital"],
   security: ["ransomware", "cve", "breach", "exploit", "hacked", "vulnerability"],
-  campaigns: ["utm_medium=qr", "qrco.de", "scan this qr"],
+  campaigns: ["utm_medium=qr", "qrco.de", "scan this qr", "launch event", "test drive", "drop"],
   culture: ["wikipedia", "album", "anime", "tvmaze"],
 };
 

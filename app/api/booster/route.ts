@@ -12,7 +12,7 @@ export async function GET() {
   const trends = cacheGet<TrendsPayload>(TRENDS_KEY);
   if (!trends) {
     return NextResponse.json(
-      { error: "no trends yet — hit GET /api/trends first" },
+      { error: "Load the tape first (GET /api/trends), then plug a close alias." },
       { status: 409 },
     );
   }
