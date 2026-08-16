@@ -24,27 +24,23 @@ export default function TopicPlug({ value, busy, onPlug, onClear }: TopicPlugPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-w-[220px] flex-1 items-center gap-2 sm:max-w-lg">
+    <form
+      onSubmit={handleSubmit}
+      className="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-lg"
+    >
       <input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         placeholder="Camry, #HeatWaveFit, launch event…"
         aria-label="Plug a topic"
-        className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
+        enterKeyHint="go"
+        className="field-input"
       />
-      <button
-        type="submit"
-        disabled={busy || !draft.trim()}
-        className="h-9 shrink-0 rounded-full bg-white px-3 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
-      >
+      <button type="submit" disabled={busy || !draft.trim()} className="btn-primary">
         Plug
       </button>
       {value ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="signal-label h-9 shrink-0 px-2"
-        >
+        <button type="button" onClick={onClear} className="btn-ghost">
           Clear
         </button>
       ) : null}

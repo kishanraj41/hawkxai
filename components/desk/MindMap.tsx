@@ -212,7 +212,7 @@ export default function MindMapChart({
         .attr("font-family", (d) =>
           d.data.node.kind === "artifact" || d.data.node.kind === "source"
             ? "var(--font-plex), ui-monospace, monospace"
-            : "var(--font-inter), Inter, sans-serif",
+            : "var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif",
         )
         .attr("opacity", (d) => {
           if (!activeTopic) return 1;

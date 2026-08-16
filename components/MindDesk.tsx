@@ -56,18 +56,18 @@ export default function MindDesk({
 
   return (
     <section className="signal-glass relative flex min-h-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/8 px-4 py-2.5">
-        <div>
+      <div className="flex shrink-0 flex-col gap-3 border-b border-white/8 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-sm font-medium tracking-tight">
             {phrase ? `“${phrase}” mind` : `${CATEGORY_LABEL[category]} mind`}
           </h1>
           <p className="mt-0.5 text-xs text-white/45">
             {caption
               ? caption
-              : "Click a print, artifact, or first print. Amber dashes are shared receipts — never an invented link."}
+              : "Tap a print, artifact, or first print. Amber dashes are shared receipts — never an invented link."}
           </p>
         </div>
-        <div className="flex gap-4 font-mono text-[11px] tabular-nums">
+        <div className="flex shrink-0 gap-4 font-mono text-[11px] tabular-nums">
           <Kpi label="Prints" value={String(topics.length)} />
           <Kpi label="Artifacts" value={String(artifacts)} />
           <Kpi label="Bridges" value={String(graph.bridges)} />
@@ -109,7 +109,7 @@ export default function MindDesk({
           />
         ) : null}
       </div>
-      <div className="flex shrink-0 gap-4 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
+      <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
         <span className="text-[#e8a23a]">hub</span>
         <span>topic</span>
         <span className="text-[#7dd3fc]">artifact</span>

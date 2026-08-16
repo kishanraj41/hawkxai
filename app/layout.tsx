@@ -1,13 +1,12 @@
-import type { Metadata } from "next";
-import { IBM_Plex_Mono, Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-inter",
+  variable: "--font-plex-sans",
   display: "swap",
-  adjustFontFallback: true,
 });
 
 const plex = IBM_Plex_Mono({
@@ -22,6 +21,13 @@ export const metadata: Metadata = {
   description: "Live trend desk — Footprint for campaigns, Research for deep topic lookup.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#07080b",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${plex.variable} min-h-screen bg-[#07080b] font-sans antialiased text-white`}
+        className={`${plexSans.variable} ${plex.variable} min-h-screen bg-[#07080b] font-sans antialiased text-white`}
       >
         {children}
       </body>
