@@ -51,6 +51,20 @@ CONTROVERSY = (
 CATEGORIES = (
     "markets", "news", "weather", "tech", "sports", "health", "security", "campaigns", "culture",
 )
+CATEGORY_LABEL = {
+    "all": "All",
+    "markets": "Markets",
+    "news": "News",
+    "weather": "Weather",
+    "tech": "Tech",
+    "sports": "Sports",
+    "health": "Health",
+    "security": "Security",
+    "campaigns": "Campaigns",
+    "culture": "Culture",
+}
+MAX_MIND_TOPICS = 12
+MAX_MIND_LEAVES = 4
 SOURCE_CATEGORY = {
     "gdelt": "news",
     "wikipedia": "culture",
@@ -170,6 +184,32 @@ class Improvisation:
 
 
 @dataclass
+class MindNode:
+    id: str
+    kind: str
+    label: str
+    weight: float
+    topic_id: Optional[str] = None
+    detail: Optional[str] = None
+
+
+@dataclass
+class MindLink:
+    source: str
+    target: str
+    kind: str
+    label: Optional[str] = None
+
+
+@dataclass
+class MindGraph:
+    hub_id: str
+    nodes: List[MindNode] = field(default_factory=list)
+    links: List[MindLink] = field(default_factory=list)
+    bridges: int = 0
+
+
+@dataclass
 class BoosterReport:
     timestamp: str
     source_updated_at: str
@@ -177,6 +217,7 @@ class BoosterReport:
     briefs: List[TopicBrief] = field(default_factory=list)
     improvisations: List[Improvisation] = field(default_factory=list)
     captured: Dict[str, int] = field(default_factory=dict)
+    mind: Optional[MindGraph] = None
 
 
 def _posts(topic: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -535,6 +576,152 @@ def boost_topic(topic: Dict[str, Any]) -> TopicBrief:
     )
 
 
+def build_mind_map(
+    topics: Sequence[Dict[str, Any]],
+    briefs: Sequence[TopicBrief],
+    category: str = "all",
+) -> MindGraph:
+    """Hub = category plug. Branches = receipts. Shared links only when the same artifact key lands on 2+ topics."""
+    brief_by_id = {b.topic_id: b for b in briefs}
+    scoped = list(topics)
+    if category != "all":
+        scoped = [
+            t
+            for t in topics
+            if (
+                brief_by_id[t.get("id")].category
+                if t.get("id") in brief_by_id
+                else classify_topic(t, [])
+            )
+            == category
+        ]
+    ranked = sorted(scoped, key=_total_score, reverse=True)[:MAX_MIND_TOPICS]
+    hub_id = f"hub:{category}"
+    nodes: List[MindNode] = [
+        MindNode(
+            id=hub_id,
+            kind="hub",
+            label=CATEGORY_LABEL.get(category, category.title()),
+            weight=float(len(ranked)),
+            detail=f"{len(ranked)} names in this plug",
+        )
+    ]
+    links: List[MindLink] = []
+    artifact_index: Dict[str, List[str]] = {}
+
+    for topic in ranked:
+        tid = str(topic.get("id") or "topic")
+        topic_id = f"topic:{tid}"
+        brief = brief_by_id.get(tid)
+        cat = brief.category if brief else classify_topic(topic, [])
+        nodes.append(
+            MindNode(
+                id=topic_id,
+                kind="topic",
+                label=(topic.get("label") or tid)[:42],
+                topic_id=tid,
+                weight=max(8.0, _total_score(topic)),
+                detail=f"{topic.get('velocity') or '—'} · {cat}",
+            )
+        )
+        links.append(MindLink(source=hub_id, target=topic_id, kind="branch"))
+
+        leaves: List[MindNode] = []
+        artifacts = list((brief.artifacts if brief else [])[:3])
+        for art in artifacts:
+            key = f"{art.kind}:{art.value.lower()}"
+            artifact_index.setdefault(key, []).append(tid)
+            leaves.append(
+                MindNode(
+                    id=f"{topic_id}:art:{key}",
+                    kind="artifact",
+                    label=art.value[:28],
+                    topic_id=tid,
+                    weight=float(art.mentions),
+                    detail=f"{art.kind} · {art.mentions} mention{'s' if art.mentions != 1 else ''}",
+                )
+            )
+
+        first = brief.causation.first_platform if brief else None
+        if first:
+            leaves.append(
+                MindNode(
+                    id=f"{topic_id}:src:{first}",
+                    kind="source",
+                    label=f"first {first}",
+                    topic_id=tid,
+                    weight=10.0,
+                    detail=brief.causation.first_at if brief else "first print",
+                )
+            )
+
+        driver = brief.causation.drivers[0] if brief and brief.causation.drivers else None
+        if driver and len(leaves) < MAX_MIND_LEAVES:
+            leaves.append(
+                MindNode(
+                    id=f"{topic_id}:drv:{driver.id}",
+                    kind="driver",
+                    label=driver.label[:28],
+                    topic_id=tid,
+                    weight=float(driver.weight),
+                    detail=driver.evidence,
+                )
+            )
+
+        for leaf in leaves[:MAX_MIND_LEAVES]:
+            nodes.append(leaf)
+            links.append(MindLink(source=topic_id, target=leaf.id, kind="branch"))
+
+    bridges = 0
+    for key, topic_ids in artifact_index.items():
+        unique = list(dict.fromkeys(topic_ids))
+        if len(unique) < 2:
+            continue
+        label = ":".join(key.split(":")[1:]) or key
+        for i, left in enumerate(unique):
+            for right in unique[i + 1 :]:
+                links.append(
+                    MindLink(
+                        source=f"topic:{left}",
+                        target=f"topic:{right}",
+                        kind="shared",
+                        label=label,
+                    )
+                )
+                bridges += 1
+
+    return MindGraph(hub_id=hub_id, nodes=nodes, links=links, bridges=bridges)
+
+
+def _mermaid_label(text: str) -> str:
+    cleaned = re.sub(r"[\[\](){}#]", "", text).replace('"', "'").strip() or "node"
+    return f'"{cleaned[:32]}"'
+
+
+def mindmap_mermaid(graph: MindGraph) -> str:
+    by_id = {n.id: n for n in graph.nodes}
+    kids: Dict[str, List[str]] = {}
+    for link in graph.links:
+        if link.kind != "branch":
+            continue
+        kids.setdefault(link.source, []).append(link.target)
+    lines = ["mindmap"]
+    hub = by_id.get(graph.hub_id)
+    if not hub:
+        return "mindmap\n  root((empty))"
+    lines.append(f"  root(({_mermaid_label(hub.label)}))")
+    for tid in kids.get(graph.hub_id, []):
+        topic = by_id.get(tid)
+        if not topic:
+            continue
+        lines.append(f"    {_mermaid_label(topic.label)}")
+        for lid in kids.get(tid, []):
+            leaf = by_id.get(lid)
+            if leaf:
+                lines.append(f"      {_mermaid_label(leaf.label)}")
+    return "\n".join(lines)
+
+
 def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) -> List[Improvisation]:
     items: List[Improvisation] = []
     degraded = payload.get("degraded") or []
@@ -565,6 +752,9 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     thin = sum(1 for b in briefs if b.causation.thin)
     if thin >= 3:
         items.append(Improvisation("P1", "Persist ingest snapshots for multi-day occurrence charts", f"{thin} topics have fewer than two dated receipts — the timeseries cannot show a peak, only a point.", "Write hourly topic-score snapshots and join them on the area chart next to live posts."))
+    mind = build_mind_map(topics, briefs)
+    if mind.bridges == 0:
+        items.append(Improvisation("P1", "Shared-artifact bridges on the mind map", "The mind map only draws amber dashes when the same hashtag, QR, URL, or ticker prints on two names. Zero bridges means correlation is still a star, not a graph.", "Keep capturing overlapping campaign codes across topics — never invent a bridge to fill the map."))
     items.append(Improvisation("P2", "News + disaster markers on the same timeseries", "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.", "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY."))
     items.append(Improvisation("P2", "Export a one-page competitor brief", "CMOs will not live inside the circle pack. They want a PDF/Slack card.", "From the booster payload, render hook / risk / age takes / three receipts."))
     rank = {"P0": 0, "P1": 1, "P2": 2}
@@ -578,6 +768,7 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
     briefs = [boost_topic(t) for t in topics[:16]]
     improvisations = improvisations_for(payload, briefs)
     captured = Counter(a.kind for b in briefs for a in b.artifacts)
+    mind = build_mind_map(topics[:16], briefs)
     top = briefs[0] if briefs else None
     summary = (
         f"{top.label} · {top.campaign.risk} risk · {top.campaign.hook}"
@@ -591,6 +782,7 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
         briefs=briefs,
         improvisations=improvisations,
         captured=dict(captured),
+        mind=mind,
     )
 
 
@@ -644,6 +836,25 @@ def report_markdown(report: BoosterReport) -> str:
         for aud in brief.audiences:
             lines.append(f"- **{aud.label}:** {aud.takeaway}")
         lines.append("")
+    if report.mind:
+        lines.append("## Mind map")
+        lines.append("")
+        lines.append("Hub is the plug. Branches are receipts. Amber dashes are shared artifacts — never an invented link.")
+        lines.append("")
+        lines.append("```mermaid")
+        lines.append(mindmap_mermaid(report.mind))
+        lines.append("```")
+        lines.append("")
+        shared = [l for l in report.mind.links if l.kind == "shared"]
+        if shared:
+            lines.append(f"{report.mind.bridges} shared-artifact bridge{'s' if report.mind.bridges != 1 else ''}:")
+            lines.append("")
+            for link in shared:
+                lines.append(f"- `{link.label}` between `{link.source}` and `{link.target}`")
+            lines.append("")
+        else:
+            lines.append("No shared artifacts in this ingest — no invented bridges.")
+            lines.append("")
     lines.append("## Improvisations")
     lines.append("")
     for item in report.improvisations:
@@ -696,8 +907,20 @@ def self_check() -> int:
     assert all(len(b.audiences) == 5 for b in report.briefs)
     assert all(b.category in CATEGORIES for b in report.briefs)
     assert all(b.causation.drivers for b in report.briefs)
+    assert report.mind is not None
+    assert any(n.kind == "hub" for n in report.mind.nodes)
+    captured_values = {a.value.lower()[:28] for b in report.briefs for a in b.artifacts}
+    for node in report.mind.nodes:
+        if node.kind == "artifact":
+            assert node.label.lower() in captured_values, node.label
+    shared_keys = {(a.kind, a.value.lower()) for b in report.briefs for a in b.artifacts}
+    for link in report.mind.links:
+        if link.kind != "shared":
+            continue
+        assert any(link.label and link.label.lower() == value for _, value in shared_keys), link.label
     print("self-check ok")
     print(f"  briefs={len(report.briefs)} captured={report.captured}")
+    print(f"  mind nodes={len(report.mind.nodes)} bridges={report.mind.bridges}")
     print(f"  top={report.briefs[0].label}")
     print(f"  next={report.improvisations[0].priority} {report.improvisations[0].title}")
     return 0

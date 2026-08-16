@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet, cachePeek, cacheSet } from "@/lib/cache";
-import { attachPublicPosts, attachXPosts, clusterTopics } from "@/lib/cluster";
+import { attachPublicPosts, attachXPosts, clusterTopics, plugTopicFromPosts } from "@/lib/cluster";
 import {
   collectorAgent,
   collectorSummary,
@@ -10,6 +10,7 @@ import {
   whyAgent,
 } from "@/lib/agents";
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
+import { recordPulls } from "@/lib/rl";
 import type { TrendsPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,15 @@ export const maxDuration = 60;
 
 const LAST_KEY = "trends:v1";
 const inflight = new Map<string, Promise<TrendsPayload>>();
+
+function markPlatformPulls(sources: TrendsPayload["sources"]) {
+  const names = [
+    ...(sources.x ? ["X"] : []),
+    ...(sources.reddit ? ["Reddit"] : []),
+    ...(sources.hn ? ["HN"] : []),
+  ];
+  if (names.length) recordPulls(names);
+}
 
 async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
   const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
@@ -45,6 +55,7 @@ async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
   if (xR.ok) attachXPosts(clustered, xR.posts);
   if (publicR.ok) attachPublicPosts(clustered, publicR.posts);
   const { sources, degraded } = healthFrom([xR, redditR, hnR, publicR]);
+  markPlatformPulls(sources);
 
   const collectorLog = collectorSummary([xR, redditR, hnR, publicR]);
   const clusterLog = `cluster: ${clustered.length} topics`;
@@ -71,11 +82,52 @@ async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
   return payload;
 }
 
+async function runPlug(
+  geo: ReturnType<typeof geoAgent>,
+  topic: string,
+  cacheKey: string,
+) {
+  const collected = collectorAgent(geo, topic);
+  const [redditR, hnR, xR, publicR] = await Promise.all([
+    collected.reddit,
+    collected.hn,
+    collected.x,
+    collected.public,
+  ]);
+  const posts = [...redditR.posts, ...hnR.posts, ...xR.posts, ...publicR.posts];
+  const clustered = plugTopicFromPosts(topic, posts);
+  const { sources, degraded } = healthFrom([xR, redditR, hnR, publicR]);
+  markPlatformPulls(sources);
+
+  const collectorLog = collectorSummary([xR, redditR, hnR, publicR]);
+  const clusterLog = `plug: "${topic}" ${clustered.length} topics from ${posts.length} posts`;
+  console.log(clusterLog);
+
+  const validated = validatorAgent(clustered);
+  const pipeline = `${geo.log} → ${collectorLog} → ${clusterLog} → ${validated.log}`;
+  console.log(`[pipeline] ${pipeline}`);
+
+  const payload: TrendsPayload = {
+    topics: validated.topics,
+    updatedAt: new Date().toISOString(),
+    sources,
+    degraded,
+    pipeline,
+    publicApis: publicR.publicApis,
+    plugged: topic,
+  };
+  cacheSet(cacheKey, payload);
+  cacheSet(LAST_KEY, payload);
+  console.log(`[trends] plugged "${topic}" ${validated.topics.length} topics @ ${payload.updatedAt}`);
+  return payload;
+}
+
 export async function GET(req: NextRequest) {
   const refresh = req.nextUrl.searchParams.get("refresh") === "1";
   const geo = geoAgent(req.nextUrl.searchParams.get("city"));
-  console.log(geo.log);
-  const cacheKey = trendsCacheKey(geo.city);
+  const topic = (req.nextUrl.searchParams.get("topic") ?? "").trim();
+  console.log(topic ? `${geo.log} topic="${topic}"` : geo.log);
+  const cacheKey = trendsCacheKey(geo.city, topic || undefined);
 
   if (!refresh) {
     const cached = cacheGet<TrendsPayload>(cacheKey);
@@ -89,7 +141,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(await existing);
   }
 
-  const job = runPipeline(geo, cacheKey).finally(() => {
+  const job = (
+    topic ? runPlug(geo, topic, cacheKey) : runPipeline(geo, cacheKey)
+  ).finally(() => {
     if (inflight.get(cacheKey) === job) inflight.delete(cacheKey);
   });
   inflight.set(cacheKey, job);

@@ -2,11 +2,12 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import CausationChart from "@/components/desk/CausationChart";
+import MindMapChart from "@/components/desk/MindMap";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import { topicRisk } from "@/lib/booster";
 import { totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { CausationReport, DeskCategory, TimeBucket, Topic } from "@/lib/types";
+import type { CausationReport, DeskCategory, MindGraph, TimeBucket, Topic } from "@/lib/types";
 
 interface DeskState {
   category: DeskCategory;
@@ -15,6 +16,7 @@ interface DeskState {
   hoverId: string | null;
   series: TimeBucket[];
   causation: CausationReport | null;
+  graph: MindGraph;
   loading: boolean;
 }
 
@@ -74,7 +76,7 @@ function Header() {
           {CATEGORY_LABEL[state.category]} desk
         </h1>
         <p className="mt-0.5 text-xs text-white/45">
-          Plug a category. Trends, measured drivers, occurrence. Never an invented WHY.
+          Plug a category. Mind map of receipts, measured drivers, occurrence. Never an invented WHY.
         </p>
       </div>
       <div className="flex gap-4 font-mono text-[11px] tabular-nums">
@@ -92,6 +94,24 @@ function Kpi({ label, value }: { label: string; value: string }) {
     <div className="text-right">
       <p className="signal-label">{label}</p>
       <p className="mt-0.5 text-base tabular-nums text-white">{value}</p>
+    </div>
+  );
+}
+
+function Mind() {
+  const { state, actions } = useDesk();
+  return (
+    <div className="relative h-52 overflow-hidden rounded border border-white/8">
+      <MindMapChart
+        graph={state.graph}
+        topics={state.topics}
+        selectedId={state.selectedId}
+        hoverId={state.hoverId}
+        onSelect={(topic) => {
+          if (topic) actions.select(topic);
+        }}
+        onHover={actions.hover}
+      />
     </div>
   );
 }
@@ -224,6 +244,7 @@ export const Desk = {
   Provider,
   Frame,
   Header,
+  Mind,
   Timeseries,
   Causation,
   Trends,

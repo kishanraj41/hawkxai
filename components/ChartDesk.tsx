@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Desk } from "@/components/desk/Desk";
 import { buildCausation, buildTimeseries } from "@/lib/desk";
+import { buildMindMap } from "@/lib/mindmap";
 import type { BoosterPayload, Topic } from "@/lib/types";
 import type { DeskCategory } from "@/lib/types";
 
@@ -30,6 +31,10 @@ export default function ChartDesk({
   const focus = selected ?? topics[0] ?? null;
   const brief = focus ? booster?.briefs.find((b) => b.topicId === focus.id) : undefined;
   const series = useMemo(() => buildTimeseries(topics), [topics]);
+  const graph = useMemo(
+    () => buildMindMap(topics, booster?.briefs ?? [], category),
+    [topics, booster, category],
+  );
   const causation = useMemo(() => {
     if (!focus) return null;
     return brief?.causation ?? buildCausation(focus, brief?.artifacts ?? []);
@@ -44,6 +49,7 @@ export default function ChartDesk({
         hoverId,
         series,
         causation,
+        graph,
         loading,
       }}
       actions={{ select: onSelect, hover: onHover }}
@@ -51,7 +57,8 @@ export default function ChartDesk({
       <Desk.Frame>
         <Desk.Header />
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <div className="grid gap-4 lg:grid-cols-2">
+          <Desk.Mind />
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <Desk.Timeseries />
             <Desk.Causation />
           </div>

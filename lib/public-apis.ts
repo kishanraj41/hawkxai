@@ -1,14 +1,17 @@
 import { cacheGet, cacheSet } from "./cache";
 import type { CityId } from "./geo";
-import type { Post, PublicApiIngest } from "./types";
+import { pickFeeds, recordPulls } from "./rl";
+import type { Post, PublicApiFeedStat, PublicApiIngest } from "./types";
 
 const CATALOG_URL =
   "https://raw.githubusercontent.com/public-apis/public-apis/master/README.md";
 const UA = "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx)";
 const CATALOG_KEY = "public-apis:catalog";
 const PER_FEED = 8;
-const MAX_POSTS = 80;
+const MAX_POSTS = 160;
 const FEED_MS = 8_000;
+const DEFAULT_FEED_BUDGET = 24;
+const TOPIC_FEED_BUDGET = 28;
 
 export interface PublicApiEntry {
   name: string;
@@ -29,7 +32,8 @@ interface Feed {
   name: string;
   category: string;
   match: string[];
-  run: (city: CityId) => Promise<Post[]>;
+  topicAware?: boolean;
+  run: (city: CityId, topic?: string) => Promise<Post[]>;
 }
 
 const CITY_COORDS: Record<Exclude<CityId, "all">, { lat: number; lon: number; label: string }> = {
@@ -53,6 +57,39 @@ function post(
     createdAt: createdAt ?? new Date().toISOString(),
     sourceApi,
   };
+}
+
+async function getText(url: string, ms = FEED_MS): Promise<string> {
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: { Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*", "User-Agent": UA },
+    signal: AbortSignal.timeout(ms),
+  });
+  if (!res.ok) throw new Error(`${url} ${res.status}`);
+  return res.text();
+}
+
+function parseRss(xml: string, sourceApi: string): Post[] {
+  if (!xml.includes("<item") && !xml.includes("<entry")) throw new Error(`${sourceApi} not rss`);
+  const chunks = xml.split(/<entry[\s>]|<item[\s>]/).slice(1);
+  const posts: Post[] = [];
+  for (const chunk of chunks) {
+    const titleRaw = chunk.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+    const title = titleRaw.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
+    const href =
+      chunk.match(/<link[^>]*href="([^"]+)"/i)?.[1] ??
+      chunk.match(/<link[^>]*>([^<]+)<\/link>/i)?.[1] ??
+      "";
+    const published =
+      chunk.match(/<published>([^<]+)<\/published>/i)?.[1] ??
+      chunk.match(/<updated>([^<]+)<\/updated>/i)?.[1] ??
+      chunk.match(/<pubDate>([^<]+)<\/pubDate>/i)?.[1] ??
+      new Date().toISOString();
+    if (!title || !href) continue;
+    posts.push(post(title, href.trim(), Math.max(5, 80 - posts.length * 3), sourceApi, published));
+  }
+  if (!posts.length) throw new Error(`${sourceApi} rss empty`);
+  return posts.slice(0, PER_FEED);
 }
 
 async function getJson(url: string, ms = FEED_MS): Promise<unknown> {
@@ -129,13 +166,6 @@ export async function loadPublicApiCatalog(): Promise<PublicApiEntry[]> {
   return entries;
 }
 
-function allowed(feed: Feed, catalog: PublicApiEntry[] | null): boolean {
-  if (!catalog?.length) return true;
-  const open = catalog.filter((e) => noAuth(e.auth) && e.https);
-  const hay = open.map((e) => `${e.name} ${e.description}`.toLowerCase());
-  return feed.match.some((m) => hay.some((h) => h.includes(m.toLowerCase())));
-}
-
 function utcYmd(daysAgo: number) {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() - daysAgo);
@@ -151,10 +181,14 @@ const FEEDS: Feed[] = [
     name: "GDELT",
     category: "News",
     match: ["gdelt"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim()
+        ? `${topic.trim()} sourcelang:english`
+        : "sourcelang:english";
       const data = asRecord(
         await getJson(
-          "https://api.gdeltproject.org/api/v2/doc/doc?query=sourcelang:english&mode=ArtList&maxrecords=20&format=json&sort=DateDesc",
+          `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=ArtList&maxrecords=20&format=json&sort=DateDesc`,
         ),
       );
       return asArray(data?.articles)
@@ -171,7 +205,22 @@ const FEEDS: Feed[] = [
     name: "Wikipedia",
     category: "Open Data",
     match: ["wikipedia"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const data = asArray(
+          await getJson(
+            `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(topic.trim())}&limit=10&namespace=0&format=json`,
+          ),
+        );
+        const titles = asArray(data[1]).map(str);
+        const urls = asArray(data[3]).map(str);
+        return titles
+          .map((title, i) =>
+            title && urls[i] ? post(`Wikipedia: ${title}`, urls[i], 80 - i * 4, "Wikipedia") : null,
+          )
+          .filter((p): p is Post => Boolean(p));
+      }
       const { y, m, day } = utcYmd(1);
       const data = asRecord(
         await getJson(
@@ -200,7 +249,28 @@ const FEEDS: Feed[] = [
     name: "CoinGecko",
     category: "Cryptocurrency",
     match: ["coingecko"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const data = asRecord(
+          await getJson(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(topic.trim())}`),
+        );
+        return asArray(data?.coins)
+          .slice(0, PER_FEED)
+          .map((row, i) => {
+            const c = asRecord(row);
+            const name = str(c?.name);
+            if (!name) return null;
+            const symbol = str(c?.symbol);
+            return post(
+              `${name}${symbol ? ` ($${symbol.toUpperCase()})` : ""}`,
+              `https://www.coingecko.com/en/coins/${str(c?.id) || name}`,
+              85 - i * 5,
+              "CoinGecko",
+            );
+          })
+          .filter((p): p is Post => Boolean(p));
+      }
       const data = asRecord(await getJson("https://api.coingecko.com/api/v3/search/trending"));
       return asArray(data?.coins)
         .map((row) => {
@@ -324,7 +394,22 @@ const FEEDS: Feed[] = [
     name: "TVMaze",
     category: "Video",
     match: ["tvmaze"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const rows = asArray(
+          await getJson(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(topic.trim())}`),
+        );
+        return rows
+          .map((row, i) => {
+            const show = asRecord(asRecord(row)?.show);
+            const name = str(show?.name);
+            if (!name) return null;
+            return post(name, str(show?.url) || "https://www.tvmaze.com/", 80 - i * 4, "TVMaze");
+          })
+          .filter((p): p is Post => Boolean(p))
+          .slice(0, PER_FEED);
+      }
       const rows = asArray(await getJson("https://api.tvmaze.com/schedule?country=US"));
       return rows
         .map((row) => {
@@ -349,7 +434,29 @@ const FEEDS: Feed[] = [
     name: "Open Library",
     category: "Books",
     match: ["open library"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const data = asRecord(
+          await getJson(
+            `https://openlibrary.org/search.json?q=${encodeURIComponent(topic.trim())}&limit=${PER_FEED}`,
+          ),
+        );
+        return asArray(data?.docs)
+          .map((row) => {
+            const w = asRecord(row);
+            const title = str(w?.title);
+            if (!title) return null;
+            const key = str(w?.key);
+            return post(
+              title,
+              key ? `https://openlibrary.org${key}` : "https://openlibrary.org/",
+              60,
+              "Open Library",
+            );
+          })
+          .filter((p): p is Post => Boolean(p));
+      }
       const data = asRecord(await getJson("https://openlibrary.org/trending/daily.json"));
       return asArray(data?.works)
         .map((row) => {
@@ -371,8 +478,13 @@ const FEEDS: Feed[] = [
     name: "Dev.to",
     category: "Development",
     match: ["dev.to", "devto"],
-    run: async () => {
-      const rows = asArray(await getJson("https://dev.to/api/articles?per_page=12&top=1"));
+    topicAware: true,
+    run: async (_city, topic) => {
+      const tag = topic?.trim().split(/\s+/)[0]?.toLowerCase();
+      const url = tag
+        ? `https://dev.to/api/articles?per_page=12&tag=${encodeURIComponent(tag)}`
+        : "https://dev.to/api/articles?per_page=12&top=1";
+      const rows = asArray(await getJson(url));
       return rows
         .map((row) => {
           const a = asRecord(row);
@@ -387,7 +499,28 @@ const FEEDS: Feed[] = [
     name: "GitHub",
     category: "Development",
     match: ["github"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const data = asRecord(
+          await getJson(
+            `https://api.github.com/search/repositories?q=${encodeURIComponent(topic.trim())}&sort=updated&per_page=${PER_FEED}`,
+          ),
+        );
+        return asArray(data?.items)
+          .map((row, i) => {
+            const r = asRecord(row);
+            const name = str(r?.full_name);
+            if (!name) return null;
+            return post(
+              `GitHub: ${name}`,
+              str(r?.html_url) || `https://github.com/${name}`,
+              Math.min(100, num(r?.stargazers_count) / 50 || 80 - i * 4),
+              "GitHub",
+            );
+          })
+          .filter((p): p is Post => Boolean(p));
+      }
       const rows = asArray(await getJson("https://api.github.com/events"));
       const counts = new Map<string, { n: number; url: string }>();
       for (const row of rows) {
@@ -409,10 +542,12 @@ const FEEDS: Feed[] = [
     name: "Spaceflight News",
     category: "Science & Math",
     match: ["spaceflight news", "snapi"],
-    run: async () => {
-      const data = asRecord(
-        await getJson("https://api.spaceflightnewsapi.net/v4/articles/?limit=12"),
-      );
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim()
+        ? `https://api.spaceflightnewsapi.net/v4/articles/?limit=12&search=${encodeURIComponent(topic.trim())}`
+        : "https://api.spaceflightnewsapi.net/v4/articles/?limit=12";
+      const data = asRecord(await getJson(q));
       return asArray(data?.results)
         .map((row) => {
           const a = asRecord(row);
@@ -475,7 +610,33 @@ const FEEDS: Feed[] = [
     name: "TheSportsDB",
     category: "Sports & Fitness",
     match: ["thesportsdb", "sportsdb"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const data = asRecord(
+          await getJson(
+            `https://www.thesportsdb.com/api/v1/json/3/searchevents.php?e=${encodeURIComponent(topic.trim())}`,
+          ),
+        );
+        const events = asArray(data?.event ?? data?.events);
+        if (events.length) {
+          return events
+            .map((row) => {
+              const e = asRecord(row);
+              const title = str(e?.strEvent);
+              if (!title) return null;
+              return post(
+                title,
+                `https://www.thesportsdb.com/event/${str(e?.idEvent)}`,
+                70,
+                "TheSportsDB",
+                str(e?.dateEvent) || undefined,
+              );
+            })
+            .filter((p): p is Post => Boolean(p))
+            .slice(0, PER_FEED);
+        }
+      }
       const data = asRecord(
         await getJson("https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4328"),
       );
@@ -562,10 +723,12 @@ const FEEDS: Feed[] = [
     name: "CheapShark",
     category: "Shopping",
     match: ["cheapshark"],
-    run: async () => {
-      const rows = asArray(
-        await getJson("https://www.cheapshark.com/api/1.0/deals?pageSize=10&sortBy=Deal%20Rating"),
-      );
+    topicAware: true,
+    run: async (_city, topic) => {
+      const url = topic?.trim()
+        ? `https://www.cheapshark.com/api/1.0/deals?pageSize=10&title=${encodeURIComponent(topic.trim())}`
+        : "https://www.cheapshark.com/api/1.0/deals?pageSize=10&sortBy=Deal%20Rating";
+      const rows = asArray(await getJson(url));
       return rows
         .map((row) => {
           const d = asRecord(row);
@@ -590,8 +753,12 @@ const FEEDS: Feed[] = [
     name: "Jikan",
     category: "Anime",
     match: ["jikan", "myanimelist"],
-    run: async () => {
-      const data = asRecord(await getJson("https://api.jikan.moe/v4/top/anime?filter=airing&limit=10"));
+    topicAware: true,
+    run: async (_city, topic) => {
+      const url = topic?.trim()
+        ? `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(topic.trim())}&limit=10`
+        : "https://api.jikan.moe/v4/top/anime?filter=airing&limit=10";
+      const data = asRecord(await getJson(url));
       return asArray(data?.data)
         .map((row) => {
           const a = asRecord(row);
@@ -632,7 +799,28 @@ const FEEDS: Feed[] = [
     name: "iTunes",
     category: "Music",
     match: ["itunes", "apple"],
-    run: async () => {
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        const data = asRecord(
+          await getJson(
+            `https://itunes.apple.com/search?term=${encodeURIComponent(topic.trim())}&media=all&limit=${PER_FEED}`,
+          ),
+        );
+        return asArray(data?.results)
+          .map((row) => {
+            const s = asRecord(row);
+            const name = str(s?.trackName) || str(s?.collectionName);
+            if (!name) return null;
+            return post(
+              `${name}${str(s?.artistName) ? ` — ${str(s.artistName)}` : ""}`,
+              str(s?.trackViewUrl) || str(s?.collectionViewUrl) || "https://music.apple.com/",
+              55,
+              "iTunes",
+            );
+          })
+          .filter((p): p is Post => Boolean(p));
+      }
       const data = asRecord(
         await getJson("https://rss.applemarketingtools.com/api/v2/us/music/most-played/10/songs.json"),
       );
@@ -772,9 +960,282 @@ const FEEDS: Feed[] = [
         .filter((p): p is Post => Boolean(p));
     },
   },
+  {
+    name: "Google News",
+    category: "News",
+    match: ["google news"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim() || "world";
+      return parseRss(
+        await getText(
+          `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`,
+        ),
+        "Google News",
+      );
+    },
+  },
+  {
+    name: "BBC",
+    category: "News",
+    match: ["bbc"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      if (topic?.trim()) {
+        return parseRss(
+          await getText(
+            `https://news.google.com/rss/search?q=${encodeURIComponent(`${topic.trim()} site:bbc.com`)}&hl=en-US&gl=US&ceid=US:en`,
+          ),
+          "BBC",
+        );
+      }
+      return parseRss(await getText("https://feeds.bbci.co.uk/news/rss.xml"), "BBC");
+    },
+  },
+  {
+    name: "Guardian",
+    category: "News",
+    match: ["guardian"],
+    run: async () => parseRss(await getText("https://www.theguardian.com/world/rss"), "Guardian"),
+  },
+  {
+    name: "NYT",
+    category: "News",
+    match: ["new york times", "nytimes"],
+    run: async () => parseRss(await getText("https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"), "NYT"),
+  },
+  {
+    name: "NPR",
+    category: "News",
+    match: ["npr"],
+    run: async () => parseRss(await getText("https://feeds.npr.org/1001/rss.xml"), "NPR"),
+  },
+  {
+    name: "TechCrunch",
+    category: "Technology",
+    match: ["techcrunch"],
+    run: async () => parseRss(await getText("https://techcrunch.com/feed/"), "TechCrunch"),
+  },
+  {
+    name: "arXiv",
+    category: "Science & Math",
+    match: ["arxiv"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim() || "cat:cs.AI";
+      return parseRss(
+        await getText(
+          `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(q)}&start=0&max_results=${PER_FEED}&sortBy=submittedDate&sortOrder=descending`,
+        ),
+        "arXiv",
+      );
+    },
+  },
+  {
+    name: "ReliefWeb",
+    category: "Government",
+    match: ["reliefweb"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim();
+      const url = q
+        ? `https://api.reliefweb.int/v1/reports?appname=hawkai&limit=${PER_FEED}&sort[]=date:desc&query[value]=${encodeURIComponent(q)}`
+        : `https://api.reliefweb.int/v1/reports?appname=hawkai&limit=${PER_FEED}&sort[]=date:desc`;
+      const data = asRecord(await getJson(url));
+      return asArray(data?.data)
+        .map((row) => {
+          const r = asRecord(row);
+          const fields = asRecord(r?.fields);
+          const title = str(fields?.title);
+          if (!title) return null;
+          return post(title, "https://reliefweb.int/", 65, "ReliefWeb");
+        })
+        .filter((p): p is Post => Boolean(p));
+    },
+  },
+  {
+    name: "Fear & Greed",
+    category: "Cryptocurrency",
+    match: ["alternative.me", "fear"],
+    run: async () => {
+      const data = asRecord(await getJson("https://api.alternative.me/fng/?limit=1"));
+      const row = asRecord(asArray(data?.data)[0]);
+      const value = str(row?.value);
+      const label = str(row?.value_classification);
+      if (!value && !label) return [];
+      return [
+        post(
+          `Crypto Fear & Greed ${label} (${value})`,
+          "https://alternative.me/crypto/fear-and-greed-index/",
+          Math.max(20, num(value)),
+          "Fear & Greed",
+        ),
+      ];
+    },
+  },
+  {
+    name: "DuckDuckGo",
+    category: "Open Data",
+    match: ["duckduckgo"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim();
+      if (!q) return [];
+      const data = asRecord(
+        await getJson(
+          `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`,
+        ),
+      );
+      const posts: Post[] = [];
+      const heading = str(data?.Heading);
+      const abs = str(data?.AbstractText);
+      const absUrl = str(data?.AbstractURL);
+      if (heading && absUrl) {
+        posts.push(post(abs ? `${heading}: ${abs.slice(0, 120)}` : heading, absUrl, 70, "DuckDuckGo"));
+      }
+      for (const row of asArray(data?.RelatedTopics)) {
+        const t = asRecord(row);
+        const text = str(t?.Text);
+        const url = str(t?.FirstURL);
+        if (!text || !url) continue;
+        posts.push(post(text.slice(0, 180), url, 50, "DuckDuckGo"));
+        if (posts.length >= PER_FEED) break;
+      }
+      if (!posts.length) throw new Error("DuckDuckGo empty");
+      return posts;
+    },
+  },
+  {
+    name: "Stack Overflow",
+    category: "Development",
+    match: ["stackexchange", "stackoverflow"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim();
+      const url = q
+        ? `https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=${encodeURIComponent(q)}&site=stackoverflow&pagesize=${PER_FEED}`
+        : `https://api.stackexchange.com/2.3/questions?order=desc&sort=hot&site=stackoverflow&pagesize=${PER_FEED}`;
+      const data = asRecord(await getJson(url));
+      return asArray(data?.items)
+        .map((row) => {
+          const i = asRecord(row);
+          const title = str(i?.title);
+          if (!title) return null;
+          return post(
+            title,
+            str(i?.link) || "https://stackoverflow.com/",
+            Math.min(100, num(i?.score) + 20),
+            "Stack Overflow",
+          );
+        })
+        .filter((p): p is Post => Boolean(p));
+    },
+  },
+  {
+    name: "OpenAlex",
+    category: "Science & Math",
+    match: ["openalex"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim() || "artificial intelligence";
+      const data = asRecord(
+        await getJson(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per_page=${PER_FEED}`),
+      );
+      return asArray(data?.results)
+        .map((row) => {
+          const w = asRecord(row);
+          const title = str(w?.display_name);
+          if (!title) return null;
+          const href = str(w?.id) || "https://openalex.org/";
+          return post(title, href, 55, "OpenAlex");
+        })
+        .filter((p): p is Post => Boolean(p));
+    },
+  },
+  {
+    name: "CoinCap",
+    category: "Cryptocurrency",
+    match: ["coincap"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const data = asRecord(await getJson("https://api.coincap.io/v2/assets?limit=20"));
+      const rows = asArray(data?.data);
+      const q = topic?.trim().toLowerCase();
+      const picked = q
+        ? rows.filter((row) => {
+            const a = asRecord(row);
+            return `${str(a?.id)} ${str(a?.symbol)} ${str(a?.name)}`.toLowerCase().includes(q);
+          })
+        : rows;
+      const use = (picked.length ? picked : rows).slice(0, PER_FEED);
+      return use
+        .map((row) => {
+          const a = asRecord(row);
+          const name = str(a?.name);
+          if (!name) return null;
+          const change = num(a?.changePercent24Hr);
+          return post(
+            `${name} $${num(a?.priceUsd).toFixed(2)} (${change.toFixed(1)}%)`,
+            `https://coincap.io/assets/${str(a?.id)}`,
+            Math.min(100, Math.abs(change) * 8 + 20),
+            "CoinCap",
+          );
+        })
+        .filter((p): p is Post => Boolean(p));
+    },
+  },
+  {
+    name: "CryptoCompare",
+    category: "Cryptocurrency",
+    match: ["cryptocompare"],
+    run: async () => {
+      const data = asRecord(await getJson("https://min-api.cryptocompare.com/data/v2/news/?lang=EN"));
+      return asArray(data?.Data)
+        .slice(0, PER_FEED)
+        .map((row) => {
+          const n = asRecord(row);
+          const title = str(n?.title);
+          if (!title) return null;
+          const ts = num(n?.published_on);
+          return post(
+            title,
+            str(n?.url) || "https://www.cryptocompare.com/news/",
+            52,
+            "CryptoCompare",
+            ts ? new Date(ts * 1000).toISOString() : undefined,
+          );
+        })
+        .filter((p): p is Post => Boolean(p));
+    },
+  },
 ];
 
-export async function collectPublicApis(city: CityId = "all"): Promise<PublicApiCollect> {
+function selectFeeds(topic?: string): Feed[] {
+  const q = topic?.trim();
+  const names = FEEDS.map((f) => f.name);
+  const core = q
+    ? FEEDS.filter((f) => f.topicAware).map((f) => f.name)
+    : ["GDELT", "Wikipedia", "CoinGecko", "Google News", "BBC", "Guardian", "NPR", "NYT"];
+  const budget = q ? TOPIC_FEED_BUDGET : DEFAULT_FEED_BUDGET;
+  const picked = new Set<string>([
+    ...core.filter((n) => names.includes(n)),
+    ...pickFeeds(names, budget),
+  ]);
+  const selected = FEEDS.filter((f) => picked.has(f.name));
+  if (selected.length <= budget + 6) return selected;
+  const must = new Set(core);
+  const extra = selected.filter((f) => !must.has(f.name));
+  return [...FEEDS.filter((f) => must.has(f.name)), ...extra].slice(0, budget + 6);
+}
+
+export function publicFeedNames(): string[] {
+  return FEEDS.map((f) => f.name);
+}
+
+export async function collectPublicApis(
+  city: CityId = "all",
+  topic?: string,
+): Promise<PublicApiCollect> {
   let catalog: PublicApiEntry[] | null = null;
   try {
     catalog = await loadPublicApiCatalog();
@@ -783,22 +1244,28 @@ export async function collectPublicApis(city: CityId = "all"): Promise<PublicApi
   }
 
   const open = catalog?.filter((e) => noAuth(e.auth) && e.https) ?? [];
-  const feeds = FEEDS.filter((f) => allowed(f, catalog));
-  const settled = await Promise.allSettled(feeds.map((f) => f.run(city)));
+  const q = topic?.trim() || undefined;
+  const feeds = selectFeeds(q);
+  recordPulls(feeds.map((f) => f.name));
+  const settled = await Promise.allSettled(feeds.map((f) => f.run(city, q)));
   const posts: Post[] = [];
   const liveNames: string[] = [];
   const categories = new Set<string>();
+  const feedStats: PublicApiFeedStat[] = [];
 
   settled.forEach((item, i) => {
     const feed = feeds[i];
     if (item.status !== "fulfilled") {
       console.warn(`[public-apis] ${feed.name} fail`, item.reason);
+      feedStats.push({ name: feed.name, category: feed.category, posts: 0 });
       return;
     }
-    if (!item.value.length) return;
+    const chunk = item.value.slice(0, PER_FEED);
+    feedStats.push({ name: feed.name, category: feed.category, posts: chunk.length });
+    if (!chunk.length) return;
     liveNames.push(feed.name);
     categories.add(feed.category);
-    posts.push(...item.value.slice(0, PER_FEED));
+    posts.push(...chunk);
   });
 
   const ingest: PublicApiIngest = {
@@ -807,9 +1274,11 @@ export async function collectPublicApis(city: CityId = "all"): Promise<PublicApi
     attempted: feeds.length,
     categories: [...categories],
     sources: liveNames,
+    feeds: feedStats.toSorted((a, b) => b.posts - a.posts),
+    topic: q,
   };
   console.log(
-    `[public-apis] catalog=${ingest.catalog} open=${open.length} live=${ingest.live}/${ingest.attempted} posts=${posts.length}`,
+    `[public-apis] catalog=${ingest.catalog} open=${open.length} live=${ingest.live}/${ingest.attempted} posts=${posts.length}${q ? ` topic="${q}"` : ""}`,
   );
   return { posts: posts.slice(0, MAX_POSTS), ingest };
 }

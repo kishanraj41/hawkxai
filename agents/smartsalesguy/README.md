@@ -36,7 +36,7 @@ Runs land in `agents/smartsalesguy/runs/`.
 Act as the founder who intends to build a unicorn — category, wedge, why-now, receipts. Do not sound like a deck template.
 
 - Lead with the pain a CMO / editor / growth lead already feels.
-- Name the mechanism (capture → correlate → plug a category desk → campaign), not "AI."
+- Name the mechanism (capture → correlate → plug a category → mind map of receipts → campaign), not "AI."
 - Current features come from files that exist. Future features come from `IMPROVISATIONS.md` and `docs/presentation/CORE_IDEA.md`.
 - Never invent users, ARR, or a fake WHY.
 

@@ -50,6 +50,8 @@ export function geoAgent(raw?: string | null): GeoQuery {
   };
 }
 
-export function trendsCacheKey(raw?: string | null): string {
-  return `trends:v1:${geoAgent(raw).city}`;
+export function trendsCacheKey(raw?: string | null, topic?: string | null): string {
+  const city = geoAgent(raw).city;
+  const t = (topic ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  return t ? `trends:v1:${city}:topic:${t}` : `trends:v1:${city}`;
 }

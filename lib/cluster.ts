@@ -9,6 +9,7 @@ import {
   totalScore,
   velocityOf,
 } from "./metrics";
+import { topicBoost } from "./rl";
 import { PLATFORMS, type Platform, type Post, type RawSignals, type Topic } from "./types";
 
 function compact(posts: Post[], n: number) {
@@ -144,6 +145,54 @@ function overlap(a: Set<string>, b: Set<string>): number {
   return n / Math.min(a.size, b.size);
 }
 
+function matchesQuery(title: string, query: string): boolean {
+  const q = query.toLowerCase().trim();
+  if (!q) return false;
+  const t = title.toLowerCase();
+  if (t.includes(q)) return true;
+  const qTok = new Set(q.split(/[^a-z0-9]+/).filter((w) => w.length > 1));
+  if ([...qTok].some((w) => w.length > 2 && t.includes(w))) return true;
+  return overlap(qTok, tokens(title)) >= 0.18;
+}
+
+/** Build a desk-ready topic from any query + live posts. No invented WHY. */
+export function plugTopicFromPosts(query: string, posts: Post[]): Topic[] {
+  const label = query.trim() || "topic";
+  const buckets: Record<Platform, Post[]> = { x: [], reddit: [], hn: [], public: [] };
+  const related: Post[] = [];
+  for (const p of posts) {
+    if (matchesQuery(p.title, label)) buckets[p.platform].push(p);
+    else related.push(p);
+  }
+  const hitCount = PLATFORMS.reduce((n, p) => n + buckets[p].length, 0);
+  if (hitCount === 0) {
+    for (const p of posts.slice(0, 24)) buckets[p.platform].push(p);
+  }
+  const topic = hydrate(label, buckets);
+  topic.platforms.public.posts = buckets.public.slice(0, 12);
+  const apis = topic.platforms.public.posts.flatMap((p) => (p.sourceApi ? [p.sourceApi] : []));
+  topic.platforms.public.score = Math.round(scalePosts(buckets.public) * topicBoost(apis));
+  topic.divergence = divergenceOf(topic);
+  const topics: Topic[] = [topic];
+  const leftover = related
+    .filter((p) => !buckets[p.platform].includes(p))
+    .toSorted((a, b) => b.score - a.score)
+    .slice(0, 24);
+  const used = new Set(topics.map((t) => t.id));
+  for (const p of leftover) {
+    const extra = hydrate(p.title, {
+      x: p.platform === "x" ? [p] : [],
+      reddit: p.platform === "reddit" ? [p] : [],
+      hn: p.platform === "hn" ? [p] : [],
+      public: p.platform === "public" ? [p] : [],
+    });
+    if (used.has(extra.id)) continue;
+    used.add(extra.id);
+    topics.push(extra);
+  }
+  return topics;
+}
+
 /** Attach X topics after clustering so x_search can run in parallel with Grok. */
 export function attachXPosts(topics: Topic[], xPosts: Post[]): Topic[] {
   if (!xPosts.length) return topics;
@@ -179,13 +228,15 @@ export function attachPublicPosts(topics: Topic[], publicPosts: Post[]): Topic[]
     for (const p of matched) used.add(p.title);
     if (!matched.length) continue;
     topic.platforms.public.posts = matched.slice(0, 5);
-    topic.platforms.public.score = scalePosts(matched);
+    topic.platforms.public.score = Math.round(
+      scalePosts(matched) * topicBoost(matched.flatMap((p) => (p.sourceApi ? [p.sourceApi] : []))),
+    );
     topic.divergence = divergenceOf(topic);
   }
   const leftover = publicPosts
     .filter((p) => !used.has(p.title))
     .toSorted((a, b) => b.score - a.score)
-    .slice(0, 12);
+    .slice(0, 24);
   for (const p of leftover) {
     topics.push(hydrate(p.title, { x: [], reddit: [], hn: [], public: [p] }));
   }

@@ -56,3 +56,25 @@ export async function fetchHn(limit = 60): Promise<Post[]> {
   console.log(`[hn] ${posts.length} stories`);
   return posts;
 }
+
+export async function searchHn(query: string, limit = 20): Promise<Post[]> {
+  const q = query.trim();
+  if (!q) return fetchHn(limit);
+  const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(q)}&tags=story&hitsPerPage=${limit}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`hn search ${res.status}`);
+  const data = (await res.json()) as {
+    hits?: { title?: string; url?: string; objectID?: string; points?: number; created_at?: string }[];
+  };
+  const posts = (data.hits ?? [])
+    .filter((h) => h.title)
+    .map((h) => ({
+      platform: "hn" as const,
+      title: h.title ?? "",
+      url: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,
+      score: Number(h.points ?? 0),
+      createdAt: h.created_at ?? new Date().toISOString(),
+    }));
+  console.log(`[hn] search "${q}" ${posts.length}`);
+  return posts;
+}

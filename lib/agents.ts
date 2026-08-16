@@ -1,5 +1,5 @@
-import { fetchHn } from "./hn";
-import { fetchReddit } from "./reddit";
+import { fetchHn, searchHn } from "./hn";
+import { fetchReddit, searchReddit } from "./reddit";
 import { collectPublicApis } from "./public-apis";
 import { fetchX } from "./signals";
 import { grokChat } from "./grok";
@@ -52,9 +52,9 @@ async function collectSource(
   }
 }
 
-async function collectPublicSource(city: GeoQuery["city"]): Promise<SourceResult> {
+async function collectPublicSource(city: GeoQuery["city"], topic?: string): Promise<SourceResult> {
   try {
-    const { posts, ingest } = await collectPublicApis(city);
+    const { posts, ingest } = await collectPublicApis(city, topic);
     const result: SourceResult = {
       source: "public",
       ok: posts.length > 0,
@@ -70,19 +70,23 @@ async function collectPublicSource(city: GeoQuery["city"]): Promise<SourceResult
   }
 }
 
-/** Parallel X / Reddit / HN / public-apis fetchers. */
-export function collectorAgent(geo: GeoQuery = geoAgent("all")): {
+/** Parallel X / Reddit / HN / public-apis fetchers. Optional topic searches each source. */
+export function collectorAgent(
+  geo: GeoQuery = geoAgent("all"),
+  topic?: string,
+): {
   reddit: Promise<SourceResult>;
   hn: Promise<SourceResult>;
   x: Promise<SourceResult>;
   public: Promise<SourceResult>;
 } {
+  const q = topic?.trim() || undefined;
   return {
-    reddit: collectSource("reddit", () => fetchReddit(geo.redditSubs)),
-    hn: collectSource("hn", fetchHn),
-    public: collectPublicSource(geo.city),
+    reddit: collectSource("reddit", () => (q ? searchReddit(q) : fetchReddit(geo.redditSubs))),
+    hn: collectSource("hn", () => (q ? searchHn(q) : fetchHn())),
+    public: collectPublicSource(geo.city, q),
     x: process.env.XAI_API_KEY
-      ? collectSource("x", () => fetchX(geo.label ?? undefined))
+      ? collectSource("x", () => fetchX(geo.label ?? undefined, q))
       : Promise.resolve({ source: "x", ok: false, count: 0, posts: [] }),
   };
 }

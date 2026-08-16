@@ -98,9 +98,18 @@ export default function OverviewRail({
         {payload?.sources.x ? "X" : "X off"} · {payload?.sources.reddit ? "Reddit" : "Reddit off"} ·{" "}
         {payload?.sources.hn ? "HN" : "HN off"} · {payload?.sources.public ? "APIs" : "APIs off"}
       </p>
+      {payload?.plugged ? (
+        <p className="mt-1 text-xs text-white/70">Plugged “{payload.plugged}”</p>
+      ) : null}
       {payload?.publicApis ? (
         <p className="mt-1 font-mono text-[10px] tabular-nums text-white/40">
-          {payload.publicApis.live}/{payload.publicApis.attempted} live · {payload.publicApis.catalog} catalog
+          {payload.publicApis.live}/{payload.publicApis.attempted} live
+          {payload.publicApis.sources.length
+            ? ` · ${payload.publicApis.sources.slice(0, 6).join(", ")}`
+            : ""}
+          {payload.publicApis.sources.length > 6
+            ? ` +${payload.publicApis.sources.length - 6}`
+            : ""}
         </p>
       ) : null}
 
@@ -120,6 +129,19 @@ export default function OverviewRail({
           onClick={() => onSort("public")}
         />
       </div>
+
+      {payload?.publicApis?.feeds?.length ? (
+        <ul className="mt-3 max-h-36 space-y-1 overflow-y-auto">
+          {payload.publicApis.feeds
+            .filter((f) => f.posts > 0)
+            .map((f) => (
+              <li key={f.name} className="flex items-baseline justify-between gap-2">
+                <span className="min-w-0 truncate text-[11px] text-white/70">{f.name}</span>
+                <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/40">{f.posts}</span>
+              </li>
+            ))}
+        </ul>
+      ) : null}
 
       <div className="mt-4 flex gap-2">
         <button

@@ -4,8 +4,10 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import AmbientBackground from "@/components/AmbientBackground";
 import ChartDesk from "@/components/ChartDesk";
 import CategoryPlugs from "@/components/desk/CategoryPlugs";
+import TopicPlug from "@/components/desk/TopicPlug";
 import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
+import MindDesk from "@/components/MindDesk";
 import OverviewRail from "@/components/OverviewRail";
 import TickerTape from "@/components/TickerTape";
 import TrendMap from "@/components/TrendMap";
@@ -17,7 +19,7 @@ import type { AgeLens, BoosterPayload, DeskCategory, Platform, Topic, TrendsPayl
 
 type SortKey = "score" | Platform | "risk";
 type VelocityFilter = Topic["velocity"] | "all";
-type Surface = "map" | "desk";
+type Surface = "mind" | "desk" | "map";
 
 function MapSkeleton() {
   return (
@@ -44,24 +46,36 @@ export default function HawkAIApp() {
   const [velocityFilter, setVelocityFilter] = useState<VelocityFilter>("all");
   const [lens, setLens] = useState<AgeLens | "all">("all");
   const [category, setCategory] = useState<DeskCategory>("all");
-  const [surface, setSurface] = useState<Surface>("desk");
+  const [surface, setSurface] = useState<Surface>("mind");
+  const [plugged, setPlugged] = useState("");
   const askRef = useRef<HTMLInputElement>(null);
+  const pluggedRef = useRef("");
+  pluggedRef.current = plugged;
 
-  const loadTrends = useCallback(async (refresh = false) => {
+  const loadTrends = useCallback(async (refresh = false, topicOverride?: string | null) => {
     if (refresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
 
     try {
+      const topic =
+        topicOverride === null ? "" : (topicOverride ?? pluggedRef.current).trim();
       const params = new URLSearchParams();
       if (refresh) params.set("refresh", "1");
       if (city !== "all") params.set("city", city);
+      if (topic) params.set("topic", topic);
       const qs = params.toString();
       const res = await fetch(`/api/trends${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error(`Trends failed (${res.status})`);
       const data = (await res.json()) as TrendsPayload;
       setPayload(data);
       setBooster(boostTrends(data));
+      if (data.plugged) {
+        setPlugged(data.plugged);
+        const first = data.topics[0] ?? null;
+        setSelected(first);
+        setHighlightedIds(data.topics.map((t) => t.id));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load trends");
     } finally {
@@ -80,40 +94,46 @@ export default function HawkAIApp() {
     event.preventDefault();
     const q = askQuery.trim();
     if (!q || asking) return;
-
     setAsking(true);
     setAskAnswer(null);
     setHighlightedIds([]);
-
+    setPlugged(q);
+    setSurface("desk");
+    setCategory("all");
     try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q, city }),
-      });
-      const data = (await res.json()) as {
-        answer?: string;
-        topicIds?: string[];
-        error?: string;
-      };
-
-      if (!res.ok) {
-        setAskAnswer(data.error ?? "Ask failed — load trends first.");
-        return;
-      }
-
-      setAskAnswer(data.answer ?? "");
-      const ids = data.topicIds ?? [];
-      setHighlightedIds(ids);
-      if (ids.length > 0) {
-        const topic = payload?.topics.find((t) => t.id === ids[0]) ?? null;
-        setSelected(topic);
-      }
+      await loadTrends(true, q);
+      setAskAnswer(`Plugged “${q}” — desk graphs use live X, Reddit, HN, and public APIs.`);
     } catch {
-      setAskAnswer("Ask request failed.");
+      setAskAnswer("Could not plug that topic.");
     } finally {
       setAsking(false);
     }
+  }
+
+  async function handlePlug(topic: string) {
+    const q = topic.trim();
+    if (!q || asking) return;
+    setAsking(true);
+    setAskQuery(q);
+    setPlugged(q);
+    setAskAnswer(null);
+    setSurface("desk");
+    setCategory("all");
+    try {
+      await loadTrends(true, q);
+      setAskAnswer(`Plugged “${q}” — sources search that topic and the desk rebuilds.`);
+    } finally {
+      setAsking(false);
+    }
+  }
+
+  async function handleClearPlug() {
+    setPlugged("");
+    setAskQuery("");
+    setAskAnswer(null);
+    setSelected(null);
+    setHighlightedIds([]);
+    await loadTrends(true, null);
   }
 
   const artifactsById = useMemo(() => {
@@ -157,6 +177,7 @@ export default function HawkAIApp() {
         askRef.current?.focus();
         return;
       }
+      if (event.key === "g" || event.key === "G") setSurface("mind");
       if (event.key === "m" || event.key === "M") setSurface("map");
       if (event.key === "d" || event.key === "D") setSurface("desk");
       if (event.key === "j" || event.key === "k" || event.key === "J" || event.key === "K") {
@@ -180,13 +201,29 @@ export default function HawkAIApp() {
 
   function pickTopicId(id: string) {
     const topic = topics.find((t) => t.id === id) ?? payload?.topics.find((t) => t.id === id) ?? null;
-    setSelected(topic);
-    if (topic) setHighlightedIds([topic.id]);
+    pickTopic(topic);
   }
 
   function pickTopic(topic: Topic | null) {
     setSelected(topic);
     setHighlightedIds(topic ? [topic.id] : []);
+    if (!topic) return;
+    const feeds = [
+      ...new Set(
+        (topic.platforms.public?.posts ?? [])
+          .map((p) => p.sourceApi)
+          .filter((name): name is string => Boolean(name)),
+      ),
+    ];
+    if (topic.platforms.x?.posts.length) feeds.push("X");
+    if (topic.platforms.reddit?.posts.length) feeds.push("Reddit");
+    if (topic.platforms.hn?.posts.length) feeds.push("HN");
+    if (!feeds.length) return;
+    void fetch("/api/rl", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ feeds, reward: 1 }),
+    });
   }
 
   return (
@@ -221,6 +258,15 @@ export default function HawkAIApp() {
         </div>
 
         <div className="flex h-9 shrink-0 overflow-hidden rounded border border-white/10">
+          <button
+            type="button"
+            onClick={() => setSurface("mind")}
+            className={`px-2.5 font-mono text-[11px] tabular-nums ${
+              surface === "mind" ? "bg-white text-black" : "text-white/55 hover:text-white"
+            }`}
+          >
+            Mind <kbd className="ml-1 opacity-50">G</kbd>
+          </button>
           <button
             type="button"
             onClick={() => setSurface("desk")}
@@ -284,7 +330,7 @@ export default function HawkAIApp() {
             ref={askRef}
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Search topics… ⌘K"
+            placeholder="Plug any topic… ⌘K"
             className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
           />
           <button
@@ -292,7 +338,7 @@ export default function HawkAIApp() {
             disabled={asking || !askQuery.trim()}
             className="h-9 shrink-0 rounded-full bg-white px-3 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
           >
-            Ask
+            Ask / Plug
           </button>
         </form>
 
@@ -307,6 +353,12 @@ export default function HawkAIApp() {
         </div>
         <div className="flex items-center gap-2 overflow-x-auto border-t border-white/8 px-3 py-2">
           <span className="signal-label shrink-0">Plug</span>
+          <TopicPlug
+            value={plugged}
+            busy={asking || loading || refreshing}
+            onPlug={(q) => void handlePlug(q)}
+            onClear={() => void handleClearPlug()}
+          />
           <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
         </div>
       </header>
@@ -337,7 +389,18 @@ export default function HawkAIApp() {
           onHover={setHoverId}
         />
 
-        {surface === "desk" ? (
+        {surface === "mind" ? (
+          <MindDesk
+            category={category}
+            topics={topics}
+            selected={selected}
+            hoverId={hoverId}
+            booster={booster}
+            loading={loading}
+            onSelect={pickTopic}
+            onHover={setHoverId}
+          />
+        ) : surface === "desk" ? (
           <ChartDesk
             category={category}
             topics={topics}

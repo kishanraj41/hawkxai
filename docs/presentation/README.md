@@ -3,7 +3,7 @@
 Investor and pitch materials for HawkAI. Ops docs stay in [docs/](../README.md) (`CONTRIBUTING.md`, `RUNBOOK.md`).
 
 - **[VC one-pager](./VC_ONE_PAGER.md)** — SmartSalesGuy investor proposal (problem, solution, live / next)
-- **[Core idea](./CORE_IDEA.md)** — product contract: capture → correlate → plug a category desk (trends, causation, occurrence) → campaign
+- **[Core idea](./CORE_IDEA.md)** — product contract: capture → correlate → plug a category (mind map, trends, causation, occurrence) → campaign
 - **[Agent roster canvas](./agent_team_canvas.html)** — visual of the agent team
 - **[SmartSalesGuy](../../agents/smartsalesguy/README.md)** — checkout the repo, write the one-pager
 
@@ -35,7 +35,7 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | File | Use in the deck |
 |---|---|
 | `docs/presentation/VC_ONE_PAGER.md` | Master script: problem, solution, why now, live, agents, next, ask |
-| `docs/presentation/CORE_IDEA.md` | Product contract: capture → correlate → category desk; non-negotiables |
+| `docs/presentation/CORE_IDEA.md` | Product contract: capture → correlate → category mind map + desk; non-negotiables |
 | `README.md` | Setup, `/api/trends` contract, demo URLs |
 | `docs/presentation/README.md` | Index of investor + research docs |
 
