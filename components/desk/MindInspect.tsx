@@ -34,13 +34,13 @@ export default function MindInspect({
   const labelById = new Map(topics.map((t) => [t.id, t.label]));
 
   return (
-    <aside className="flex h-full min-h-0 w-[300px] shrink-0 flex-col overflow-y-auto border-l border-white/8 p-4">
+    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col overflow-y-auto border-t border-white/8 bg-[var(--panel-strong)] p-4 max-md:absolute max-md:inset-0 max-md:z-20 max-md:border-t-0 md:relative md:w-[300px] md:border-l md:border-t-0 md:bg-transparent">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="signal-label">{KIND[node.kind]}</p>
           <h2 className="mt-1 text-sm font-medium leading-snug tracking-tight">{node.label}</h2>
         </div>
-        <button type="button" onClick={onClose} className="signal-label hover:text-white">
+        <button type="button" onClick={onClose} className="btn-ghost">
           Close
         </button>
       </div>

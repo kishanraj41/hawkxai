@@ -14,8 +14,8 @@ export default function TickerTape({ topics, onSelect }: TickerTapeProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="relative z-20 mx-3 mt-2 overflow-hidden rounded-lg border border-white/8 bg-[#0c0d10]">
-      <div className="tape-track flex w-max gap-6 px-4 py-1.5">
+    <div className="relative z-20 mx-3 mt-2 overflow-hidden rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)]">
+      <div className="tape-track flex w-max gap-7 px-4 py-2">
         {items.map((t, i) => {
           const risk = topicRisk(t);
           return (

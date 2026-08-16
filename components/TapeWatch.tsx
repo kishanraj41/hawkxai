@@ -11,7 +11,7 @@ export default function TapeWatch({ deltas, onPick }: TapeWatchProps) {
   if (!deltas.length) return null;
 
   return (
-    <div className="no-print relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
+    <div className="no-print relative z-20 mx-3 mt-2 rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)] px-4 py-2 max-lg:mx-2">
       <p className="signal-label">Since last look</p>
       <ul className="mt-1 space-y-1">
         {deltas.map((d) => (

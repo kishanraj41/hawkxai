@@ -4,6 +4,15 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import AmbientBackground from "@/components/AmbientBackground";
 import ResearchLookup from "@/components/research/ResearchLookup";
 import {
+  DeskFrame,
+  DeskNav,
+  GhostButton,
+  HomeMark,
+  PrimaryButton,
+  StatusChip,
+} from "@/components/shell/DeskChrome";
+import DeskWorkspace from "@/components/shell/DeskWorkspace";
+import {
   formatResearchBrief,
   researchBriefFilename,
 } from "@/lib/research-brief";
@@ -22,66 +31,11 @@ const KIND_LABEL: Record<ResearchSourceKind, string> = {
   uspto: "USPTO",
 };
 
-function goHome() {
-  window.location.assign("/");
-}
-
 function setQueryUrl(topic: string) {
   const url = new URL(window.location.href);
   if (topic) url.searchParams.set("q", topic);
   else url.searchParams.delete("q");
   window.history.replaceState(null, "", `${url.pathname}${url.search}`);
-}
-
-function HomeMark() {
-  return (
-    <a
-      href="/"
-      aria-label="hawkai home"
-      className="flex shrink-0 items-center gap-2 hover:text-white"
-      onClick={(e) => {
-        e.preventDefault();
-        goHome();
-      }}
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-white">
-        <polygon
-          points="8,1.5 14.5,5 14.5,11 8,14.5 1.5,11 1.5,5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.2"
-        />
-      </svg>
-      <span className="text-sm font-medium tracking-tight">hawkai</span>
-      <span className="signal-live" aria-label="Live" />
-    </a>
-  );
-}
-
-function DeskNav() {
-  return (
-    <nav className="flex h-9 shrink-0 items-center gap-1" aria-label="Desks">
-      <a
-        href="/"
-        className="signal-label flex h-9 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white"
-        onClick={(e) => {
-          e.preventDefault();
-          goHome();
-        }}
-      >
-        Trends
-      </a>
-      <a
-        href="/footprint"
-        className="signal-label flex h-9 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white"
-      >
-        Footprint
-      </a>
-      <span className="signal-label flex h-9 items-center rounded border border-white/30 bg-white px-2.5 text-black">
-        Research
-      </span>
-    </nav>
-  );
 }
 
 function ResearchExport({ payload }: { payload: ResearchPayload }) {
@@ -108,16 +62,10 @@ function ResearchExport({ payload }: { payload: ResearchPayload }) {
 
   return (
     <>
-      <div className="no-print flex shrink-0 flex-wrap gap-2">
-        <button type="button" onClick={() => void copy()} className="signal-label h-9 px-2 hover:text-white">
-          Copy
-        </button>
-        <button type="button" onClick={download} className="signal-label h-9 px-2 hover:text-white">
-          Save .md
-        </button>
-        <button type="button" onClick={() => window.print()} className="signal-label h-9 px-2 hover:text-white">
-          Print / PDF
-        </button>
+      <div className="no-print flex shrink-0 items-center gap-0.5">
+        <GhostButton onClick={() => void copy()}>Copy</GhostButton>
+        <GhostButton onClick={download}>Save .md</GhostButton>
+        <GhostButton onClick={() => window.print()}>Print / PDF</GhostButton>
       </div>
       <article className="keep-brief-sheet" aria-hidden>
         <pre>{markdown}</pre>
@@ -139,8 +87,10 @@ function SourceCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded border px-3 py-2 text-left transition-colors duration-80 ${
-        active ? "border-white/40 bg-white/10" : "border-white/8 hover:border-white/20"
+      className={`w-full rounded-[var(--radius-sm)] border px-3 py-2.5 text-left transition-colors duration-120 ${
+        active
+          ? "border-white/30 bg-white/[0.07]"
+          : "border-white/8 hover:border-white/18 hover:bg-white/[0.03]"
       }`}
     >
       <div className="flex items-baseline justify-between gap-2">
@@ -149,7 +99,7 @@ function SourceCard({
           <span className="font-mono text-[10px] tabular-nums text-white/40">{source.score}</span>
         ) : null}
       </div>
-      <p className="mt-1 line-clamp-2 text-[12px] text-white/85">{source.title}</p>
+      <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-white/88">{source.title}</p>
     </button>
   );
 }
@@ -235,238 +185,242 @@ export default function ResearchDesk() {
   const empty = !payload && !loading;
 
   return (
-    <main className="relative flex h-screen flex-col overflow-hidden bg-[#07080b] text-white">
+    <main className="desk-shell">
       <AmbientBackground />
 
-      <header className="no-print relative z-50 mx-3 mt-3 shrink-0 rounded-lg border border-white/8 bg-[#0c0d10]">
-        <div className="flex items-center gap-2 overflow-x-auto px-3 py-2">
-          <div className="flex shrink-0 items-center gap-3">
-            <HomeMark />
-            <span className="font-mono text-[11px] tabular-nums text-white/50">
-              {loading
-                ? "researching"
-                : payload
-                  ? `${payload.sources.length} sources · ${formatUpdatedAt(payload.updatedAt)}`
-                  : "research a topic"}
-            </span>
-            {payload?.thin ? (
-              <span className="signal-label rounded border border-amber-400/30 px-1.5 py-0.5 text-amber-300/80">
-                thin evidence
-              </span>
-            ) : null}
-            {payload?.degraded.map((msg) => (
-              <span key={msg} className="signal-label rounded border border-white/10 px-1.5 py-0.5">
-                {msg}
-              </span>
-            ))}
-          </div>
-
-          <DeskNav />
-
-          <form onSubmit={handleSubmit} className="flex min-w-[220px] flex-1 items-center gap-2 sm:max-w-xl">
+      <DeskFrame
+        toolbar={
+          <form
+            onSubmit={handleSubmit}
+            className="desk-chrome__toolbar-form flex min-w-0 flex-1 items-center gap-2"
+          >
             <input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Topic, paper, policy, patent… ⌘K"
-              className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
+              placeholder="Topic, paper, policy, patent…"
+              enterKeyHint="search"
+              className="field-input max-w-xl"
             />
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              className="h-9 shrink-0 rounded-full bg-white px-3 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
-            >
+            <PrimaryButton type="submit" disabled={loading || !query.trim()}>
               Research
-            </button>
+            </PrimaryButton>
           </form>
-
-          {payload ? <ResearchExport payload={payload} /> : null}
-
-          <button
-            type="button"
-            onClick={() => void runResearch(query)}
-            disabled={loading || !query.trim()}
-            className="signal-label h-9 shrink-0 px-2 disabled:opacity-40"
-          >
-            Refresh
-          </button>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto border-t border-white/8 px-3 py-2">
-          {payload ? (
+        }
+        context={
+          payload ? (
             <>
               <span className="signal-label shrink-0">Topic</span>
-              <span className="max-w-[280px] truncate rounded border border-white/20 px-2 py-1 text-[12px]">
+              <span className="max-w-[min(280px,60vw)] truncate rounded border border-white/15 bg-white/[0.03] px-2.5 py-1 text-[12px]">
                 {payload.query}
               </span>
-              {Object.entries(byKind).map(([kind, n]) => (
-                <span key={kind} className="signal-label shrink-0">
-                  {KIND_LABEL[kind as ResearchSourceKind]} {n}
-                </span>
-              ))}
-              <button type="button" onClick={handleClear} className="signal-label h-9 shrink-0 px-2">
-                Clear
-              </button>
+              <div className="desk-chrome__context-trail flex items-center gap-2">
+                {Object.entries(byKind).map(([kind, n]) => (
+                  <StatusChip key={kind}>
+                    {KIND_LABEL[kind as ResearchSourceKind]} {n}
+                  </StatusChip>
+                ))}
+              </div>
+              <GhostButton onClick={handleClear}>Clear</GhostButton>
             </>
           ) : (
-            <span className="signal-label shrink-0">Name a topic · dig the corners · ⌘K</span>
-          )}
+            <span className="signal-label shrink-0">
+              Name a topic · dig the corners
+              <span className="desk-shortcut"> · ⌘K</span>
+            </span>
+          )
+        }
+      >
+        <div className="desk-chrome__brand flex min-w-0 shrink-0 items-center gap-3">
+          <HomeMark />
+          <DeskNav active="research" />
         </div>
-      </header>
+        <div className="desk-chrome__status flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+          <StatusChip>
+            {loading
+              ? "researching"
+              : payload
+                ? `${payload.sources.length} sources · ${formatUpdatedAt(payload.updatedAt)}`
+                : "research a topic"}
+          </StatusChip>
+          {payload?.thin ? (
+            <span className="status-chip status-chip--warn">thin evidence</span>
+          ) : null}
+          {payload?.degraded.map((msg) => (
+            <StatusChip key={msg}>{msg}</StatusChip>
+          ))}
+        </div>
+        <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
+          {payload ? <ResearchExport payload={payload} /> : null}
+          <GhostButton
+            onClick={() => void runResearch(query)}
+            disabled={loading || !query.trim()}
+          >
+            Refresh
+          </GhostButton>
+        </div>
+      </DeskFrame>
 
       {error ? (
-        <div className="no-print relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
+        <div className="no-print relative z-20 mx-3 mt-2 rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)] px-4 py-2.5">
           <p className="signal-label">{error}</p>
         </div>
       ) : null}
 
-      <div className="no-print relative z-10 grid min-h-0 min-w-0 flex-1 grid-cols-[260px_minmax(0,1fr)_300px] gap-3 p-3">
-        <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-3">
-          <p className="text-sm font-medium tracking-tight">Sources</p>
-          <p className="mt-1 text-xs text-white/45">
-            Wiki, web, PubMed, arXiv, USPTO, HN, Reddit, X. Click to inspect.
-          </p>
-          <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto">
-            {loading && !payload ? (
-              <p className="signal-label">Gathering…</p>
-            ) : (
-              (payload?.sources ?? []).map((s) => (
-                <SourceCard
-                  key={s.id}
-                  source={s}
-                  active={s.id === selectedId}
-                  onSelect={() => setSelectedId(s.id)}
-                />
-              ))
-            )}
-          </div>
-        </aside>
-
-        {empty ? (
-          <ResearchLookup
-            onLookup={(t) => void runResearch(t)}
-            onFocusLookup={() => inputRef.current?.focus()}
-          />
-        ) : (
-          <section className="signal-glass flex min-h-0 flex-col overflow-hidden">
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/8 px-4 py-2.5">
-              <div>
-                <h1 className="text-sm font-medium tracking-tight">Brief</h1>
-                <p className="mt-0.5 text-xs text-white/45">
-                  Evidence-grounded findings. Thin corners stay marked thin.
-                </p>
-              </div>
-              {loading ? (
-                <span className="font-mono text-[11px] tabular-nums text-white/45">updating…</span>
-              ) : null}
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <DeskWorkspace
+        listLabel="Sources"
+        stageLabel="Brief"
+        detailLabel="Inspect"
+        jumpToDetailKey={selectedId}
+        preferStage={empty}
+        list={
+          <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-3.5">
+            <p className="text-sm font-medium tracking-tight">Sources</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/45">
+              Wiki, web, PubMed, arXiv, USPTO, HN, Reddit, X.
+            </p>
+            <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto">
               {loading && !payload ? (
-                <p className="text-sm text-white/45">
-                  Digging Wikipedia, web, PubMed, arXiv, USPTO, HN, Reddit, X…
-                </p>
+                <p className="signal-label">Gathering…</p>
               ) : (
-                <>
-                  <p className="text-pretty text-sm leading-relaxed text-white/85">
-                    {payload?.summary}
-                  </p>
-
-                  <h2 className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
-                    Findings
-                  </h2>
-                  <ul className="mt-2 space-y-3">
-                    {(payload?.findings ?? []).map((f, i) => (
-                      <li key={`${f.claim.slice(0, 40)}-${i}`} className="rounded border border-white/8 px-3 py-2">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <p className="text-[13px] text-white/90">{f.claim}</p>
-                          <span
-                            className={`signal-label shrink-0 ${
-                              f.confidence === "thin" ? "text-amber-300/80" : ""
-                            }`}
-                          >
-                            {f.confidence}
-                          </span>
-                        </div>
-                        <p className="mt-1 font-mono text-[10px] text-white/40">
-                          {f.evidenceIds.join(" · ")}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {(payload?.angles.length ?? 0) > 0 ? (
-                    <>
-                      <h2 className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
-                        Angles
-                      </h2>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {payload!.angles.map((a) => (
-                          <button
-                            key={a}
-                            type="button"
-                            disabled={loading}
-                            onClick={() => void runResearch(`${payload!.query}: ${a}`)}
-                            className="rounded border border-white/10 px-2 py-1 font-mono text-[11px] text-white/70 transition-colors duration-80 hover:border-white/30 hover:text-white disabled:opacity-40"
-                          >
-                            {a}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-
-                  {(payload?.openQuestions.length ?? 0) > 0 ? (
-                    <>
-                      <h2 className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
-                        Open questions
-                      </h2>
-                      <p className="mt-1 text-xs text-white/40">Click to research that angle.</p>
-                      <ul className="mt-2 space-y-1.5">
-                        {payload!.openQuestions.map((q) => (
-                          <li key={q}>
-                            <button
-                              type="button"
-                              disabled={loading}
-                              onClick={() => void runResearch(q)}
-                              className="w-full rounded border border-white/8 px-3 py-2 text-left text-[13px] text-white/70 transition-colors duration-80 hover:border-white/25 hover:text-white disabled:opacity-40"
-                            >
-                              {q}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : null}
-                </>
+                (payload?.sources ?? []).map((s) => (
+                  <SourceCard
+                    key={s.id}
+                    source={s}
+                    active={s.id === selectedId}
+                    onSelect={() => setSelectedId(s.id)}
+                  />
+                ))
               )}
             </div>
-          </section>
-        )}
-
-        <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-4">
-          <p className="text-sm font-medium tracking-tight">Inspector</p>
-          {selected ? (
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
-              <p className="signal-label">{KIND_LABEL[selected.kind]}</p>
-              <p className="mt-2 text-sm text-white/90">{selected.title}</p>
-              <p className="mt-3 text-pretty text-xs leading-relaxed text-white/55">
-                {selected.snippet}
-              </p>
-              <a
-                href={selected.url}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex h-9 items-center rounded-full border border-white/20 px-3 text-xs text-white/80 hover:border-white/40 hover:text-white"
-              >
-                Open source
-              </a>
-            </div>
+          </aside>
+        }
+        stage={
+          empty ? (
+            <ResearchLookup
+              onLookup={(t) => void runResearch(t)}
+              onFocusLookup={() => inputRef.current?.focus()}
+            />
           ) : (
-            <p className="mt-3 text-xs text-white/45">
-              Select a source on the left. Research never invents a citation.
-            </p>
-          )}
-        </aside>
-      </div>
+            <section className="signal-glass flex min-h-0 flex-col overflow-hidden">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
+                <div>
+                  <h1 className="text-sm font-medium tracking-tight">Brief</h1>
+                  <p className="mt-0.5 text-xs text-white/45">
+                    Evidence-grounded findings. Thin corners stay marked thin.
+                  </p>
+                </div>
+                {loading ? (
+                  <span className="font-mono text-[11px] tabular-nums text-white/45">updating…</span>
+                ) : null}
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+                {loading && !payload ? (
+                  <p className="text-sm text-white/45">
+                    Digging Wikipedia, web, PubMed, arXiv, USPTO, HN, Reddit, X…
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-pretty text-[15px] leading-relaxed text-white/88">
+                      {payload?.summary}
+                    </p>
+
+                    <h2 className="mt-7 signal-label">Findings</h2>
+                    <ul className="mt-2.5 space-y-2.5">
+                      {(payload?.findings ?? []).map((f, i) => (
+                        <li
+                          key={`${f.claim.slice(0, 40)}-${i}`}
+                          className="rounded-[var(--radius-sm)] border border-white/8 bg-white/[0.02] px-3 py-2.5"
+                        >
+                          <div className="flex items-baseline justify-between gap-2">
+                            <p className="text-[13px] leading-snug text-white/90">{f.claim}</p>
+                            <span
+                              className={`signal-label shrink-0 ${
+                                f.confidence === "thin" ? "text-amber-300/80" : ""
+                              }`}
+                            >
+                              {f.confidence}
+                            </span>
+                          </div>
+                          <p className="mt-1.5 font-mono text-[10px] text-white/35">
+                            {f.evidenceIds.join(" · ")}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {(payload?.angles.length ?? 0) > 0 ? (
+                      <>
+                        <h2 className="mt-7 signal-label">Angles</h2>
+                        <div className="mt-2.5 flex flex-wrap gap-1.5">
+                          {payload!.angles.map((a) => (
+                            <button
+                              key={a}
+                              type="button"
+                              disabled={loading}
+                              onClick={() => void runResearch(`${payload!.query}: ${a}`)}
+                              className="empty-stage__chip disabled:opacity-40"
+                            >
+                              {a}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
+
+                    {(payload?.openQuestions.length ?? 0) > 0 ? (
+                      <>
+                        <h2 className="mt-7 signal-label">Open questions</h2>
+                        <p className="mt-1 text-xs text-white/40">Tap to research that angle.</p>
+                        <ul className="mt-2.5 space-y-1.5">
+                          {payload!.openQuestions.map((q) => (
+                            <li key={q}>
+                              <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => void runResearch(q)}
+                                className="w-full rounded-[var(--radius-sm)] border border-white/8 px-3 py-2.5 text-left text-[13px] text-white/70 transition-colors duration-120 hover:border-white/22 hover:bg-white/[0.03] hover:text-white disabled:opacity-40"
+                              >
+                                {q}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </section>
+          )
+        }
+        detail={
+          <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-4">
+            <p className="text-sm font-medium tracking-tight">Inspector</p>
+            {selected ? (
+              <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+                <p className="signal-label">{KIND_LABEL[selected.kind]}</p>
+                <p className="mt-2 text-sm leading-snug text-white/92">{selected.title}</p>
+                <p className="mt-3 text-pretty text-xs leading-relaxed text-white/55">
+                  {selected.snippet}
+                </p>
+                <a
+                  href={selected.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-ghost mt-4 border border-white/12"
+                >
+                  Open source
+                </a>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs leading-relaxed text-white/45">
+                Select a source from the list. Research never invents a citation.
+              </p>
+            )}
+          </aside>
+        }
+      />
     </main>
   );
 }

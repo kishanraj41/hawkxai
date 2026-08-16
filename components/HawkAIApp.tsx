@@ -11,6 +11,17 @@ import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
 import MindDesk from "@/components/MindDesk";
 import OverviewRail from "@/components/OverviewRail";
+import {
+  DeskFrame,
+  DeskNav,
+  FieldSelect,
+  GhostButton,
+  HomeMark,
+  PrimaryButton,
+  SegmentControl,
+  StatusChip,
+} from "@/components/shell/DeskChrome";
+import DeskWorkspace from "@/components/shell/DeskWorkspace";
 import TapeWatch from "@/components/TapeWatch";
 import TickerTape from "@/components/TickerTape";
 import TrendMap from "@/components/TrendMap";
@@ -64,71 +75,6 @@ function MapSkeleton() {
     <div className="absolute inset-0 flex items-center justify-center">
       <p className="text-sm text-white/45">Loading…</p>
     </div>
-  );
-}
-
-function goHome() {
-  window.location.assign("/");
-}
-
-function HomeMark() {
-  return (
-    <a
-      href="/"
-      aria-label="hawkai home"
-      className="flex shrink-0 items-center gap-2 hover:text-white"
-      onClick={(e) => {
-        e.preventDefault();
-        goHome();
-      }}
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-white">
-        <polygon
-          points="8,1.5 14.5,5 14.5,11 8,14.5 1.5,11 1.5,5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.2"
-        />
-      </svg>
-      <span className="text-sm font-medium tracking-tight">hawkai</span>
-      <span className="signal-live" aria-label="Live" />
-    </a>
-  );
-}
-
-function DeskSwitch({ desk }: { desk: DeskKind }) {
-  const link =
-    "signal-label flex h-9 shrink-0 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white";
-  const active =
-    "signal-label flex h-9 shrink-0 items-center rounded border border-white/30 bg-white px-2.5 text-black";
-
-  return (
-    <nav className="flex h-9 shrink-0 items-center gap-1" aria-label="Desks">
-      {desk === "trends" ? (
-        <span className={active}>Trends</span>
-      ) : (
-        <a
-          href="/"
-          className={link}
-          onClick={(e) => {
-            e.preventDefault();
-            goHome();
-          }}
-        >
-          Trends
-        </a>
-      )}
-      {desk === "footprint" ? (
-        <span className={active}>Footprint</span>
-      ) : (
-        <a href="/footprint" className={link}>
-          Footprint
-        </a>
-      )}
-      <a href="/research" className={link}>
-        Research
-      </a>
-    </nav>
   );
 }
 
@@ -414,149 +360,99 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       lens={lens}
       since={sinceLastLook}
     >
-    <main className="relative flex h-screen flex-col overflow-hidden bg-[#07080b] text-white">
+    <main className="desk-shell">
       <AmbientBackground />
 
-      <header className="no-print relative z-50 mx-3 mt-3 shrink-0 rounded-lg border border-white/8 bg-[#0c0d10]">
-        <div className="flex items-center gap-2 overflow-x-auto px-3 py-2">
-        <div className="flex shrink-0 items-center gap-3">
-          <HomeMark />
-          <span className="font-mono text-[11px] tabular-nums text-white/50">
-            {loading
-              ? footprint
-                ? "looking up"
-                : "loading"
-              : footprint && !plugged
-                ? "look up a phrase"
-                : `${topics.length} ${footprint ? "prints" : "names"} · ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
-          </span>
-          {payload?.degraded.map((msg) => (
-            <span key={msg} className="signal-label rounded border border-white/10 px-1.5 py-0.5">
-              {msg}
-            </span>
-          ))}
-        </div>
-
-        <DeskSwitch desk={desk} />
-
-        <div className="flex h-9 shrink-0 overflow-hidden rounded border border-white/10">
-          <button
-            type="button"
-            onClick={() => setSurface("mind")}
-            className={`px-2.5 font-mono text-[11px] tabular-nums ${
-              surface === "mind" ? "bg-white text-black" : "text-white/55 hover:text-white"
-            }`}
-          >
-            Mind <kbd className="ml-1 opacity-50">G</kbd>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSurface("desk")}
-            className={`px-2.5 font-mono text-[11px] tabular-nums ${
-              surface === "desk" ? "bg-white text-black" : "text-white/55 hover:text-white"
-            }`}
-          >
-            Desk <kbd className="ml-1 opacity-50">D</kbd>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSurface("map")}
-            className={`px-2.5 font-mono text-[11px] tabular-nums ${
-              surface === "map" ? "bg-white text-black" : "text-white/55 hover:text-white"
-            }`}
-          >
-            Map <kbd className="ml-1 opacity-50">M</kbd>
-          </button>
-        </div>
-
-        <select
-          value={velocityFilter}
-          onChange={(e) => setVelocityFilter(e.target.value as VelocityFilter)}
-          aria-label="Velocity"
-          className="signal-label h-9 shrink-0 rounded border border-white/10 bg-transparent px-2 text-white focus:border-white/40 focus:outline-none"
-        >
-          <option value="all" className="bg-[#0a0e17]">All</option>
-          <option value="rising" className="bg-[#0a0e17]">Rising</option>
-          <option value="peaking" className="bg-[#0a0e17]">Peaking</option>
-          <option value="fading" className="bg-[#0a0e17]">Fading</option>
-        </select>
-
-        <select
-          value={lens}
-          onChange={(e) => setLens(e.target.value as AgeLens | "all")}
-          aria-label="Audience"
-          className="signal-label h-9 shrink-0 rounded border border-white/10 bg-transparent px-2 text-white focus:border-white/40 focus:outline-none"
-        >
-          {AUDIENCE_OPTIONS.map((opt) => (
-            <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={city}
-          onChange={(e) => setCity(e.target.value as CityId)}
-          aria-label="City"
-          className="signal-label h-9 shrink-0 rounded border border-white/10 bg-transparent px-2 text-white focus:border-white/40 focus:outline-none"
-        >
-          {CITY_OPTIONS.map((opt) => (
-            <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <form onSubmit={handleAsk} className="flex min-w-[200px] flex-1 items-center gap-2 sm:max-w-md">
-          <input
-            ref={askRef}
-            value={askQuery}
-            onChange={(e) => setAskQuery(e.target.value)}
-            placeholder={footprint ? "Campaign, hashtag, or phrase… ⌘K" : "Camry, #HeatWaveFit, launch event… ⌘K"}
-            className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={asking || !askQuery.trim()}
-            className="h-9 shrink-0 rounded-full bg-white px-3 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
-          >
-            {footprint ? "Look up" : "Ask / Plug"}
-          </button>
-        </form>
-
-        <KeepBrief.Actions />
-        <button
-          type="button"
-          onClick={() => void loadTrends(true)}
-          disabled={refreshing || (footprint && !plugged)}
-          className="signal-label h-9 shrink-0 px-2 disabled:opacity-40"
-        >
-          Refresh
-        </button>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto border-t border-white/8 px-3 py-2">
-          {footprint ? (
+      <DeskFrame
+        toolbar={
+          <>
+            <SegmentControl
+              value={surface}
+              onChange={(id) => setSurface(id as Surface)}
+              options={[
+                { id: "mind", label: "Mind", hint: "G" },
+                { id: "desk", label: "Desk", hint: "D" },
+                { id: "map", label: "Map", hint: "M" },
+              ]}
+            />
+            <FieldSelect
+              label="Velocity"
+              value={velocityFilter}
+              onChange={(v) => setVelocityFilter(v as VelocityFilter)}
+            >
+              <option value="all" className="bg-[#0a0e17]">All</option>
+              <option value="rising" className="bg-[#0a0e17]">Rising</option>
+              <option value="peaking" className="bg-[#0a0e17]">Peaking</option>
+              <option value="fading" className="bg-[#0a0e17]">Fading</option>
+            </FieldSelect>
+            <FieldSelect
+              label="Audience"
+              value={lens}
+              onChange={(v) => setLens(v as AgeLens | "all")}
+            >
+              {AUDIENCE_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
+                  {opt.label}
+                </option>
+              ))}
+            </FieldSelect>
+            <FieldSelect
+              label="City"
+              value={city}
+              onChange={(v) => setCity(v as CityId)}
+            >
+              {CITY_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
+                  {opt.label}
+                </option>
+              ))}
+            </FieldSelect>
+            <form
+              onSubmit={handleAsk}
+              className="desk-chrome__toolbar-form flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-lg"
+            >
+              <input
+                ref={askRef}
+                value={askQuery}
+                onChange={(e) => setAskQuery(e.target.value)}
+                placeholder={footprint ? "Campaign, hashtag, or phrase…" : "Ask or plug a name…"}
+                enterKeyHint="search"
+                className="field-input"
+              />
+              <PrimaryButton type="submit" disabled={asking || !askQuery.trim()}>
+                {footprint ? "Look up" : "Ask / Plug"}
+              </PrimaryButton>
+            </form>
+          </>
+        }
+        context={
+          footprint ? (
             plugged ? (
               <>
                 <span className="signal-label shrink-0">Footprint</span>
-                <span className="max-w-[220px] truncate rounded border border-white/20 px-2 py-1 text-[12px]">
+                <span className="max-w-[min(220px,55vw)] truncate rounded border border-white/15 bg-white/[0.03] px-2.5 py-1 text-[12px]">
                   {plugged}
                 </span>
                 {payload?.query ? (
-                  <span className="signal-label shrink-0">
+                  <StatusChip>
                     {payload.query.kind} · {payload.query.match} · {payload.query.hitCount}
-                  </span>
+                  </StatusChip>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={() => void handleClearPlug()}
-                  className="signal-label h-9 shrink-0 px-2"
-                >
-                  Clear
-                </button>
+                <GhostButton onClick={() => void handleClearPlug()}>Clear</GhostButton>
+                <div className="desk-chrome__context-trail ml-auto flex items-center gap-2">
+                  <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
+                </div>
               </>
             ) : (
-              <span className="signal-label shrink-0">Look up a campaign or phrase · ⌘K</span>
+              <>
+                <span className="signal-label shrink-0">
+                  Look up a campaign or phrase
+                  <span className="desk-shortcut"> · ⌘K</span>
+                </span>
+                <div className="desk-chrome__context-trail ml-auto">
+                  <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
+                </div>
+              </>
             )
           ) : (
             <>
@@ -567,118 +463,161 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
                 onPlug={(q) => void handlePlug(q)}
                 onClear={() => void handleClearPlug()}
               />
+              <div className="desk-chrome__context-trail ml-auto">
+                <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
+              </div>
             </>
-          )}
-          <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
+          )
+        }
+      >
+        <div className="desk-chrome__brand flex min-w-0 shrink-0 items-center gap-3">
+          <HomeMark />
+          <DeskNav active={footprint ? "footprint" : "trends"} />
         </div>
-      </header>
+        <div className="desk-chrome__status flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+          <StatusChip>
+            {loading
+              ? footprint
+                ? "looking up"
+                : "loading"
+              : footprint && !plugged
+                ? "look up a phrase"
+                : `${topics.length} ${footprint ? "prints" : "names"} · ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
+          </StatusChip>
+          {payload?.degraded.map((msg) => (
+            <StatusChip key={msg}>{msg}</StatusChip>
+          ))}
+        </div>
+        <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
+          <KeepBrief.Actions />
+          <GhostButton
+            onClick={() => void loadTrends(true)}
+            disabled={refreshing || (footprint && !plugged)}
+          >
+            Refresh
+          </GhostButton>
+        </div>
+      </DeskFrame>
 
       <TickerTape topics={payload?.topics ?? []} onSelect={pickTopic} />
 
       {askAnswer ? (
-        <div className="no-print relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
-          <p className="text-sm text-white/80">{askAnswer}</p>
+        <div className="no-print relative z-20 mx-3 mt-2 rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)] px-4 py-2.5">
+          <p className="text-sm leading-relaxed text-white/80">{askAnswer}</p>
         </div>
       ) : null}
 
       <TapeWatch deltas={deltas} onPick={pickTopicId} />
 
       {error ? (
-        <div className="relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
+        <div className="relative z-20 mx-3 mt-2 rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)] px-4 py-2.5">
           <p className="signal-label">{error}</p>
         </div>
       ) : null}
 
-      <div className="relative z-10 grid min-h-0 min-w-0 flex-1 grid-cols-[240px_minmax(0,1fr)_300px] gap-3 p-3">
-        <OverviewRail
-          payload={payload}
-          topics={topics}
-          selectedId={selected?.id ?? null}
-          hoverId={hoverId}
-          sortKey={sortKey}
-          watchedIds={watchIds}
-          onSort={setSortKey}
-          onSelect={pickTopic}
-          onHover={setHoverId}
-          onToggleWatch={handleToggleWatch}
-        />
-
-        {footprint && !(plugged || loading) ? (
-          <PhraseLookup
-            onLookup={(q) => void handlePlug(q)}
-            onFocusLookup={() => askRef.current?.focus()}
-          />
-        ) : surface === "mind" ? (
-          <MindDesk
-            category={category}
+      <DeskWorkspace
+        listLabel="Watch"
+        stageLabel={surface === "mind" ? "Mind" : surface === "desk" ? "Desk" : "Map"}
+        detailLabel="Intel"
+        jumpToDetailKey={selected?.id ?? null}
+        preferStage={Boolean(footprint && !plugged && !loading)}
+        list={
+          <OverviewRail
+            payload={payload}
             topics={topics}
-            selected={selected}
-            hoverId={hoverId}
-            booster={booster}
-            loading={loading}
-            phrase={plugged}
-            caption={focusCaption}
-            onSelect={pickTopic}
-            onHover={setHoverId}
-          />
-        ) : surface === "desk" ? (
-          <ChartDesk
-            category={category}
-            topics={topics}
-            selected={selected}
-            hoverId={hoverId}
-            booster={booster}
-            loading={loading}
-            query={payload?.query ?? null}
-            takeaway={lens === "all" ? undefined : focusCaption}
-            onSelect={pickTopic}
-            onHover={setHoverId}
-          />
-        ) : (
-          <MapStage
-            topics={topics}
-            loading={loading}
             selectedId={selected?.id ?? null}
             hoverId={hoverId}
+            sortKey={sortKey}
+            watchedIds={watchIds}
+            onSort={setSortKey}
             onSelect={pickTopic}
             onHover={setHoverId}
-          >
-            {loading ? (
-              <MapSkeleton />
-            ) : topics.length > 0 ? (
-              <TrendMap
-                topics={topics}
-                selectedId={selected?.id ?? null}
-                highlightedIds={highlightedIds}
-                hoverId={hoverId}
-                captionFor={(t) =>
-                  lensCaption(
-                    booster?.briefs.find((b) => b.topicId === t.id),
-                    lens,
-                  )
-                }
-                onSelect={pickTopic}
-                onHover={setHoverId}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <p className="signal-label">{footprint ? "No prints in this filter — try All" : "Nearest names are in another plug — try All"}</p>
-              </div>
-            )}
-          </MapStage>
-        )}
-
-        <IntelRail
-          selected={selected}
-          booster={booster}
-          topics={topics}
-          hoverId={hoverId}
-          lens={lens}
-          onSelect={pickTopic}
-          onPickId={pickTopicId}
-          onHover={setHoverId}
-        />
-      </div>
+            onToggleWatch={handleToggleWatch}
+          />
+        }
+        stage={
+          footprint && !(plugged || loading) ? (
+            <PhraseLookup
+              onLookup={(q) => void handlePlug(q)}
+              onFocusLookup={() => askRef.current?.focus()}
+            />
+          ) : surface === "mind" ? (
+            <MindDesk
+              category={category}
+              topics={topics}
+              selected={selected}
+              hoverId={hoverId}
+              booster={booster}
+              loading={loading}
+              phrase={plugged}
+              caption={focusCaption}
+              onSelect={pickTopic}
+              onHover={setHoverId}
+            />
+          ) : surface === "desk" ? (
+            <ChartDesk
+              category={category}
+              topics={topics}
+              selected={selected}
+              hoverId={hoverId}
+              booster={booster}
+              loading={loading}
+              query={payload?.query ?? null}
+              takeaway={lens === "all" ? undefined : focusCaption}
+              onSelect={pickTopic}
+              onHover={setHoverId}
+            />
+          ) : (
+            <MapStage
+              topics={topics}
+              loading={loading}
+              selectedId={selected?.id ?? null}
+              hoverId={hoverId}
+              onSelect={pickTopic}
+              onHover={setHoverId}
+            >
+              {loading ? (
+                <MapSkeleton />
+              ) : topics.length > 0 ? (
+                <TrendMap
+                  topics={topics}
+                  selectedId={selected?.id ?? null}
+                  highlightedIds={highlightedIds}
+                  hoverId={hoverId}
+                  captionFor={(t) =>
+                    lensCaption(
+                      booster?.briefs.find((b) => b.topicId === t.id),
+                      lens,
+                    )
+                  }
+                  onSelect={pickTopic}
+                  onHover={setHoverId}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <p className="signal-label">
+                    {footprint
+                      ? "No prints in this filter — try All"
+                      : "Nearest names are in another plug — try All"}
+                  </p>
+                </div>
+              )}
+            </MapStage>
+          )
+        }
+        detail={
+          <IntelRail
+            selected={selected}
+            booster={booster}
+            topics={topics}
+            hoverId={hoverId}
+            lens={lens}
+            onSelect={pickTopic}
+            onPickId={pickTopicId}
+            onHover={setHoverId}
+          />
+        }
+      />
       <KeepBrief.Sheet />
     </main>
     </KeepBrief.Provider>

@@ -81,14 +81,14 @@ function Actions() {
   if (!ready) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <button type="button" onClick={() => void copy()} className="signal-label hover:text-white">
+    <div className="flex flex-wrap items-center gap-0.5">
+      <button type="button" onClick={() => void copy()} className="btn-ghost">
         Copy
       </button>
-      <button type="button" onClick={download} className="signal-label hover:text-white">
+      <button type="button" onClick={download} className="btn-ghost">
         Save .md
       </button>
-      <button type="button" onClick={print} className="signal-label hover:text-white">
+      <button type="button" onClick={print} className="btn-ghost">
         Print / PDF
       </button>
     </div>
