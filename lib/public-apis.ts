@@ -810,11 +810,13 @@ const FEEDS: Feed[] = [
         return asArray(data?.results)
           .map((row) => {
             const s = asRecord(row);
-            const name = str(s?.trackName) || str(s?.collectionName);
+            if (!s) return null;
+            const name = str(s.trackName) || str(s.collectionName);
             if (!name) return null;
+            const artist = str(s.artistName);
             return post(
-              `${name}${str(s?.artistName) ? ` — ${str(s.artistName)}` : ""}`,
-              str(s?.trackViewUrl) || str(s?.collectionViewUrl) || "https://music.apple.com/",
+              artist ? `${name} — ${artist}` : name,
+              str(s.trackViewUrl) || str(s.collectionViewUrl) || "https://music.apple.com/",
               55,
               "iTunes",
             );
