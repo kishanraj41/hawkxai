@@ -101,7 +101,7 @@ export default function OverviewRail({
       <p className="mt-1 text-xs text-white/45">
         {payload
           ? "○ watches a name. Refresh to see tape deltas — never an invented cause."
-          : "Live names load on the trend desk. Footprint opens in a new tab."}
+          : "Live names load on the trend desk. Footprint opens /footprint."}
       </p>
       <p className="mt-1 text-xs text-white/45">
         {payload?.sources.x ? "X" : "X off"} · {payload?.sources.reddit ? "Reddit" : "Reddit off"} ·{" "}
