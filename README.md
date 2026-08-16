@@ -57,7 +57,7 @@ npm run dev
 - Data: http://localhost:3000/api/trends
 - Phrase lookup: http://localhost:3000/api/trends?topic=Camry
 - Force refresh: http://localhost:3000/api/trends?refresh=1
-- Ask: `POST /api/ask` body `{ "q": "what's blowing up in Austin?" }`
+- Ask: `POST /api/ask` body `{ "q": "what's printing worldwide?" }`
 - Booster: http://localhost:3000/api/booster  (after trends are cached)
 
 First `/api/trends` can take ~60–90s (Grok cluster). After that it caches **5 minutes**.

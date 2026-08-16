@@ -1,15 +1,11 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { WORLD_REDDIT } from "./geo";
 import type { Post } from "./types";
 
 const execFileP = promisify(execFile);
 
-const DEFAULT_SUBS = [
-  "technology",
-  "wallstreetbets",
-  "news",
-  "artificial",
-] as const;
+const DEFAULT_SUBS = WORLD_REDDIT;
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 HawkAI/0.1";
@@ -219,7 +215,11 @@ export async function fetchReddit(
   const list = [...new Set(subs.map((s) => s.trim()).filter(Boolean))];
   if (!list.length) throw new Error("reddit: no subreddits");
 
-  const probe = list.includes("technology") ? "technology" : list[0];
+  const probe = list.includes("worldnews")
+    ? "worldnews"
+    : list.includes("technology")
+      ? "technology"
+      : list[0];
   let official: Post[] = [];
   try {
     official = await fetchOfficial(probe);

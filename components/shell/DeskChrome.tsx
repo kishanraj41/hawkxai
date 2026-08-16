@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 
 export type DeskId = "trends" | "footprint" | "research";
 
-const DESKS: { id: DeskId; href: string; label: string }[] = [
-  { id: "trends", href: "/", label: "Trends" },
-  { id: "footprint", href: "/footprint", label: "Footprint" },
-  { id: "research", href: "/research", label: "Research" },
+const DESKS: { id: DeskId; href: string; label: string; blurb: string }[] = [
+  { id: "trends", href: "/", label: "Trends", blurb: "What's printing now" },
+  { id: "footprint", href: "/footprint", label: "Footprint", blurb: "Look up a phrase" },
+  { id: "research", href: "/research", label: "Research", blurb: "Dig a topic" },
 ];
 
 export function goHome() {
@@ -43,15 +43,30 @@ export function HomeMark() {
   );
 }
 
+function DeskLabel({ label, blurb }: { label: string; blurb: string }) {
+  return (
+    <>
+      <span className="desk-nav__label">{label}</span>
+      <span className="desk-nav__blurb">{blurb}</span>
+    </>
+  );
+}
+
 export function DeskNav({ active }: { active: DeskId }) {
   return (
     <nav className="desk-nav" aria-label="Desks">
       {DESKS.map((desk) => {
         const isActive = desk.id === active;
+        const title = `${desk.label}: ${desk.blurb}`;
         if (isActive) {
           return (
-            <span key={desk.id} className="desk-nav__item desk-nav__item--active" aria-current="page">
-              {desk.label}
+            <span
+              key={desk.id}
+              className="desk-nav__item desk-nav__item--active"
+              aria-current="page"
+              title={title}
+            >
+              <DeskLabel label={desk.label} blurb={desk.blurb} />
             </span>
           );
         }
@@ -60,6 +75,7 @@ export function DeskNav({ active }: { active: DeskId }) {
             key={desk.id}
             href={desk.href}
             className="desk-nav__item"
+            title={title}
             onClick={
               desk.id === "trends"
                 ? (e) => {
@@ -69,7 +85,7 @@ export function DeskNav({ active }: { active: DeskId }) {
                 : undefined
             }
           >
-            {desk.label}
+            <DeskLabel label={desk.label} blurb={desk.blurb} />
           </a>
         );
       })}
@@ -86,7 +102,7 @@ export function SegmentControl({
   value,
   onChange,
 }: {
-  options: { id: string; label: string; hint?: string }[];
+  options: { id: string; label: string; hint?: string; blurb?: string }[];
   value: string;
   onChange: (id: string) => void;
 }) {
@@ -98,11 +114,18 @@ export function SegmentControl({
           type="button"
           role="tab"
           aria-selected={value === opt.id}
+          aria-label={opt.blurb ? `${opt.label}: ${opt.blurb}` : opt.label}
+          title={opt.blurb ? `${opt.label}: ${opt.blurb}` : opt.label}
           onClick={() => onChange(opt.id)}
           className={`segment__item ${value === opt.id ? "segment__item--active" : ""}`}
         >
-          {opt.label}
-          {opt.hint ? <kbd className="segment__kbd">{opt.hint}</kbd> : null}
+          <span className="segment__copy">
+            <span className="segment__label">
+              {opt.label}
+              {opt.hint ? <kbd className="segment__kbd">{opt.hint}</kbd> : null}
+            </span>
+            {opt.blurb ? <span className="segment__blurb">{opt.blurb}</span> : null}
+          </span>
         </button>
       ))}
     </div>
