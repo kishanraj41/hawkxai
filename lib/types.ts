@@ -247,7 +247,10 @@ export type ResearchSourceKind =
   | "hn"
   | "reddit"
   | "x"
-  | "public";
+  | "public"
+  | "pubmed"
+  | "arxiv"
+  | "uspto";
 
 export interface ResearchSource {
   id: string;

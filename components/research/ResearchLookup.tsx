@@ -20,7 +20,8 @@ export default function ResearchLookup({ onLookup, onFocusLookup }: ResearchLook
         <div>
           <h1 className="text-sm font-medium tracking-tight">Research</h1>
           <p className="mt-0.5 text-xs text-white/45">
-            Deep lookup across Wikipedia, the open web, HN, Reddit, and X — receipts only.
+            Deep lookup across Wikipedia, PubMed, arXiv, USPTO, the open web, HN, Reddit, and X —
+            receipts only.
           </p>
         </div>
         <p className="font-mono text-[11px] tabular-nums text-white/45">⌘K</p>
@@ -28,8 +29,8 @@ export default function ResearchLookup({ onLookup, onFocusLookup }: ResearchLook
       <div className="flex min-h-0 flex-1 flex-col items-start justify-center px-8 py-10">
         <p className="text-lg font-medium tracking-tight">Research a topic</p>
         <p className="mt-2 max-w-lg text-pretty text-sm leading-relaxed text-white/55">
-          HawkAI digs the corners: encyclopedia pages, live discussion, and a deep Grok pass when
-          available. Findings cite sources. Thin evidence stays thin — never invented.
+          HawkAI digs the corners: encyclopedia pages, papers, patents, live discussion, and a deep
+          Grok pass when available. Findings cite sources. Thin evidence stays thin — never invented.
         </p>
         <button
           type="button"

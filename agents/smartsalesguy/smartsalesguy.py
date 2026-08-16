@@ -66,6 +66,7 @@ FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Mind / Timeseries / Sentiment / Trends — same parts in the rail"),
     ("components/research/ResearchDesk.tsx", "Research desk", "Researchers dig a topic across Wikipedia, web, HN, Reddit, and X — findings cite receipts only"),
     ("lib/research.ts", "Research gather + brief", "Parallel source collect + evidence-only synthesis; never invents a citation"),
+    ("lib/research-brief.ts", "Research markdown export", "Copy / Save .md / Print pack of findings and source URLs"),
     ("app/api/research/route.ts", "Research API", "GET /api/research?q= returns sources, findings, open questions"),
     ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence, occurrence chart, causation drivers, source posts"),
     ("lib/cluster.ts", "Phrase plug from live posts", "Builds a desk-ready topic from any query + live posts; nearest receipts if the exact print is thin"),
