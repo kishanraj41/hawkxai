@@ -179,7 +179,8 @@ export default function HawkAIApp() {
     <main className="relative flex h-screen flex-col overflow-hidden bg-[#07080b] text-white">
       <AmbientBackground />
 
-      <header className="relative z-50 mx-3 mt-3 flex shrink-0 items-center gap-2 overflow-x-auto rounded-lg border border-white/8 bg-[#0c0d10] px-3 py-2">
+      <header className="relative z-50 mx-3 mt-3 shrink-0 rounded-lg border border-white/8 bg-[#0c0d10]">
+        <div className="flex items-center gap-2 overflow-x-auto px-3 py-2">
         <div className="flex shrink-0 items-center gap-3">
           <span className="flex shrink-0 items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="text-white">
@@ -205,11 +206,32 @@ export default function HawkAIApp() {
           ))}
         </div>
 
+        <div className="flex h-9 shrink-0 overflow-hidden rounded border border-white/10">
+          <button
+            type="button"
+            onClick={() => setSurface("desk")}
+            className={`px-2.5 font-mono text-[11px] tabular-nums ${
+              surface === "desk" ? "bg-white text-black" : "text-white/55 hover:text-white"
+            }`}
+          >
+            Desk <kbd className="ml-1 opacity-50">D</kbd>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSurface("map")}
+            className={`px-2.5 font-mono text-[11px] tabular-nums ${
+              surface === "map" ? "bg-white text-black" : "text-white/55 hover:text-white"
+            }`}
+          >
+            Map <kbd className="ml-1 opacity-50">M</kbd>
+          </button>
+        </div>
+
         <select
           value={velocityFilter}
           onChange={(e) => setVelocityFilter(e.target.value as VelocityFilter)}
           aria-label="Velocity"
-          className="signal-label shrink-0 rounded border border-white/10 bg-transparent px-2 py-1.5 text-white focus:border-white/40 focus:outline-none"
+          className="signal-label h-9 shrink-0 rounded border border-white/10 bg-transparent px-2 text-white focus:border-white/40 focus:outline-none"
         >
           <option value="all" className="bg-[#0a0e17]">All</option>
           <option value="rising" className="bg-[#0a0e17]">Rising</option>
@@ -221,7 +243,7 @@ export default function HawkAIApp() {
           value={lens}
           onChange={(e) => setLens(e.target.value as AgeLens | "all")}
           aria-label="Audience"
-          className="signal-label shrink-0 rounded border border-white/10 bg-transparent px-2 py-1.5 text-white focus:border-white/40 focus:outline-none"
+          className="signal-label h-9 shrink-0 rounded border border-white/10 bg-transparent px-2 text-white focus:border-white/40 focus:outline-none"
         >
           {AUDIENCE_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
@@ -234,7 +256,7 @@ export default function HawkAIApp() {
           value={city}
           onChange={(e) => setCity(e.target.value as CityId)}
           aria-label="City"
-          className="signal-label shrink-0 rounded border border-white/10 bg-transparent px-2 py-1.5 text-white focus:border-white/40 focus:outline-none"
+          className="signal-label h-9 shrink-0 rounded border border-white/10 bg-transparent px-2 text-white focus:border-white/40 focus:outline-none"
         >
           {CITY_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id} className="bg-[#0a0e17]">
@@ -247,13 +269,13 @@ export default function HawkAIApp() {
           <input
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Search topics…"
-            className="w-full rounded border border-white/10 bg-transparent px-3 py-1.5 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
+            placeholder="Search topics… ⌘K"
+            className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
           />
           <button
             type="submit"
             disabled={asking || !askQuery.trim()}
-            className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
+            className="h-9 shrink-0 rounded-full bg-white px-3 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
           >
             Ask
           </button>
@@ -263,10 +285,15 @@ export default function HawkAIApp() {
           type="button"
           onClick={() => void loadTrends(true)}
           disabled={refreshing}
-          className="signal-label shrink-0 px-2 py-1.5 disabled:opacity-40"
+          className="signal-label h-9 shrink-0 px-2 disabled:opacity-40"
         >
           Refresh
         </button>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto border-t border-white/8 px-3 py-2">
+          <span className="signal-label shrink-0">Plug</span>
+          <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
+        </div>
       </header>
 
       <TickerTape topics={payload?.topics ?? []} onSelect={pickTopic} />
@@ -295,31 +322,44 @@ export default function HawkAIApp() {
           onHover={setHoverId}
         />
 
-        <MapStage
-          topics={topics}
-          loading={loading}
-          selectedId={selected?.id ?? null}
-          hoverId={hoverId}
-          onSelect={pickTopic}
-          onHover={setHoverId}
-        >
-          {loading ? (
-            <MapSkeleton />
-          ) : topics.length > 0 ? (
-            <TrendMap
-              topics={topics}
-              selectedId={selected?.id ?? null}
-              highlightedIds={highlightedIds}
-              hoverId={hoverId}
-              onSelect={pickTopic}
-              onHover={setHoverId}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="signal-label">No names — refresh</p>
-            </div>
-          )}
-        </MapStage>
+        {surface === "desk" ? (
+          <ChartDesk
+            category={category}
+            topics={topics}
+            selected={selected}
+            hoverId={hoverId}
+            booster={booster}
+            loading={loading}
+            onSelect={pickTopic}
+            onHover={setHoverId}
+          />
+        ) : (
+          <MapStage
+            topics={topics}
+            loading={loading}
+            selectedId={selected?.id ?? null}
+            hoverId={hoverId}
+            onSelect={pickTopic}
+            onHover={setHoverId}
+          >
+            {loading ? (
+              <MapSkeleton />
+            ) : topics.length > 0 ? (
+              <TrendMap
+                topics={topics}
+                selectedId={selected?.id ?? null}
+                highlightedIds={highlightedIds}
+                hoverId={hoverId}
+                onSelect={pickTopic}
+                onHover={setHoverId}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <p className="signal-label">No names in this category — plug All</p>
+              </div>
+            )}
+          </MapStage>
+        )}
 
         <IntelRail
           selected={selected}
