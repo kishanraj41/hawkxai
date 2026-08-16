@@ -36,7 +36,7 @@ export function HomeMark() {
         </svg>
       </span>
       <span className="flex items-center gap-2">
-        <span className="text-[15px] font-medium tracking-[-0.02em] text-white">hawkai</span>
+        <span className="text-[18px] font-medium tracking-[-0.02em] text-white">hawkai</span>
         <span className="signal-live" aria-label="Live" />
       </span>
     </a>
