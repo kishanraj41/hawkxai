@@ -1,11 +1,11 @@
 """
 Booster Agent — HawkAI's core intelligence layer.
 
-Captures the current trend hashtags/ QRs/phrases/URLs etc and analyze them
-and co-relate them on why they are treanding and collect this information
-to create a cool interactive dashboard that gives us most useful information
-to all age groups and compititors in the bussiness that will leverage their
-campains.
+Look up a word or a phrase. See its footprint on the internet.
+A marketing team plugs a campaign name; the same desk fills with where
+that phrase is actually printing. Capture artifacts, correlate why
+(never invent a WHY), translate for every age group, arm competitors,
+keep improvising.
 """
 
 from __future__ import annotations
@@ -171,6 +171,16 @@ class SentimentMix:
 
 
 @dataclass
+class SentimentHit:
+    title: str
+    url: str
+    platform: str
+    pos: int
+    neg: int
+    risk: int
+
+
+@dataclass
 class SentimentReport:
     topic_id: str
     lean: str
@@ -178,6 +188,7 @@ class SentimentReport:
     drivers: List[CausationDriver]
     quotes: List[str]
     thin: bool
+    hits: List[SentimentHit] = field(default_factory=list)
 
 
 @dataclass
@@ -537,6 +548,7 @@ def build_sentiment(topic: Dict[str, Any]) -> SentimentReport:
     posts = _posts(topic)
     pos = neg = risk = 0
     quotes: List[str] = []
+    hits: List[SentimentHit] = []
     for post in posts:
         title = str(post.get("title") or "")
         blob = title.lower()
@@ -548,6 +560,16 @@ def build_sentiment(topic: Dict[str, Any]) -> SentimentReport:
         risk += r
         if p + n + r:
             quotes.append(title[:90])
+            hits.append(
+                SentimentHit(
+                    title=title,
+                    url=str(post.get("url") or ""),
+                    platform=str(post.get("platform") or "x"),
+                    pos=p,
+                    neg=n,
+                    risk=r,
+                )
+            )
     n = len(posts)
     if n < 2:
         lean = "thin"
@@ -573,6 +595,7 @@ def build_sentiment(topic: Dict[str, Any]) -> SentimentReport:
         for d in drivers
     ]
     scaled.sort(key=lambda d: d.weight, reverse=True)
+    hits.sort(key=lambda h: h.pos + h.neg + h.risk, reverse=True)
     return SentimentReport(
         topic_id=str(topic.get("id") or "topic"),
         lean=lean,
@@ -580,6 +603,7 @@ def build_sentiment(topic: Dict[str, Any]) -> SentimentReport:
         drivers=scaled[:8],
         quotes=quotes[:3],
         thin=n < 2,
+        hits=hits[:8],
     )
 
 
@@ -699,8 +723,9 @@ def build_mind_map(
     topics: Sequence[Dict[str, Any]],
     briefs: Sequence[TopicBrief],
     category: str = "all",
+    hub_label: Optional[str] = None,
 ) -> MindGraph:
-    """Hub = category plug. Branches = receipts. Shared links only when the same artifact key lands on 2+ topics."""
+    """Hub = looked-up phrase (or category plug). Branches = receipts. Shared links only when the same artifact key lands on 2+ topics."""
     brief_by_id = {b.topic_id: b for b in briefs}
     scoped = list(topics)
     if category != "all":
@@ -715,14 +740,14 @@ def build_mind_map(
             == category
         ]
     ranked = sorted(scoped, key=_total_score, reverse=True)[:MAX_MIND_TOPICS]
-    hub_id = f"hub:{category}"
+    hub_id = "hub:phrase" if hub_label else f"hub:{category}"
     nodes: List[MindNode] = [
         MindNode(
             id=hub_id,
             kind="hub",
-            label=CATEGORY_LABEL.get(category, category.title()),
+            label=(hub_label or CATEGORY_LABEL.get(category, category.title()))[:42],
             weight=float(len(ranked)),
-            detail=f"{len(ranked)} names in this plug",
+            detail=f"{len(ranked)} related prints" if hub_label else f"{len(ranked)} prints in this plug",
         )
     ]
     links: List[MindLink] = []
@@ -863,6 +888,8 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P0", "QR image decode, not just QR-shaped URLs", "Campaigns hide the payload in images. Text regex cannot see a poster QR.", "Accept image URLs → decode with a QR library → treat payload as a first-class artifact."))
     if bubbles >= 3:
         items.append(Improvisation("P1", "Platform-native campaign studio", f"{bubbles} topics are still single-platform bubbles — the cheapest time to act.", "One-click brief: format + hook + risk for the bubbling network only."))
+    if payload.get("plugged"):
+        items.append(Improvisation("P1", "Compare two campaign phrases on one desk", "A CMO looking up this year's tag also needs last year's phrase on the same timeseries.", "Second lookup slot; overlay occurrence without inventing a shared WHY."))
     if not any((t.get("tickers") or []) for t in topics):
         items.append(Improvisation("P1", "Finance overlay even without explicit tickers", "Competitors still need category peers when $TICKER is absent.", "Map topic labels to a small industry lexicon — never invent symbols."))
     thin = sum(1 for b in briefs if b.causation.thin)
@@ -884,13 +911,15 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
     briefs = [boost_topic(t) for t in topics[:16]]
     improvisations = improvisations_for(payload, briefs)
     captured = Counter(a.kind for b in briefs for a in b.artifacts)
-    mind = build_mind_map(topics[:16], briefs)
+    plugged = str(payload.get("plugged") or "").strip()
+    mind = build_mind_map(topics[:16], briefs, hub_label=plugged or None)
     top = briefs[0] if briefs else None
-    summary = (
-        f"{top.label} · {top.campaign.risk} risk · {top.campaign.hook}"
-        if top
-        else "Nearest receipts are still loading."
-    )
+    if plugged and top:
+        summary = f"“{plugged}” footprint · {top.campaign.hook}"
+    elif top:
+        summary = f"{top.label} · {top.campaign.risk} risk · {top.campaign.hook}"
+    else:
+        summary = "Look up a phrase to fill the desk."
     return BoosterReport(
         timestamp=datetime.now(timezone.utc).isoformat(),
         source_updated_at=str(payload.get("updatedAt") or ""),

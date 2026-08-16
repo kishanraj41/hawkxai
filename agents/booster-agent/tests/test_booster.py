@@ -72,6 +72,13 @@ class BoosterTests(unittest.TestCase):
         blob = " ".join(d.evidence.lower() for d in storm.drivers)
         self.assertNotIn("invent", blob)
 
+    def test_mind_map_hub_is_looked_up_phrase(self):
+        report = boost_trends(self.payload)
+        graph = build_mind_map(self.payload["topics"], report.briefs, hub_label="#HeatWaveFit")
+        hub = next(n for n in graph.nodes if n.kind == "hub")
+        self.assertEqual(hub.label, "#HeatWaveFit")
+        self.assertIn("prints", hub.detail.lower())
+
     def test_mind_map_hub_and_receipts_only(self):
         report = boost_trends(self.payload)
         graph = report.mind
@@ -127,6 +134,8 @@ class BoosterTests(unittest.TestCase):
         sent = build_sentiment(pos)
         self.assertEqual(sent.lean, "pos")
         self.assertGreater(sent.overall.pos, sent.overall.neg)
+        self.assertTrue(sent.hits)
+        self.assertTrue(all(h.url.startswith("http") for h in sent.hits))
         blob = " ".join(d.evidence.lower() for d in sent.drivers)
         self.assertNotIn("invent", blob)
         brief = boost_topic(pos)

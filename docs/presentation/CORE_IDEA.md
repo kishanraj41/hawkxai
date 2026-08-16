@@ -2,43 +2,46 @@
 
 Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
 
+**Additional tab:** look up a particular word or phrase. A marketing team opens **Footprint** from the trend desk (new browser tab, `/footprint`) and plugs a campaign name — `#HeatWaveFit`, Camry, Just Do It. The same modules fill with where that phrase is printing. Trending words stay on `/`. Phrase footprint is additive.
+
 ## Plug-and-play desk
 
-A **category is a plug**. Drop Markets, News, Weather, Tech, Sports, Health, Security, Campaigns, or Culture into the desk — the same modules fill from live evidence:
+A **phrase is the plug**. Drop a campaign, product, hashtag, ticker, or event into the desk — the same modules fill from live evidence:
 
-1. **Mind map** — hub is the plug, branches are names plus captured artifacts / first print / top driver. Amber dashes are **shared artifacts only** (same hashtag, QR, URL, or ticker on two names). Never an invented bridge.
-2. **Trends in that category** — ranked names, velocity, risk.
-3. **Sentiment correlation** — pos/neg/risk word hits in receipt titles, split by platform. Never a generated story. First print still marks the occurrence chart.
-4. **Occurrence timeseries** — when receipts actually landed (area by source, CT). First print is marked.
-5. **Floor facts** — for a plugged campaign or product (Camry, #HeatWaveFit), kind + category + nearest receipts a sales team can quote. Empty search returns a close match, not “no trend yet.”
+1. **Mind map** — hub is the looked-up phrase, branches are related prints plus captured artifacts / first print / top driver. Click a node to expand the branch and an inspector (receipts, shared artifacts, first print). Amber dashes are **shared artifacts only** (same hashtag, QR, URL, or ticker on two names). Never an invented bridge.
+2. **Related prints** — ranked mentions, velocity, risk — still that phrase, not a global trend list.
+3. **Sentiment correlation** — pos/neg/risk word hits in receipt titles, split by platform. Click to open source mix and linked receipts with tone words. Never a generated story. First print still marks the occurrence chart.
+4. **Occurrence timeseries** — when receipts for this phrase actually landed (area by source, CT). First print is marked.
+5. **Floor facts** — for the plugged campaign or product (Camry, #HeatWaveFit), kind + category + nearest receipts a sales team can quote. Empty search returns a close match, not “no trend yet.”
 6. **Campaign brief** — hook, timing, risk, five age lenses. Copy / Save .md / Print PDF from live receipts only.
-7. **Tape watch** — star a name; on refresh, show measured deltas (velocity, title lean, receipt count). Never explain the spike.
+7. **Tape watch** — star a print; on refresh, show measured deltas (velocity, title lean, receipt count). Never explain the spike.
 8. **Audience compose** — one lens select. Same receipts, different takeaway on desk, map hover, mind subtitle, and the exported brief.
 
-The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses Ask.
+The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses lookup.
 
-Same modules compose into the topic rail when a name is selected. Swap the category plug; keep the UI.
+Same modules compose into the topic rail when a print is selected. Swap the phrase; keep the UI.
 
 ## What this means in product terms
 
-HawkAI is not only a live circle-pack of topics. The **Booster Agent** is the intelligence layer that:
+HawkAI is a live circle-pack of what is trending, plus an optional phrase war-room. The **Booster Agent** is the intelligence layer that:
 
-1. **Captures** live artifacts — hashtags, QR / short-link campaign codes, phrases, URLs, cashtags.
-2. **Analyzes** them against velocity, platform divergence, and receipt posts.
-3. **Correlates** *why* something is trending (evidence only — never invent a WHY). Sentiment is counted from titles, not narrated. Shared artifacts become mind-map bridges.
-4. **Plugs** the same signal into a category desk — mind map, current trends, causation bars, occurrence timeseries.
-5. **Translates** the same signal for every age group: kids, Gen Z, millennials, Gen X, boomers.
-6. **Arms competitors** with campaign moves: hook, timing, risk, and how to ride the need without copying the meme.
-7. **Improvises** after every run — ranked upgrades that make the dashboard more useful.
+1. **Looks up** a word or phrase a team already owns — campaign name, hashtag, product, ticker, event.
+2. **Captures** live artifacts around that phrase — hashtags, QR / short-link campaign codes, co-occurring phrases, URLs, cashtags.
+3. **Maps the footprint** across X, Reddit, HN, and public APIs: where it printed, how hot, how split.
+4. **Correlates** *why* those receipts exist (evidence only — never invent a WHY). Sentiment is counted from titles, not narrated. Shared artifacts become mind-map bridges.
+5. **Plugs** the same signal into the desk — mind map, related prints, causation bars, occurrence timeseries.
+6. **Translates** the same signal for every age group: kids, Gen Z, millennials, Gen X, boomers.
+7. **Arms competitors** with campaign moves: hook, timing, risk, and how to ride the need without copying the meme.
+8. **Improvises** after every run — ranked upgrades that make the dashboard more useful.
 
-The map stays the map. Booster sits beside it: capture → correlate → **plug a category** → mind map of receipts → campaign → improvise.
+The map stays the map. Booster sits beside it: capture trending words **or** lookup a phrase (new tab) → correlate → mind map of receipts → campaign → improvise.
 
 ## Non-negotiables
 
 - Never invent posts or a fake WHY. If receipts are thin, sentiment says so and lowers confidence.
-- `/api/trends` contract stays stable (additive fields only). Category, sentiment, timeseries, and the mind map are derived from receipts already on the topic.
+- `/api/trends` remains the trending-word path. `/api/trends?topic=` and `/footprint` are the phrase-footprint path. Additive fields only.
 - A plugged query with no exact print returns nearest receipts and neighbors from the last tape — never “no trend yet,” and never invented posts.
-- Mind-map bridges exist only when the same artifact key prints on two topics. Empty bridges stay empty.
+- Mind-map hub is the looked-up phrase. Bridges exist only when the same artifact key prints on two topics. Empty bridges stay empty.
 - If a source is degraded, say so — still boost the sources that worked.
 - Kids lens must prefer safety and plain language over slang.
 - Campaign advice must include risk, not just opportunity.
@@ -48,8 +51,9 @@ The map stays the map. Booster sits beside it: capture → correlate → **plug 
 
 | Surface | Owner |
 |---|---|
+| Phrase lookup | `components/desk/PhraseLookup.tsx` + header `⌘K` |
 | Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
-| Category plugs + desk | `components/desk/` + `components/ChartDesk.tsx` |
+| Category filters + desk | `components/desk/` + `components/ChartDesk.tsx` |
 | Occurrence + sentiment | `lib/desk.ts` · `lib/sentiment.ts` (live) · `agents/booster-agent/` (CLI) |
 | Live map | `components/TrendMap.tsx` |
 | Topic receipts | `components/TopicDetailPanel.tsx` |
@@ -72,3 +76,4 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 7. Geo / city pulse (Ask already hints at Austin-style questions).
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
+10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens as a new tab from the trend desk; trending words stay on `/`.

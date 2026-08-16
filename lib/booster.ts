@@ -345,6 +345,14 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       next: "One-click brief: format + hook + risk for the bubbling network only.",
     });
   }
+  if (payload.plugged) {
+    items.push({
+      priority: "P1",
+      title: "Compare two campaign phrases on one desk",
+      why: "A CMO looking up this year's tag also needs last year's phrase on the same timeseries.",
+      next: "Second lookup slot; overlay occurrence without inventing a shared WHY.",
+    });
+  }
   if (!payload.topics.some((t) => t.tickers.length > 0)) {
     items.push({
       priority: "P1",
@@ -384,9 +392,11 @@ export function boostTrends(payload: TrendsPayload): BoosterPayload {
   const briefs = ranked.slice(0, 16).map(boostTopic);
   const improvisations = improvisationsFor(payload, briefs);
   const top = briefs[0];
-  const summary = top
-    ? `${payload.topics.find((t) => t.id === top.topicId)?.label ?? "Lead"} · ${top.campaign.risk} risk · ${top.campaign.hook}`
-    : payload.query?.floor ?? "Nearest receipts are still loading.";
+  const summary = payload.plugged
+    ? `“${payload.plugged}” footprint · ${payload.query?.hitCount ?? 0} live prints · ${top?.campaign.hook ?? "receipts only"}`
+    : top
+      ? `${payload.topics.find((t) => t.id === top.topicId)?.label ?? "Lead"} · ${top.campaign.risk} risk · ${top.campaign.hook}`
+      : payload.query?.floor ?? "Look up a phrase to fill the desk.";
   return {
     updatedAt: new Date().toISOString(),
     sourceUpdatedAt: payload.updatedAt,

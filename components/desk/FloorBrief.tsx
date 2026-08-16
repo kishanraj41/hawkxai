@@ -16,7 +16,7 @@ const KIND_COPY: Record<QueryInsight["kind"], string> = {
   event: "Event",
   product: "Product",
   place: "Place",
-  generic: "Topic",
+  generic: "Phrase",
 };
 
 export default function FloorBrief({ query, sentiment, hook, takeaway }: FloorBriefProps) {

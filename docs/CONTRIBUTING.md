@@ -25,7 +25,7 @@ Set `XAI_API_KEY` in `.env.local` only. Never commit it.
 npm run dev
 ```
 
-App: http://localhost:3000 · trends: `/api/trends` · booster: `/api/booster` (after trends).
+App: http://localhost:3000 · lookup: `/?q=Camry` · booster: `/api/booster` (after a phrase lookup).
 
 ## Commands
 

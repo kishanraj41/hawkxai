@@ -1,8 +1,8 @@
 # Booster Agent
 
-HawkAI's core intelligence layer. It does extremely smart things: capture live trend artifacts, explain *why* they are trending, translate that for every age group, arm competitors with campaign moves, and keep improvising the product.
+HawkAI's core intelligence layer. It does extremely smart things: look up a word or phrase, map its internet footprint, capture live artifacts around it, explain *why* those receipts exist, translate that for every age group, arm competitors with campaign moves, and keep improvising the product.
 
-Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
+Look up a campaign name. The same interactive dashboard fills with where that phrase is printing — useful for every age group and for competitors who will leverage their campaigns.
 
 ## What it does
 
@@ -40,8 +40,9 @@ The same brain runs in TypeScript:
 - `lib/desk.ts` — category plug, causation drivers, occurrence bins
 - `lib/mindmap.ts` — evidence-only correlation graph (shared artifacts only)
 - `GET /api/booster` — JSON for other clients (needs `/api/trends` cache)
-- `MindDesk` — radial mind map of the plugged category (`G`)
-- `ChartDesk` — plug a category; mind strip + trends + causation bars + timeseries
+- `MindDesk` — radial mind map of the looked-up phrase (`G`)
+- `ChartDesk` — look up a phrase; mind strip + related prints + causation bars + timeseries
+- `PhraseLookup` — empty desk: campaign name or phrase in, footprint out
 - `BoosterInsights` — per-topic artifacts, competitor move, age takes
 
 The D3 map and `/api/trends` contract are unchanged.

@@ -6,11 +6,11 @@ alwaysApply: false
 
 # Booster Agent (core idea)
 
-Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
+Look up a word or a phrase. See its footprint on the internet. A marketing team plugs a campaign name; the same dashboard fills with where that phrase is printing.
 
 - Booster is a first-class product surface, not a side script.
 - Capture artifacts from real posts only. Never invent posts or a fake WHY.
-- Translate every hot topic for kids / Gen Z / millennials / Gen X / boomers and for campaign competitors (hook, timing, risk).
-- Keep `/api/trends` and the D3 map stable. Add booster via `/api/booster` and composed UI.
+- Translate every hot print for kids / Gen Z / millennials / Gen X / boomers and for campaign competitors (hook, timing, risk).
+- Keep `/api/trends?topic=` and the D3 map stable. Add booster via `/api/booster` and composed UI.
 - After work on this project, suggest 3–5 ranked improvisations that make the dashboard or campaigns smarter.
 - Read `docs/presentation/CORE_IDEA.md` and `agents/booster-agent/IMPROVISATIONS.md` before proposing new features.

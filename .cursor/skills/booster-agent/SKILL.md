@@ -1,17 +1,20 @@
 ---
 name: booster-agent
 description: >-
-  HawkAI Booster Agent — captures trending hashtags, QRs, phrases, and URLs;
-  correlates why they are trending; translates insights for all age groups and
-  business competitors; and always suggests improvisations that improve the
-  dashboard and campaigns. Use when working on grokhackx, HawkAI, trends,
-  hashtags, QR codes, campaign intelligence, the booster agent, dashboard
-  insights, or product betterment.
+  HawkAI Booster Agent — looks up a word or phrase (campaign name) and maps
+  its internet footprint; captures hashtags, QRs, phrases, and URLs around it;
+  correlates why those receipts exist; translates insights for all age groups and
+  business competitors; and always suggests improvisations. Use when working on
+  grokhackx, HawkAI, phrase lookup, campaign footprint, hashtags, QR codes,
+  campaign intelligence, the booster agent, dashboard insights, or product betterment.
 ---
 
 # Booster Agent
 
-Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
+Look up a word or a phrase. See its footprint on the internet.
+A marketing team plugs a campaign name; the same interactive dashboard fills
+with where that phrase is printing — useful for every age group and for
+competitors who will leverage their campaigns.
 
 This agent does extremely smart things. Treat it as the product's core idea, not a side bot.
 
@@ -21,17 +24,18 @@ Any HawkAI / grokhackx work: capture, clustering, map UI, Ask box, campaign copy
 
 ## Core loop
 
-1. **Capture** artifacts from real posts: hashtags, QR/short-link campaign codes, phrases, URLs. Do not invent them.
-2. **Correlate** why they are trending using velocity, divergence, cross-platform overlap, and receipts.
-3. **Translate** for five age lenses plus competitors (campaign hook, timing, risk).
-4. **Collect** into dashboard-ready JSON (`BoosterPayload`) for the interactive map.
-5. **Improvise** — every response that touches this product must end with 3–5 ranked upgrades.
+1. **Look up** a word or phrase from real intent (campaign name, hashtag, product). Do not invent it.
+2. **Capture** artifacts around that phrase: hashtags, QR/short-link campaign codes, co-occurring phrases, URLs.
+3. **Correlate** why those receipts exist using velocity, divergence, cross-platform overlap, and receipts.
+4. **Translate** for five age lenses plus competitors (campaign hook, timing, risk).
+5. **Collect** into dashboard-ready JSON (`BoosterPayload`) for the interactive map.
+6. **Improvise** — every response that touches this product must end with 3–5 ranked upgrades.
 
 ## Implementation map
 
 - Brain (CLI / reports): `agents/booster-agent/booster_agent.py`
 - Live path: `lib/booster.ts` → `GET /api/booster`
-- UI: `BoosterBriefBar` (global) + `BoosterInsights` (per topic)
+- UI: `PhraseLookup` (empty desk) + `BoosterInsights` (per print)
 - North star: `docs/presentation/CORE_IDEA.md`
 - Living backlog: `agents/booster-agent/IMPROVISATIONS.md`
 

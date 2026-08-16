@@ -198,13 +198,13 @@ export function floorLine(intent: QueryIntent, sentiment: SentimentReport | null
   const kind = KIND_LABEL[intent.kind];
   const cat = intent.category;
   if (hitCount === 0) {
-    return `No exact print for “${intent.raw}”. Showing nearest ${kind} receipts in ${cat} — pitch only what is on the tape.`;
+    return `No exact print for “${intent.raw}”. Showing nearest ${kind} receipts on the internet — pitch only what is on the tape.`;
   }
   if (match !== "exact") {
-    return `Nearest ${kind} receipts in ${cat} (${hitCount}). Not an exact match — do not claim it is trending.`;
+    return `Nearest ${kind} footprint (${hitCount} receipts). Not an exact match — do not claim the campaign is everywhere.`;
   }
   if (!sentiment || sentiment.thin) {
-    return `${kind} · ${cat}. Live print is thin — name the source, not a story.`;
+    return `${kind} · ${cat}. Live footprint is thin — name the source, not a story.`;
   }
   const { pos, neg, n } = sentiment.overall;
   if (sentiment.lean === "pos") {
@@ -213,7 +213,7 @@ export function floorLine(intent: QueryIntent, sentiment: SentimentReport | null
   if (sentiment.lean === "neg") {
     return `${kind} lean is negative in titles (${neg}/${n}). Name the risk on the floor.`;
   }
-  return `Split room on “${intent.raw}”: ${pos} pos / ${neg} neg in ${n} titles. Lead with the fact.`;
+  return `“${intent.raw}” footprint: ${pos} pos / ${neg} neg in ${n} titles. Lead with the fact.`;
 }
 
 export function toQueryInsight(

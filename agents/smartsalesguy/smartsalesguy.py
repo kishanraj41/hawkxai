@@ -52,12 +52,13 @@ BANNED = (
 )
 
 FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
-    ("app/api/trends/route.ts", "Live multi-source trend graph", "GET /api/trends clusters X, Reddit, HN, and public APIs with velocity + divergence"),
+    ("app/api/trends/route.ts", "Live phrase footprint", "GET /api/trends?topic= looks up a word or phrase across X, Reddit, HN, and public APIs"),
+    ("components/desk/PhraseLookup.tsx", "Campaign / phrase lookup", "A marketing team looks up a campaign name; the same desk fills with its internet footprint"),
     ("app/api/ask/route.ts", "Natural-language Ask", "POST /api/ask answers live questions and zooms the matching topics"),
-    ("app/api/booster/route.ts", "Booster intelligence API", "GET /api/booster returns artifacts, why-trending, age lenses, campaign moves"),
-    ("components/ChartDesk.tsx", "Plug-and-play category dashboard", "Drop in a category; trends, causation bars, and occurrence area chart fill from receipts"),
-    ("components/MindDesk.tsx", "Correlation mind map", "Radial map of a category plug: topics, captured artifacts, first print; amber dashes only for shared receipts"),
-    ("lib/mindmap.ts", "Mind-map brain", "Builds evidence-only correlation graphs — never invents a bridge between names"),
+    ("app/api/booster/route.ts", "Booster intelligence API", "GET /api/booster returns artifacts, footprint correlation, age lenses, campaign moves"),
+    ("components/ChartDesk.tsx", "Phrase footprint desk", "Look up a phrase; related prints, causation bars, and occurrence area chart fill from receipts"),
+    ("components/MindDesk.tsx", "Correlation mind map", "Radial map of a looked-up phrase: related prints, captured artifacts, first print; amber dashes only for shared receipts"),
+    ("lib/mindmap.ts", "Mind-map brain", "Hub is the looked-up phrase. Builds evidence-only correlation graphs — never invents a bridge between names"),
     ("lib/desk.ts", "Category desk brain", "Classifies topics, graphs measured causation drivers, bins occurrence timeseries"),
     ("components/TrendMap.tsx", "Interactive D3 circle-pack map", "Full-viewport topic map; rising topics glow; click zooms to receipts"),
     ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
@@ -65,7 +66,7 @@ FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Mind / Timeseries / Sentiment / Trends — same parts in the rail"),
     ("components/BoosterBriefBar.tsx", "Global booster briefing", "Always-on strip: what is hot, why, and the campaign implication"),
     ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence, occurrence chart, causation drivers, source posts"),
-    ("lib/cluster.ts", "Grok topic clustering", "xAI Grok 4.6 clusters raw posts into topics; divergence is computed in code"),
+    ("lib/cluster.ts", "Phrase plug from live posts", "Builds a desk-ready topic from any query + live posts; nearest receipts if the exact print is thin"),
     ("agents/booster-agent/booster_agent.py", "Booster Agent (CLI brain)", "Offline/live capture of hashtags, QRs, phrases, URLs; improvises the backlog"),
     ("agents/pr-review-bot/review_bot.py", "PR Review Bot", "AI code review with 0-10 scoring and JSON/Markdown reports"),
     ("agents/bug-bot/bug_bot.py", "Bug Bot", "Security and logic scan as a merge gate"),
@@ -467,23 +468,19 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "package.json",
     ]
     problem = (
-        "Every brand, newsroom, and growth team can see that something is trending. "
-        "Almost none of them know why it is trending, who it is for, or what to ship "
-        "before the peak. Social dashboards count hashtags. Terminals count tickers. "
-        "Neither captures QR campaigns, short links, phrases, and URLs as they ignite "
-        "across platforms — then translates that signal for kids through boomers and "
-        "for the competitor sitting across the table. By the time a CMO sees the meme, "
-        "the need underneath it has already moved."
+        "A marketing team can launch a campaign name and still not see where it lives "
+        "on the internet. Social dashboards count whatever is trending. They do not "
+        "answer: where did *our* phrase print, on which platforms, with what tone, "
+        "and what to ship before the peak. By the time a CMO googles the tag, "
+        "the footprint has already moved."
     )
     solution = (
-        "HawkAI is a plug-and-play category desk on live topics across X, Reddit, HN, "
-        "and public APIs. Plug Markets or Weather or Campaigns — the same modules fill: "
-        "a correlation mind map (hub is the plug; amber dashes are shared artifacts only), "
-        "current trends, a causation graph of measured drivers (first print, source heat, "
-        "lag, artifacts — never an invented WHY), and an occurrence timeseries. The "
-        "Booster Agent captures artifacts from real posts only, translates five age "
-        "lenses, and arms competitors with hook, timing, and risk. The map is one more "
-        "module. Booster turns attention into a campaign."
+        "HawkAI is a phrase footprint desk. Look up a campaign name, hashtag, product, "
+        "or event — Camry, #HeatWaveFit, Just Do It — and the same modules fill from "
+        "live evidence across X, Reddit, HN, and public APIs: a mind map (hub is the "
+        "phrase; amber dashes are shared artifacts only), related prints, title "
+        "sentiment, an occurrence timeseries, five age lenses, and a campaign move "
+        "with risk. Never an invented WHY. Booster turns a lookup into a war-room."
     )
     if idea:
         # keep founder copy, but pin the north star in the dossier
@@ -495,10 +492,10 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "phrases, URLs, cashtags, with receipts — is the wedge, and it is already running."
     )
     wedge = (
-        "We do not sell another listening dashboard. We sell a category desk you "
-        "plug in: a mind map of receipts, why it is trending (measured, never invented), "
-        "when it printed, who it lands on, and the campaign move that does not clone the "
-        "meme. That loop is encoded in the Booster Agent and the live desk, not a slide."
+        "We do not sell another trending-word finder. We sell the footprint of a "
+        "phrase a team already owns: where it printed, when, who it lands on, and "
+        "the campaign move that does not clone the meme. That loop is encoded in "
+        "the Booster Agent and the live desk, not a slide."
     )
     stage = (
         "Working product. Honest stage: hackathon-grade wedge with a live map, a live "
@@ -506,8 +503,8 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "fake ARR slide."
     )
     one_liner = (
-        "HawkAI is the live operating system for why the world is trending — "
-        "and the campaign move that follows."
+        "HawkAI is the live footprint desk for a word or phrase a marketing team "
+        "already owns — and the campaign move that follows."
     )
     if product_para:
         sources.append(f"{(core_src.split(' @', 1)[0] or CORE_IDEA_RELS[0])}#product")
@@ -584,7 +581,7 @@ def compose_one_pager(dossier: Dossier) -> str:
 
 ## What's live
 
-{_bullets(dossier.current, 8)}
+{_bullets(dossier.current, 7)}
 
 Stack in the checkout: {stack}.
 {agents_block}

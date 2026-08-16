@@ -1,13 +1,26 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
+import MindInspect from "@/components/desk/MindInspect";
 import MindMapChart from "@/components/desk/MindMap";
-import SentimentChart from "@/components/desk/SentimentChart";
+import { SentimentChart } from "@/components/desk/SentimentChart";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import { topicRisk } from "@/lib/booster";
-import { totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { CausationReport, DeskCategory, MindGraph, SentimentReport, TimeBucket, Topic } from "@/lib/types";
+import { topPosts, totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
+import type {
+  BoosterTopicBrief,
+  CausationReport,
+  DeskCategory,
+  MindGraph,
+  MindNode,
+  QueryInsight,
+  SentimentReport,
+  TimeBucket,
+  Topic,
+} from "@/lib/types";
+
+type DeskOpen = "mind" | "sentiment" | null;
 
 interface DeskState {
   category: DeskCategory;
@@ -19,11 +32,18 @@ interface DeskState {
   sentiment: SentimentReport | null;
   graph: MindGraph;
   loading: boolean;
+  open: DeskOpen;
+  inspectId: string | null;
+  focus: Topic | null;
+  brief?: BoosterTopicBrief;
+  query?: QueryInsight | null;
 }
 
 interface DeskActions {
   select: (topic: Topic) => void;
   hover: (id: string | null) => void;
+  open: (panel: DeskOpen) => void;
+  inspect: (node: MindNode | null) => void;
 }
 
 interface DeskContextValue {
@@ -74,14 +94,16 @@ function Header() {
     <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/8 px-4 py-2.5">
       <div>
         <h1 className="text-sm font-medium tracking-tight">
-          {CATEGORY_LABEL[state.category]} desk
+          {state.query ? `“${state.query.raw}” desk` : `${CATEGORY_LABEL[state.category]} desk`}
         </h1>
         <p className="mt-0.5 text-xs text-white/45">
-          Plug a category. Mind map of receipts, sentiment from titles, occurrence. Never an invented WHY.
+          {state.query
+            ? "Footprint of this phrase. Mind map of receipts, sentiment from titles, occurrence. Never an invented WHY."
+            : "Look up a phrase. Mind map of receipts, sentiment from titles, occurrence. Never an invented WHY."}
         </p>
       </div>
       <div className="flex gap-4 font-mono text-[11px] tabular-nums">
-        <Kpi label="Names" value={String(state.topics.length)} />
+        <Kpi label="Prints" value={String(state.topics.length)} />
         <Kpi label="Rising" value={String(rising)} />
         <Kpi label="First print" value={first} />
         <Kpi label="Lag" value={lag} />
@@ -99,20 +121,134 @@ function Kpi({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Mind() {
+function MindMapBody({
+  tall,
+  onInspect,
+}: {
+  tall?: boolean;
+  onInspect: (node: MindNode | null) => void;
+}) {
   const { state, actions } = useDesk();
   return (
-    <div className="relative h-52 overflow-hidden rounded border border-white/8">
+    <div className={`relative overflow-hidden ${tall ? "min-h-0 flex-1" : "h-52"}`}>
       <MindMapChart
         graph={state.graph}
         topics={state.topics}
         selectedId={state.selectedId}
         hoverId={state.hoverId}
+        inspectId={state.inspectId}
         onSelect={(topic) => {
           if (topic) actions.select(topic);
         }}
         onHover={actions.hover}
+        onInspect={onInspect}
       />
+    </div>
+  );
+}
+
+function Mind() {
+  const { state, actions } = useDesk();
+  const inspect =
+    state.graph.nodes.find((n) => n.id === state.inspectId) ??
+    state.graph.nodes.find((n) => n.id === `topic:${state.selectedId}`) ??
+    null;
+
+  return (
+    <div className="overflow-hidden rounded border border-white/8">
+      <div className="flex items-center justify-between border-b border-white/8 px-3 py-2">
+        <div>
+          <p className="text-[13px] font-medium">Mind</p>
+          <p className="signal-label">click a node to open · shared dashes only</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => actions.open("mind")}
+          className="signal-label hover:text-white"
+        >
+          Open
+        </button>
+      </div>
+      <MindMapBody
+        onInspect={(node) => {
+          actions.inspect(node);
+          if (node) actions.open("mind");
+        }}
+      />
+      {inspect && state.open !== "mind" ? (
+        <p className="truncate border-t border-white/8 px-3 py-2 font-mono text-[10px] text-white/45">
+          {inspect.kind} · {inspect.label}
+          {inspect.detail ? ` · ${inspect.detail}` : ""}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function MindSheet() {
+  const { state, actions } = useDesk();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const inspect =
+    state.graph.nodes.find((n) => n.id === state.inspectId) ??
+    state.graph.nodes.find((n) => n.id === `topic:${state.selectedId}`) ??
+    state.graph.nodes.find((n) => n.id === state.graph.hubId) ??
+    null;
+
+  useEffect(() => {
+    if (state.open !== "mind") return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") actions.open(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state.open, actions]);
+
+  if (state.open !== "mind") return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mind map"
+      className="absolute inset-0 z-30 flex min-h-0 flex-col bg-[#0c0d10]"
+    >
+      <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-4 py-2.5">
+        <div>
+          <p className="text-sm font-medium tracking-tight">
+            {state.query ? `“${state.query.raw}” mind` : `${CATEGORY_LABEL[state.category]} mind`}
+          </p>
+          <p className="signal-label mt-0.5">
+            Click a print, artifact, or first print. Amber dashes are shared receipts — never an invented link.
+          </p>
+        </div>
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={() => actions.open(null)}
+          className="signal-label hover:text-white"
+        >
+          Close
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1">
+        <MindMapBody tall onInspect={actions.inspect} />
+        {inspect ? (
+          <MindInspect
+            node={inspect}
+            graph={state.graph}
+            topics={state.topics}
+            brief={state.brief}
+            onClose={() => actions.inspect(null)}
+            onPick={(topic) => {
+              actions.select(topic);
+              actions.inspect(
+                state.graph.nodes.find((n) => n.id === `topic:${topic.id}`) ?? null,
+              );
+            }}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -142,21 +278,85 @@ function Timeseries() {
 }
 
 function Sentiment() {
-  const { state } = useDesk();
+  const { state, actions } = useDesk();
   return (
-    <div className="rounded-lg border border-white/8 p-4">
-      <div className="mb-2 flex items-baseline justify-between">
-        <p className="text-[13px] font-medium">Sentiment</p>
-        <p className="signal-label">title correlation · receipts only</p>
+    <div className="relative rounded-lg border border-white/8 p-4">
+      <button
+        type="button"
+        onClick={() => actions.open("sentiment")}
+        className="absolute inset-0 z-10 rounded-lg"
+        aria-expanded={state.open === "sentiment"}
+        aria-label="Open title sentiment"
+      />
+      <div className="pointer-events-none relative">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <div>
+            <p className="text-[13px] font-medium">Sentiment</p>
+            <p className="signal-label">click to open · title correlation · receipts only</p>
+          </div>
+          <span className="signal-label">Open</span>
+        </div>
+        {state.loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="h-6 rounded bg-white/5" />
+            ))}
+          </div>
+        ) : (
+          <SentimentChart.Peek report={state.sentiment} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SentimentSheet() {
+  const { state, actions } = useDesk();
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (state.open !== "sentiment") return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") actions.open(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state.open, actions]);
+
+  if (state.open !== "sentiment") return null;
+
+  const posts = state.focus ? topPosts(state.focus, 12) : [];
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Title sentiment"
+      className="absolute inset-0 z-30 flex min-h-0 flex-col bg-[#0c0d10]"
+    >
+      <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-4 py-2.5">
+        <div>
+          <p className="text-sm font-medium tracking-tight">
+            {state.focus?.label ?? "Sentiment"}
+          </p>
+          <p className="signal-label mt-0.5">Word hits in receipt titles. Never a generated mood.</p>
+        </div>
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={() => actions.open(null)}
+          className="signal-label hover:text-white"
+        >
+          Close
+        </button>
       </div>
       {state.loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="h-6 rounded bg-white/5" />
-          ))}
+        <div className="p-4">
+          <div className="h-32 animate-pulse rounded bg-white/5" />
         </div>
       ) : (
-        <SentimentChart report={state.sentiment} />
+        <SentimentChart.Sheet report={state.sentiment} posts={posts} />
       )}
     </div>
   );
@@ -175,21 +375,21 @@ function Trends() {
   }
   if (state.topics.length === 0) {
     return (
-      <p className="signal-label mt-4">Nearest names are in another plug — try All.</p>
+      <p className="signal-label mt-4">No prints in this filter — try All.</p>
     );
   }
 
   return (
     <div className="mt-4">
       <div className="mb-2 flex items-baseline justify-between">
-        <p className="text-[13px] font-medium">Trends</p>
+        <p className="text-[13px] font-medium">{state.query ? "Related prints" : "Trends"}</p>
         <p className="signal-label">J/K · click a row</p>
       </div>
       <table className="w-full text-left">
         <thead>
           <tr className="signal-label">
             <th className="px-2 py-1.5 font-normal">Score</th>
-            <th className="px-2 py-1.5 font-normal">Name</th>
+            <th className="px-2 py-1.5 font-normal">Print</th>
             <th className="px-2 py-1.5 font-normal">Peak</th>
             <th className="px-2 py-1.5 text-right font-normal">Spread</th>
             <th className="px-2 py-1.5 text-right font-normal">Risk</th>
@@ -202,7 +402,14 @@ function Trends() {
             return (
               <tr
                 key={topic.id}
+                tabIndex={0}
                 onClick={() => actions.select(topic)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    actions.select(topic);
+                  }
+                }}
                 onMouseEnter={() => actions.hover(topic.id)}
                 onMouseLeave={() => actions.hover(null)}
                 className={`cursor-pointer transition-colors duration-80 ${
@@ -241,13 +448,20 @@ function Trends() {
   );
 }
 
+function Stage({ children }: { children: ReactNode }) {
+  return <div className="relative min-h-0 flex-1">{children}</div>;
+}
+
 export const Desk = {
   Provider,
   Frame,
   Header,
+  Stage,
   Mind,
+  MindSheet,
   Timeseries,
   Sentiment,
+  SentimentSheet,
   Causation: Sentiment,
   Trends,
 };
