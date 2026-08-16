@@ -19,6 +19,11 @@ Last run: 2026-08-16T06:56:37.669262+00:00
 - **Why:** Campaigns hide the payload in images. Text regex cannot see a poster QR.
 - **Next:** Accept image URLs → decode with a QR library → treat payload as a first-class artifact.
 
+## P1 — Compare two campaign phrases on one desk
+
+- **Why:** A CMO looking up this year's tag also needs last year's phrase on the same timeseries.
+- **Next:** Second lookup slot; overlay occurrence without inventing a shared WHY.
+
 ## P1 — Shared-artifact bridges on the mind map
 
 - **Why:** The mind map only draws amber dashes when the same hashtag, QR, URL, or ticker prints on two names. Zero bridges means correlation is still a star, not a graph.

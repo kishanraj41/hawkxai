@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import AmbientBackground from "@/components/AmbientBackground";
 import ChartDesk from "@/components/ChartDesk";
 import CategoryPlugs from "@/components/desk/CategoryPlugs";
+import PhraseLookup from "@/components/desk/PhraseLookup";
 import TopicPlug from "@/components/desk/TopicPlug";
 import { KeepBrief } from "@/components/brief/KeepBrief";
 import IntelRail from "@/components/IntelRail";
@@ -31,6 +32,7 @@ import type { AgeLens, BoosterPayload, DeskCategory, Platform, Topic, TrendsPayl
 type SortKey = "score" | Platform | "risk";
 type VelocityFilter = Topic["velocity"] | "all";
 type Surface = "mind" | "desk" | "map";
+type DeskKind = "trends" | "footprint";
 
 function readWatch(): TapeWatchStore {
   if (typeof window === "undefined") return { ids: [], snaps: {} };
@@ -49,6 +51,14 @@ function writeWatch(store: TapeWatchStore) {
   }
 }
 
+function setQueryUrl(phrase: string) {
+  const url = new URL(window.location.href);
+  if (phrase) url.searchParams.set("q", phrase);
+  else url.searchParams.delete("q");
+  url.searchParams.delete("topic");
+  window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+}
+
 function MapSkeleton() {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
@@ -57,9 +67,42 @@ function MapSkeleton() {
   );
 }
 
+function DeskSwitch({ desk }: { desk: DeskKind }) {
+  if (desk === "trends") {
+    return (
+      <a
+        href="/footprint"
+        target="_blank"
+        rel="noreferrer"
+        className="signal-label flex h-9 shrink-0 items-center gap-1 px-2 hover:text-white"
+      >
+        Footprint <span aria-hidden>↗</span>
+      </a>
+    );
+  }
+  return (
+    <a href="/" className="signal-label flex h-9 shrink-0 items-center px-2 hover:text-white">
+      Trends
+    </a>
+  );
+}
+
+export function TrendDesk() {
+  return <LiveDesk desk="trends" />;
+}
+
+export function FootprintDesk() {
+  return <LiveDesk desk="footprint" />;
+}
+
 export default function HawkAIApp() {
+  return <TrendDesk />;
+}
+
+function LiveDesk({ desk }: { desk: DeskKind }) {
+  const footprint = desk === "footprint";
   const [payload, setPayload] = useState<TrendsPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!footprint);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Topic | null>(null);
@@ -80,6 +123,7 @@ export default function HawkAIApp() {
   const [deltas, setDeltas] = useState<TapeDelta[]>([]);
   const askRef = useRef<HTMLInputElement>(null);
   const pluggedRef = useRef("");
+  const bootedRef = useRef(false);
   pluggedRef.current = plugged;
 
   const loadTrends = useCallback(async (refresh = false, topicOverride?: string | null) => {
@@ -102,19 +146,20 @@ export default function HawkAIApp() {
       setBooster(boostTrends(data));
       if (data.plugged) {
         setPlugged(data.plugged);
+        if (footprint) setQueryUrl(data.plugged);
         const first = data.topics[0] ?? null;
         setSelected(first);
         setHighlightedIds(data.topics.map((t) => t.id));
       }
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load trends");
+      setError(err instanceof Error ? err.message : footprint ? "Could not look up that phrase" : "Could not load trends");
       return null;
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [city]);
+  }, [city, footprint]);
 
   useEffect(() => {
     if (!payload || !booster) return;
@@ -130,10 +175,24 @@ export default function HawkAIApp() {
   }, [payload, booster]);
 
   useEffect(() => {
+    if (footprint) {
+      if (!bootedRef.current) {
+        bootedRef.current = true;
+        const params = new URLSearchParams(window.location.search);
+        const q = (params.get("q") ?? params.get("topic") ?? "").trim();
+        if (q) {
+          setAskQuery(q);
+          setPlugged(q);
+          void loadTrends(false, q);
+        }
+        return;
+      }
+      if (!pluggedRef.current) return;
+    }
     setSelected(null);
     setHighlightedIds([]);
     void loadTrends();
-  }, [loadTrends]);
+  }, [loadTrends, footprint]);
 
   function ensureWatched(topicId: string) {
     const store = readWatch();
@@ -148,9 +207,9 @@ export default function HawkAIApp() {
     const q = askQuery.trim();
     if (!q || asking) return;
     setAsking(true);
+    setPlugged(q);
     setAskAnswer(null);
     setHighlightedIds([]);
-    setPlugged(q);
     setSurface("desk");
     setCategory("all");
     try {
@@ -158,7 +217,7 @@ export default function HawkAIApp() {
       setAskAnswer(data?.query?.floor ?? `Nearest receipts for “${q}”.`);
       if (data?.topics[0]) ensureWatched(data.topics[0].id);
     } catch {
-      setAskAnswer("Search failed — try a close alias (Camry → Toyota Camry).");
+      setAskAnswer(footprint ? "Lookup failed — try a close alias (Camry → Toyota Camry)." : "Search failed — try a close alias (Camry → Toyota Camry).");
     } finally {
       setAsking(false);
     }
@@ -188,6 +247,12 @@ export default function HawkAIApp() {
     setAskAnswer(null);
     setSelected(null);
     setHighlightedIds([]);
+    if (footprint) {
+      setPayload(null);
+      setBooster(null);
+      setQueryUrl("");
+      return;
+    }
     await loadTrends(true, null);
   }
 
@@ -324,8 +389,12 @@ export default function HawkAIApp() {
           </span>
           <span className="font-mono text-[11px] tabular-nums text-white/50">
             {loading
-              ? "loading"
-              : `${topics.length} names · ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
+              ? footprint
+                ? "looking up"
+                : "loading"
+              : footprint && !plugged
+                ? "look up a phrase"
+                : `${topics.length} ${footprint ? "prints" : "names"} · ${formatUpdatedAt(payload?.updatedAt ?? null)}`}
           </span>
           {payload?.degraded.map((msg) => (
             <span key={msg} className="signal-label rounded border border-white/10 px-1.5 py-0.5">
@@ -333,6 +402,8 @@ export default function HawkAIApp() {
             </span>
           ))}
         </div>
+
+        <DeskSwitch desk={desk} />
 
         <div className="flex h-9 shrink-0 overflow-hidden rounded border border-white/10">
           <button
@@ -407,7 +478,7 @@ export default function HawkAIApp() {
             ref={askRef}
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
-            placeholder="Camry, #HeatWaveFit, launch event… ⌘K"
+            placeholder={footprint ? "Campaign, hashtag, or phrase… ⌘K" : "Camry, #HeatWaveFit, launch event… ⌘K"}
             className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
           />
           <button
@@ -415,7 +486,7 @@ export default function HawkAIApp() {
             disabled={asking || !askQuery.trim()}
             className="h-9 shrink-0 rounded-full bg-white px-3 text-xs font-medium text-black transition-colors duration-150 hover:bg-white/85 disabled:opacity-40"
           >
-            Ask / Plug
+            {footprint ? "Look up" : "Ask / Plug"}
           </button>
         </form>
 
@@ -423,20 +494,47 @@ export default function HawkAIApp() {
         <button
           type="button"
           onClick={() => void loadTrends(true)}
-          disabled={refreshing}
+          disabled={refreshing || (footprint && !plugged)}
           className="signal-label h-9 shrink-0 px-2 disabled:opacity-40"
         >
           Refresh
         </button>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto border-t border-white/8 px-3 py-2">
-          <span className="signal-label shrink-0">Plug</span>
-          <TopicPlug
-            value={plugged}
-            busy={asking || loading || refreshing}
-            onPlug={(q) => void handlePlug(q)}
-            onClear={() => void handleClearPlug()}
-          />
+          {footprint ? (
+            plugged ? (
+              <>
+                <span className="signal-label shrink-0">Footprint</span>
+                <span className="max-w-[220px] truncate rounded border border-white/20 px-2 py-1 text-[12px]">
+                  {plugged}
+                </span>
+                {payload?.query ? (
+                  <span className="signal-label shrink-0">
+                    {payload.query.kind} · {payload.query.match} · {payload.query.hitCount}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void handleClearPlug()}
+                  className="signal-label h-9 shrink-0 px-2"
+                >
+                  Clear
+                </button>
+              </>
+            ) : (
+              <span className="signal-label shrink-0">Look up a campaign or phrase · ⌘K</span>
+            )
+          ) : (
+            <>
+              <span className="signal-label shrink-0">Plug</span>
+              <TopicPlug
+                value={plugged}
+                busy={asking || loading || refreshing}
+                onPlug={(q) => void handlePlug(q)}
+                onClear={() => void handleClearPlug()}
+              />
+            </>
+          )}
           <CategoryPlugs value={category} counts={counts} onChange={setCategory} />
         </div>
       </header>
@@ -471,7 +569,12 @@ export default function HawkAIApp() {
           onToggleWatch={handleToggleWatch}
         />
 
-        {surface === "mind" ? (
+        {footprint && !(plugged || loading) ? (
+          <PhraseLookup
+            onLookup={(q) => void handlePlug(q)}
+            onFocusLookup={() => askRef.current?.focus()}
+          />
+        ) : surface === "mind" ? (
           <MindDesk
             category={category}
             topics={topics}
@@ -479,6 +582,7 @@ export default function HawkAIApp() {
             hoverId={hoverId}
             booster={booster}
             loading={loading}
+            phrase={plugged}
             caption={focusCaption}
             onSelect={pickTopic}
             onHover={setHoverId}
@@ -524,7 +628,7 @@ export default function HawkAIApp() {
               />
             ) : (
               <div className="flex h-full items-center justify-center">
-                <p className="signal-label">Nearest names are in another plug — try All</p>
+                <p className="signal-label">{footprint ? "No prints in this filter — try All" : "Nearest names are in another plug — try All"}</p>
               </div>
             )}
           </MapStage>

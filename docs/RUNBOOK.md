@@ -8,10 +8,10 @@ There is no `/health` route. Treat these as live checks:
 
 | Check | Expect |
 |-------|--------|
-| `GET /` | 200, map shell |
-| `GET /api/trends` | 200 JSON after first cluster (60–90s cold) |
-| `GET /api/booster` | 200 after trends are cached; **409** if trends never ran |
-| `POST /api/ask` `{"q":"..."}` | 200 `{ answer, topicIds }`; **400** if `q` missing; **409** if no trends |
+| `GET /` | 200, lookup desk |
+| `GET /api/trends?topic=Camry` | 200 JSON after first lookup (30–60s cold) |
+| `GET /api/booster` | 200 after a phrase is cached; **409** if lookup never ran |
+| `POST /api/ask` `{"q":"..."}` | 200 `{ answer, topicIds }`; **400** if `q` missing; **409** if no lookup |
 
 `degraded` on trends (e.g. `reddit offline`) is expected on some networks — still render other sources.
 
@@ -23,7 +23,7 @@ cp .env.example .env.local   # set XAI_API_KEY
 npm run dev
 ```
 
-Force refresh: `GET /api/trends?refresh=1`. Cache TTL is 5 minutes.
+Force refresh: `GET /api/trends?topic=Camry&refresh=1`. Cache TTL is 5 minutes.
 
 ## Docker
 
@@ -63,10 +63,10 @@ Failure of build, smoke, or critical Bug Bot blocks merge.
 | Symptom | Fix |
 |---------|-----|
 | `Bind for 0.0.0.0:3000 failed` | Something else (often Grafana) holds 3000. Use `-p 3001:3000`. |
-| `/api/booster` or `/api/ask` 409 | Hit `GET /api/trends` first. |
+| `/api/booster` or `/api/ask` 409 | Hit `GET /api/trends?topic=` first. |
 | Ask says Grok is offline | `XAI_API_KEY` missing in `.env.local`, Docker `-e`, or Vercel env. |
 | Reddit pill `reddit offline` | 403 on some networks. Expected; map still renders HN/X. |
-| First trends call ~90s | Cold Grok cluster. Subsequent hits use the 5-minute cache. |
+| First lookup ~60s | Cold live search. Subsequent hits use the 5-minute cache. |
 | Docker build SWC unicode regex | Production target is ES2017 (`tsconfig`); already fixed on this line. |
 
 ## Escalation

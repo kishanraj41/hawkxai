@@ -114,6 +114,15 @@ export interface SentimentMix {
   n: number;
 }
 
+export interface SentimentHit {
+  title: string;
+  url: string;
+  platform: Platform;
+  pos: number;
+  neg: number;
+  risk: number;
+}
+
 export interface SentimentReport {
   topicId: string;
   lean: SentimentLean;
@@ -121,6 +130,7 @@ export interface SentimentReport {
   byPlatform: Partial<Record<Platform, SentimentMix>>;
   drivers: CausationDriver[];
   quotes: string[];
+  hits: SentimentHit[];
   thin: boolean;
 }
 

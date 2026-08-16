@@ -15,8 +15,10 @@ interface MindMapChartProps {
   topics: Topic[];
   selectedId: string | null;
   hoverId: string | null;
+  inspectId?: string | null;
   onSelect: (topic: Topic | null) => void;
   onHover: (id: string | null) => void;
+  onInspect?: (node: MindNode | null) => void;
 }
 
 const FILL: Record<MindNode["kind"], string> = {
@@ -52,7 +54,7 @@ function toTree(graph: MindGraph): TreeDatum | null {
 }
 
 function topicIdOf(node: MindNode): string | null {
-  return node.kind === "topic" ? node.topicId ?? null : node.topicId ?? null;
+  return node.kind === "hub" ? null : node.topicId ?? null;
 }
 
 export default function MindMapChart({
@@ -60,8 +62,10 @@ export default function MindMapChart({
   topics,
   selectedId,
   hoverId,
+  inspectId = null,
   onSelect,
   onHover,
+  onInspect,
 }: MindMapChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -87,6 +91,16 @@ export default function MindMapChart({
       const radius = Math.max(48, Math.min(width, height) / 2 - 56);
       const root = d3.hierarchy(tree);
       d3.tree<TreeDatum>().size([2 * Math.PI, radius])(root);
+      const inspectNode = inspectId ? graph.nodes.find((n) => n.id === inspectId) : undefined;
+      const expandTopic = inspectNode?.topicId ?? selectedId;
+      if (expandTopic) {
+        (root.descendants() as d3.HierarchyPointNode<TreeDatum>[]).forEach((d) => {
+          const tid = topicIdOf(d.data.node);
+          if (tid === expandTopic && d.data.node.kind !== "hub") {
+            d.y += Math.min(36, radius * 0.14);
+          }
+        });
+      }
 
       const g = svg.append("g").attr("transform", `translate(${cx},${cy})`);
 
@@ -106,8 +120,9 @@ export default function MindMapChart({
         points.set(d.data.id, p);
       });
 
-      const activeTopic = selectedId ?? hoverId;
+      const activeTopic = selectedId ?? inspectNode?.topicId ?? hoverId;
       const lit = new Set<string>();
+      if (inspectId) lit.add(inspectId);
       if (activeTopic) {
         lit.add(graph.hubId);
         lit.add(`topic:${activeTopic}`);
@@ -213,6 +228,7 @@ export default function MindMapChart({
         .on("mouseleave", () => onHover(null))
         .on("click", (event, d) => {
           event.stopPropagation();
+          onInspect?.(d.data.node);
           const tid = topicIdOf(d.data.node);
           if (!tid) {
             onSelect(null);
@@ -221,7 +237,10 @@ export default function MindMapChart({
           onSelect(topicById.get(tid) ?? null);
         });
 
-      svg.on("click", () => onSelect(null));
+      svg.on("click", () => {
+        onInspect?.(null);
+        onSelect(null);
+      });
     };
 
     apply();
@@ -231,7 +250,7 @@ export default function MindMapChart({
       ro.disconnect();
       d3.select(svgEl).on("click", null);
     };
-  }, [tree, graph, selectedId, hoverId, onHover, onSelect, topicById]);
+  }, [tree, graph, selectedId, hoverId, inspectId, onHover, onSelect, onInspect, topicById]);
 
   if (!tree || graph.nodes.length <= 1) {
     return (

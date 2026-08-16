@@ -2,23 +2,23 @@
 
 A live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters related topics, while divergence is calculated in code. A topic exploding on one platform tells a different story from one gaining momentum across all platforms.
 
+**Additional tab:** Footprint (`/footprint`) opens from the dashboard in a new browser tab. Look up a campaign name or phrase and see its internet footprint on the same desk, mind, and map.
+
 # Core Idea — Booster Agent
 
 The Booster Agent captures trending signals such as hashtags, phrases, URLs, and other emerging topics, then analyzes and correlates them to understand why they are trending.
 
-It transforms those signals into an interactive dashboard that provides useful, easy-to-understand insights for different audiences and helps businesses understand emerging trends, competitors, and opportunities for their campaigns.
-
-The Booster Agent acts as the intelligence layer:
+It also looks up a particular word or phrase a marketing team already owns, and fills the same interactive dashboard with that phrase's footprint.
 
 Capture signals → Correlate trends → Explain why → Identify audience relevance → Generate campaign insights → Continuously improve
 
-The goal is to turn fragmented social signals into actionable trend intelligence, rather than simply showing what is trending.
+Phrase lookup is additive: `/` stays the trending desk. `/footprint` is the campaign-name war-room.
 
 ```bash
 python3 agents/booster-agent/booster_agent.py --self-check
 ```
 
-North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) — plug a category, get trends + causation + occurrence. Live: `GET /api/booster` after `/api/trends`.
+North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) — trending desk on `/`, phrase footprint on `/footprint`. Live: `GET /api/trends` and `GET /api/trends?topic=Camry`.
 
 Repo: https://github.com/snagaram3/grokhackx
 
@@ -53,7 +53,9 @@ npm run dev
 ```
 
 - App: http://localhost:3000
+- Footprint tab: http://localhost:3000/footprint
 - Data: http://localhost:3000/api/trends
+- Phrase lookup: http://localhost:3000/api/trends?topic=Camry
 - Force refresh: http://localhost:3000/api/trends?refresh=1
 - Ask: `POST /api/ask` body `{ "q": "what's blowing up in Austin?" }`
 - Booster: http://localhost:3000/api/booster  (after trends are cached)
@@ -62,14 +64,16 @@ First `/api/trends` can take ~60–90s (Grok cluster). After that it caches **5 
 
 ## Map teammate — payload contract
 
-`GET /api/trends` returns:
+`GET /api/trends?topic=` returns:
 
 ```ts
 {
   topics: Topic[]
   updatedAt: string
-  sources: { x: boolean; reddit: boolean; hn: boolean }
+  sources: { x: boolean; reddit: boolean; hn: boolean; public: boolean }
   degraded: string[]   // e.g. ["reddit offline"]
+  plugged?: string     // the looked-up phrase
+  query?: { raw, kind, category, match, hitCount, floor }
 }
 ```
 
@@ -93,11 +97,11 @@ Each `Topic`:
 - Inner circles = platforms: X `#ffffff`, Reddit `#ff4500`, HN `#ff6600` on `#0a0e14`
 - Glow on `velocity === "rising"`
 - Click zooms 600ms; right panel: label, velocity, divergence one-liner (`"X-only bubble"` / `"spreading"` / `"everywhere"`), 3 receipt links from `posts`, ticker chips
-- Top bar: logo, `updatedAt`, refresh (`?refresh=1`), Ask box
+- Top bar: logo, footprint status, lookup (`⌘K`)
 - Loading: skeleton circles, never a blank screen
 - If `degraded` has `"reddit offline"`, show a small pill — still render the other sources
 
-Ask box: `POST /api/ask` → `{ answer, topicIds[] }` → highlight + zoom those nodes. Make zoom smooth before making it clever.
+Lookup: header search or `/?q=Camry` → `GET /api/trends?topic=Camry` → same mind / desk / map for that phrase.
 
 D3 is already in `package.json`.
 

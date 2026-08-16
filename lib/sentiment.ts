@@ -54,6 +54,7 @@ export function buildSentiment(topic: Topic): SentimentReport {
   const overall = emptyMix();
   const byPlatform: Partial<Record<Platform, SentimentMix>> = {};
   const quotes: { title: string; pos: number; neg: number }[] = [];
+  const hits: SentimentReport["hits"] = [];
 
   for (const post of posts) {
     const hit = scoreTitle(post.title);
@@ -67,7 +68,17 @@ export function buildSentiment(topic: Topic): SentimentReport {
     overall.pos += hit.pos;
     overall.neg += hit.neg;
     overall.risk += hit.risk;
-    if (hit.pos + hit.neg + hit.risk > 0) quotes.push({ title: post.title, pos: hit.pos, neg: hit.neg });
+    if (hit.pos + hit.neg + hit.risk > 0) {
+      quotes.push({ title: post.title, pos: hit.pos, neg: hit.neg });
+      hits.push({
+        title: post.title,
+        url: post.url,
+        platform: post.platform,
+        pos: hit.pos,
+        neg: hit.neg,
+        risk: hit.risk,
+      });
+    }
   }
 
   const lean = leanOf(overall);
@@ -138,6 +149,9 @@ export function buildSentiment(topic: Topic): SentimentReport {
       .toSorted((a, b) => b.pos + b.neg - (a.pos + a.neg))
       .slice(0, 3)
       .map((q) => q.title.slice(0, 90)),
+    hits: hits
+      .toSorted((a, b) => b.pos + b.neg + b.risk - (a.pos + a.neg + a.risk))
+      .slice(0, 8),
     thin: posts.length < 2,
   };
 }

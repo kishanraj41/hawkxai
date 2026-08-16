@@ -27,7 +27,7 @@ Do **not** put `XAI_API_KEY` in git. Local only: `.env.local`.
 
 7. Click **Deploy**.
 8. After the build succeeds, open `https://<project>.vercel.app`.
-9. First visit: wait up to a minute for `/api/trends`. If you see a 504, refresh once.
+9. First visit: wait up to a minute for `/api/trends`. Open **Footprint ↗** for a campaign-name lookup in a new tab. If you see a 504, refresh once.
 
 ## 3. Deploy from the CLI
 

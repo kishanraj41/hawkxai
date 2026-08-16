@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import BoosterInsights from "@/components/BoosterInsights";
-import SentimentChart from "@/components/desk/SentimentChart";
+import { SentimentChart } from "@/components/desk/SentimentChart";
 import Sparkline from "@/components/Sparkline";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
 import { buildTimeseries, CATEGORY_LABEL } from "@/lib/desk";
@@ -157,7 +157,7 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
           <div className="mt-4">
             <p className="signal-label">Sentiment</p>
             <div className="mt-2">
-              <SentimentChart report={brief.sentiment} />
+              <SentimentChart.Sheet report={brief.sentiment} posts={receipts} />
             </div>
           </div>
         ) : null}

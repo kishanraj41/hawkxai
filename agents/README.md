@@ -14,7 +14,7 @@ This directory contains autonomous AI agents that enhance the development workfl
 
 ### 1. Booster Agent (`booster-agent/`) — **core idea**
 
-Captures trending hashtags, QRs, phrases, and URLs; correlates why they are trending; translates insights for every age group and for campaign competitors; and keeps improvising the dashboard.
+Captures the footprint of a looked-up phrase (campaign name, hashtag, product); correlates why those receipts exist; translates insights for every age group and for campaign competitors; and keeps improvising the dashboard.
 
 ```bash
 python3 agents/booster-agent/booster_agent.py --self-check

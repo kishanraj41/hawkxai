@@ -99,7 +99,9 @@ export default function OverviewRail({
         </span>
       </div>
       <p className="mt-1 text-xs text-white/45">
-        ○ watches a name. Refresh to see tape deltas — never an invented cause.
+        {payload
+          ? "○ watches a name. Refresh to see tape deltas — never an invented cause."
+          : "Live names load on the trend desk. Footprint opens in a new tab."}
       </p>
       <p className="mt-1 text-xs text-white/45">
         {payload?.sources.x ? "X" : "X off"} · {payload?.sources.reddit ? "Reddit" : "Reddit off"} ·{" "}
@@ -107,7 +109,7 @@ export default function OverviewRail({
       </p>
       {payload?.plugged ? (
         <p className="mt-1 text-xs text-white/70">
-          Plugged “{payload.plugged}”
+          Footprint of “{payload.plugged}”
           {payload.query ? ` · ${payload.query.kind} · ${payload.query.match}` : ""}
         </p>
       ) : null}

@@ -46,14 +46,14 @@ Vercel: set the same variable in project env. Docker: `-e XAI_API_KEY=...`.
 
 ## API
 
-Warm `/api/trends` before Ask or Booster (409 until the cache is populated). First trends call can take 60–90s; then 5-minute cache. `?refresh=1` bypasses cache.
+Warm `/api/trends?topic=` with a phrase before Ask or Booster (409 until the cache is populated). First lookup can take 30–60s; then 5-minute cache. `?refresh=1` bypasses cache.
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
-| `GET` | `/api/trends` | `XAI_API_KEY` for Grok cluster | `{ topics, updatedAt, sources, degraded }` |
-| `GET` | `/api/trends?refresh=1` | same | Force refetch |
-| `POST` | `/api/ask` | Grok optional | Body `{ "q": "..." }` → `{ answer, topicIds[] }`. 400 if `q` missing; 409 if no trends. |
-| `GET` | `/api/booster` | none (uses trends cache) | Artifacts, why-trending, age lenses, campaign. 409 if no trends. |
+| `GET` | `/api/trends?topic=` | `XAI_API_KEY` for X search | Phrase footprint `{ topics, updatedAt, sources, degraded, plugged, query }` |
+| `GET` | `/api/trends?topic=&refresh=1` | same | Force refetch |
+| `POST` | `/api/ask` | Grok optional | Body `{ "q": "..." }` → `{ answer, topicIds[] }`. 400 if `q` missing; 409 if no lookup. |
+| `GET` | `/api/booster` | none (uses lookup cache) | Artifacts, footprint correlation, age lenses, campaign. 409 if no lookup. |
 
 Vercel `maxDuration`: 60s for `/api/trends` and `/api/ask`; 30s for `/api/booster` (`vercel.json`).
 
