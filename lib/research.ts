@@ -133,6 +133,130 @@ async function wikipedia(query: string): Promise<ResearchSource[]> {
   return out;
 }
 
+async function pubmed(query: string): Promise<ResearchSource[]> {
+  const searchUrl =
+    `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed` +
+    `&term=${encodeURIComponent(query)}&retmax=6&retmode=json&sort=relevance`;
+  const searchRes = await fetch(searchUrl, {
+    cache: "no-store",
+    headers: { Accept: "application/json", "User-Agent": UA },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!searchRes.ok) throw new Error(`pubmed search ${searchRes.status}`);
+  const search = (await searchRes.json()) as {
+    esearchresult?: { idlist?: string[] };
+  };
+  const ids = search.esearchresult?.idlist ?? [];
+  if (!ids.length) return [];
+
+  const summaryUrl =
+    `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed` +
+    `&id=${ids.join(",")}&retmode=json`;
+  const summaryRes = await fetch(summaryUrl, {
+    cache: "no-store",
+    headers: { Accept: "application/json", "User-Agent": UA },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!summaryRes.ok) throw new Error(`pubmed summary ${summaryRes.status}`);
+  const summary = (await summaryRes.json()) as {
+    result?: Record<string, { title?: string; sortpubdate?: string; source?: string } | string[]>;
+  };
+  const result = summary.result ?? {};
+  const out: ResearchSource[] = [];
+  let n = 0;
+  for (const id of ids) {
+    const row = result[id];
+    if (!row || Array.isArray(row) || !row.title) continue;
+    out.push({
+      id: sourceId("pubmed", ++n),
+      kind: "pubmed",
+      title: row.title.slice(0, 220),
+      url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
+      snippet: [row.source, row.sortpubdate, row.title].filter(Boolean).join(" · ").slice(0, 480),
+      createdAt: row.sortpubdate || undefined,
+    });
+  }
+  return out;
+}
+
+function decodeXml(text: string): string {
+  return text
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+async function arxiv(query: string): Promise<ResearchSource[]> {
+  const url =
+    `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}` +
+    `&start=0&max_results=6&sortBy=relevance&sortOrder=descending`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: { Accept: "application/atom+xml, application/xml, text/xml", "User-Agent": UA },
+    signal: AbortSignal.timeout(18_000),
+  });
+  if (!res.ok) throw new Error(`arxiv ${res.status}`);
+  const xml = await res.text();
+  const entries = xml.split("<entry>").slice(1);
+  const out: ResearchSource[] = [];
+  let n = 0;
+  for (const entry of entries) {
+    if (n >= 6) break;
+    const title = decodeXml((entry.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "").replace(/\s+/g, " ").trim());
+    const summary = decodeXml((entry.match(/<summary>([\s\S]*?)<\/summary>/)?.[1] ?? "").replace(/\s+/g, " ").trim());
+    const id = (entry.match(/<id>([\s\S]*?)<\/id>/)?.[1] ?? "").trim();
+    const published = (entry.match(/<published>([\s\S]*?)<\/published>/)?.[1] ?? "").trim();
+    if (!title || !id) continue;
+    out.push({
+      id: sourceId("arxiv", ++n),
+      kind: "arxiv",
+      title: title.slice(0, 220),
+      url: id.startsWith("http") ? id : `https://arxiv.org/abs/${id}`,
+      snippet: summary.slice(0, 480),
+      createdAt: published || undefined,
+    });
+  }
+  return out;
+}
+
+async function uspto(query: string): Promise<ResearchSource[]> {
+  const q = JSON.stringify({ _text_any: { patent_title: query } });
+  const url =
+    `https://api.patentsview.org/patents/query?q=${encodeURIComponent(q)}` +
+    `&f=["patent_number","patent_title","patent_date","patent_abstract"]&o={"per_page":5}`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: { Accept: "application/json", "User-Agent": UA },
+    signal: AbortSignal.timeout(18_000),
+  });
+  if (!res.ok) throw new Error(`uspto ${res.status}`);
+  const data = (await res.json()) as {
+    patents?: {
+      patent_number?: string;
+      patent_title?: string;
+      patent_date?: string;
+      patent_abstract?: string;
+    }[];
+  };
+  const out: ResearchSource[] = [];
+  let n = 0;
+  for (const p of data.patents ?? []) {
+    if (!p.patent_number || !p.patent_title) continue;
+    out.push({
+      id: sourceId("uspto", ++n),
+      kind: "uspto",
+      title: p.patent_title.slice(0, 220),
+      url: `https://patents.google.com/patent/US${p.patent_number}`,
+      snippet: (p.patent_abstract || `USPTO ${p.patent_number} · ${p.patent_date ?? ""}`).slice(0, 480),
+      createdAt: p.patent_date || undefined,
+    });
+  }
+  return out;
+}
+
 function postsToSources(
   kind: Extract<ResearchSourceKind, "hn" | "reddit" | "x">,
   posts: { title: string; url: string; score: number; createdAt: string }[],
@@ -275,12 +399,15 @@ export async function researchTopic(rawQuery: string): Promise<ResearchPayload> 
   }
 
   const degraded: string[] = [];
-  const [wiki, ddg, hn, reddit, x, deep] = await Promise.all([
+  const [wiki, ddg, hn, reddit, x, papers, preprints, patents, deep] = await Promise.all([
     settle("wikipedia", () => wikipedia(query), degraded),
     settle("web", () => duckDuckGo(query), degraded),
     settle("hn", () => searchHn(query, 12), degraded),
     settle("reddit", () => searchReddit(query), degraded),
     settle("x", () => fetchX(undefined, query), degraded),
+    settle("pubmed", () => pubmed(query), degraded),
+    settle("arxiv", () => arxiv(query), degraded),
+    settle("uspto", () => uspto(query), degraded),
     deepCornerNotes(query),
   ]);
 
@@ -289,6 +416,9 @@ export async function researchTopic(rawQuery: string): Promise<ResearchPayload> 
   const sources: ResearchSource[] = [
     ...(wiki ?? []),
     ...(ddg ?? []),
+    ...(papers ?? []),
+    ...(preprints ?? []),
+    ...(patents ?? []),
     ...postsToSources("hn", hn ?? [], 10),
     ...postsToSources("reddit", reddit ?? [], 10),
     ...postsToSources("x", x ?? [], 8),

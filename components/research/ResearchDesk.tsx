@@ -3,6 +3,10 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
 import ResearchLookup from "@/components/research/ResearchLookup";
+import {
+  formatResearchBrief,
+  researchBriefFilename,
+} from "@/lib/research-brief";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import type { ResearchPayload, ResearchSource, ResearchSourceKind } from "@/lib/types";
 
@@ -13,6 +17,9 @@ const KIND_LABEL: Record<ResearchSourceKind, string> = {
   reddit: "Reddit",
   x: "X",
   public: "APIs",
+  pubmed: "PubMed",
+  arxiv: "arXiv",
+  uspto: "USPTO",
 };
 
 function goHome() {
@@ -74,6 +81,48 @@ function DeskNav() {
         Research
       </span>
     </nav>
+  );
+}
+
+function ResearchExport({ payload }: { payload: ResearchPayload }) {
+  const markdown = useMemo(() => formatResearchBrief(payload), [payload]);
+  const filename = useMemo(() => researchBriefFilename(payload.query), [payload.query]);
+
+  const copy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(markdown);
+    } catch {
+      /* clipboard can fail in locked-down browsers */
+    }
+  }, [markdown]);
+
+  const download = useCallback(() => {
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [markdown, filename]);
+
+  return (
+    <>
+      <div className="no-print flex shrink-0 flex-wrap gap-2">
+        <button type="button" onClick={() => void copy()} className="signal-label h-9 px-2 hover:text-white">
+          Copy
+        </button>
+        <button type="button" onClick={download} className="signal-label h-9 px-2 hover:text-white">
+          Save .md
+        </button>
+        <button type="button" onClick={() => window.print()} className="signal-label h-9 px-2 hover:text-white">
+          Print / PDF
+        </button>
+      </div>
+      <article className="keep-brief-sheet" aria-hidden>
+        <pre>{markdown}</pre>
+      </article>
+    </>
   );
 }
 
@@ -219,7 +268,7 @@ export default function ResearchDesk() {
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Topic, paper, policy, market… ⌘K"
+              placeholder="Topic, paper, policy, patent… ⌘K"
               className="h-9 w-full rounded border border-white/10 bg-transparent px-3 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
             />
             <button
@@ -230,6 +279,8 @@ export default function ResearchDesk() {
               Research
             </button>
           </form>
+
+          {payload ? <ResearchExport payload={payload} /> : null}
 
           <button
             type="button"
@@ -263,16 +314,16 @@ export default function ResearchDesk() {
       </header>
 
       {error ? (
-        <div className="relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
+        <div className="no-print relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
           <p className="signal-label">{error}</p>
         </div>
       ) : null}
 
-      <div className="relative z-10 grid min-h-0 min-w-0 flex-1 grid-cols-[260px_minmax(0,1fr)_300px] gap-3 p-3">
+      <div className="no-print relative z-10 grid min-h-0 min-w-0 flex-1 grid-cols-[260px_minmax(0,1fr)_300px] gap-3 p-3">
         <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-3">
           <p className="text-sm font-medium tracking-tight">Sources</p>
           <p className="mt-1 text-xs text-white/45">
-            Live receipts from the open web and discussion boards. Click to inspect.
+            Wiki, web, PubMed, arXiv, USPTO, HN, Reddit, X. Click to inspect.
           </p>
           <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto">
             {loading && !payload ? (
@@ -310,7 +361,9 @@ export default function ResearchDesk() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
               {loading && !payload ? (
-                <p className="text-sm text-white/45">Digging Wikipedia, web, HN, Reddit, X…</p>
+                <p className="text-sm text-white/45">
+                  Digging Wikipedia, web, PubMed, arXiv, USPTO, HN, Reddit, X…
+                </p>
               ) : (
                 <>
                   <p className="text-pretty text-sm leading-relaxed text-white/85">
@@ -347,12 +400,15 @@ export default function ResearchDesk() {
                       </h2>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {payload!.angles.map((a) => (
-                          <span
+                          <button
                             key={a}
-                            className="rounded border border-white/10 px-2 py-1 font-mono text-[11px] text-white/70"
+                            type="button"
+                            disabled={loading}
+                            onClick={() => void runResearch(`${payload!.query}: ${a}`)}
+                            className="rounded border border-white/10 px-2 py-1 font-mono text-[11px] text-white/70 transition-colors duration-80 hover:border-white/30 hover:text-white disabled:opacity-40"
                           >
                             {a}
-                          </span>
+                          </button>
                         ))}
                       </div>
                     </>
@@ -363,9 +419,19 @@ export default function ResearchDesk() {
                       <h2 className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-white/45">
                         Open questions
                       </h2>
-                      <ul className="mt-2 list-disc space-y-1 pl-4 text-[13px] text-white/70">
+                      <p className="mt-1 text-xs text-white/40">Click to research that angle.</p>
+                      <ul className="mt-2 space-y-1.5">
                         {payload!.openQuestions.map((q) => (
-                          <li key={q}>{q}</li>
+                          <li key={q}>
+                            <button
+                              type="button"
+                              disabled={loading}
+                              onClick={() => void runResearch(q)}
+                              className="w-full rounded border border-white/8 px-3 py-2 text-left text-[13px] text-white/70 transition-colors duration-80 hover:border-white/25 hover:text-white disabled:opacity-40"
+                            >
+                              {q}
+                            </button>
+                          </li>
                         ))}
                       </ul>
                     </>

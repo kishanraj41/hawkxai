@@ -52,7 +52,7 @@ The map stays the map. Booster sits beside it: capture trending words **or** loo
 | Surface | Owner |
 |---|---|
 | Phrase lookup | `components/desk/PhraseLookup.tsx` + header `⌘K` |
-| Research desk | `components/research/ResearchDesk.tsx` + `GET /api/research?q=` |
+| Research desk | `components/research/ResearchDesk.tsx` + `GET /api/research?q=` + `lib/research-brief.ts` |
 | Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
 | Category filters + desk | `components/desk/` + `components/ChartDesk.tsx` |
 | Occurrence + sentiment | `lib/desk.ts` · `lib/sentiment.ts` (live) · `agents/booster-agent/` (CLI) |
@@ -78,4 +78,4 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
 10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens from the trend desk; trending words stay on `/`.
-11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + HN + Reddit + X + optional Grok deep pass; findings cite receipts only.
+11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + PubMed + arXiv + USPTO + HN + Reddit + X + optional Grok deep pass; Copy / Save .md / Print; click an open question to dig that angle.
