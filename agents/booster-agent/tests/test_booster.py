@@ -15,8 +15,12 @@ from booster_agent import (
     build_sentiment,
     capture_artifacts,
     classify_topic,
+    diff_snapshots,
+    format_keep_brief,
     infer_query_intent,
     load_payload,
+    snapshot_of,
+    takeaway_for,
     why_trending,
 )
 
@@ -128,6 +132,41 @@ class BoosterTests(unittest.TestCase):
         brief = boost_topic(pos)
         self.assertEqual(brief.sentiment.lean, "pos")
         self.assertIn("positive", brief.why_trending.lower())
+
+    def test_keep_brief_uses_receipts_not_fiction(self):
+        topic = self.topics["qr-summer-drop"]
+        brief = boost_topic(topic)
+        md = format_keep_brief(topic, brief, query={"kind": "hashtag", "category": "campaigns", "match": "exact", "hitCount": 2, "floor": "Floor: #HeatWaveFit printed."}, lens="kids")
+        self.assertIn("# HawkAI brief", md)
+        self.assertIn("Play", md)
+        self.assertIn("Family", md)
+        self.assertIn("Evidence only", md)
+        self.assertNotIn("invent", md.lower().replace("invented cause", ""))
+        self.assertNotIn("## Audiences", md)
+        all_ages = format_keep_brief(topic, brief)
+        self.assertIn("## Audiences", all_ages)
+        family = takeaway_for(brief, "kids")
+        self.assertIsNotNone(family)
+        self.assertEqual(family.lens, "kids")
+
+    def test_tape_watch_deltas_are_measured(self):
+        topic = json.loads(json.dumps(self.topics["airline-outage"]))
+        brief = boost_topic(topic)
+        prev = snapshot_of(topic, brief, "2026-08-16T12:00:00.000Z")
+        nxt = dict(prev)
+        nxt["velocity"] = "peaking"
+        nxt["lean"] = "neg"
+        nxt["pos"] = 1
+        nxt["neg"] = 8
+        nxt["receipt_count"] = prev["receipt_count"] + 3
+        lines = diff_snapshots(prev, nxt)
+        blob = " ".join(lines).lower()
+        self.assertTrue(any("→" in line for line in lines))
+        self.assertIn("receipts", blob)
+        self.assertNotIn("because", blob)
+        self.assertNotIn("invent", blob)
+        same = diff_snapshots(prev, prev)
+        self.assertEqual(same, [])
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 "use client";
 
 import type { AgeLens, BoosterPayload, Topic } from "@/lib/types";
+import { lensCaption } from "@/lib/brief";
 import RiskBoard from "@/components/RiskBoard";
 import TopicDetailPanel from "@/components/TopicDetailPanel";
 
@@ -80,6 +81,11 @@ export default function IntelRail({
                 <p className="signal-label mt-2">
                   {b.campaign.risk} risk · {b.campaign.timing}
                 </p>
+                {lens !== "all" ? (
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/50">
+                    {lensCaption(b, lens)}
+                  </p>
+                ) : null}
               </button>
             </li>
           );

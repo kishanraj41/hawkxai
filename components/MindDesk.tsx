@@ -13,6 +13,7 @@ interface MindDeskProps {
   hoverId: string | null;
   booster: BoosterPayload | null;
   loading: boolean;
+  caption?: string;
   onSelect: (topic: Topic | null) => void;
   onHover: (id: string | null) => void;
 }
@@ -24,6 +25,7 @@ export default function MindDesk({
   hoverId,
   booster,
   loading,
+  caption,
   onSelect,
   onHover,
 }: MindDeskProps) {
@@ -39,7 +41,9 @@ export default function MindDesk({
         <div>
           <h1 className="text-sm font-medium tracking-tight">{CATEGORY_LABEL[category]} mind</h1>
           <p className="mt-0.5 text-xs text-white/45">
-            Hub is the plug. Branches are receipts. Amber dashes are shared artifacts — never an invented link.
+            {caption
+              ? caption
+              : "Hub is the plug. Branches are receipts. Amber dashes are shared artifacts — never an invented link."}
           </p>
         </div>
         <div className="flex gap-4 font-mono text-[11px] tabular-nums">

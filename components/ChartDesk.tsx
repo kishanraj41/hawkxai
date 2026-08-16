@@ -17,6 +17,7 @@ interface ChartDeskProps {
   booster: BoosterPayload | null;
   loading: boolean;
   query?: QueryInsight | null;
+  takeaway?: string;
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
 }
@@ -29,6 +30,7 @@ export default function ChartDesk({
   booster,
   loading,
   query = null,
+  takeaway,
   onSelect,
   onHover,
 }: ChartDeskProps) {
@@ -68,7 +70,12 @@ export default function ChartDesk({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {query ? (
             <div className="mb-4">
-              <FloorBrief query={query} sentiment={sentiment} hook={brief?.campaign.hook} />
+              <FloorBrief
+                query={query}
+                sentiment={sentiment}
+                hook={brief?.campaign.hook}
+                takeaway={takeaway}
+              />
             </div>
           ) : null}
           <Desk.Mind />
