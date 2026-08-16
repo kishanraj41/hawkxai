@@ -640,7 +640,7 @@ body {
 }
 
 .tape-track {
-  animation: tape-scroll 42s linear infinite;
+  animation: tape-scroll 72s linear infinite;
 }
 
 .signal-live {
