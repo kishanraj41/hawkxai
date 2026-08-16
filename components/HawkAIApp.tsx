@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
 import ChartDesk from "@/components/ChartDesk";
 import CategoryPlugs from "@/components/desk/CategoryPlugs";
@@ -45,6 +45,7 @@ export default function HawkAIApp() {
   const [lens, setLens] = useState<AgeLens | "all">("all");
   const [category, setCategory] = useState<DeskCategory>("all");
   const [surface, setSurface] = useState<Surface>("desk");
+  const askRef = useRef<HTMLInputElement>(null);
 
   const loadTrends = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -143,17 +144,23 @@ export default function HawkAIApp() {
         setHighlightedIds([]);
         return;
       }
-      if (typing) return;
+      if (typing && !((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k")) return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        askRef.current?.focus();
+        return;
+      }
       if (event.key === "m" || event.key === "M") setSurface("map");
       if (event.key === "d" || event.key === "D") setSurface("desk");
       if (event.key === "j" || event.key === "k" || event.key === "J" || event.key === "K") {
         event.preventDefault();
         if (!topics.length) return;
         const idx = selected ? topics.findIndex((t) => t.id === selected.id) : -1;
-        const next =
+        const nextIdx =
           event.key.toLowerCase() === "j"
-            ? topics[Math.min(topics.length - 1, Math.max(0, idx) + (idx < 0 ? 0 : 1))]
-            : topics[Math.max(0, idx < 0 ? 0 : idx - 1)];
+            ? idx < 0 ? 0 : Math.min(topics.length - 1, idx + 1)
+            : idx < 0 ? 0 : Math.max(0, idx - 1);
+        const next = topics[nextIdx];
         if (next) {
           setSelected(next);
           setHighlightedIds([next.id]);
@@ -267,6 +274,7 @@ export default function HawkAIApp() {
 
         <form onSubmit={handleAsk} className="flex min-w-[200px] flex-1 items-center gap-2 sm:max-w-md">
           <input
+            ref={askRef}
             value={askQuery}
             onChange={(e) => setAskQuery(e.target.value)}
             placeholder="Search topics… ⌘K"

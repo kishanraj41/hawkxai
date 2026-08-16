@@ -37,8 +37,9 @@ Reports land in `agents/booster-agent/runs/`. The living backlog is `IMPROVISATI
 The same brain runs in TypeScript:
 
 - `lib/booster.ts` — capture / correlate / campaign / improvise
+- `lib/desk.ts` — category plug, causation drivers, occurrence bins
 - `GET /api/booster` — JSON for other clients (needs `/api/trends` cache)
-- `BoosterBriefBar` — strip under the Ask box
+- `ChartDesk` — plug a category; trends + causation bars + timeseries
 - `BoosterInsights` — per-topic artifacts, competitor move, age takes
 
 The D3 map and `/api/trends` contract are unchanged.

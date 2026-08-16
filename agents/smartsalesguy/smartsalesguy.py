@@ -60,6 +60,9 @@ FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
     ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence one-liner, ticker chips, source posts"),
     ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
+    ("lib/desk.ts", "Category desk brain", "Classifies topics, graphs measured causation drivers, bins occurrence timeseries"),
+    ("components/ChartDesk.tsx", "Plug-and-play category dashboard", "Drop in a category; trends, causation bars, and occurrence area chart fill from receipts"),
+    ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Timeseries / Causation / Trends — same parts in the rail"),
     ("lib/cluster.ts", "Grok topic clustering", "xAI Grok 4.6 clusters raw posts into topics; divergence is computed in code"),
     ("agents/booster-agent/booster_agent.py", "Booster Agent (CLI brain)", "Offline/live capture of hashtags, QRs, phrases, URLs; improvises the backlog"),
     ("agents/pr-review-bot/review_bot.py", "PR Review Bot", "AI code review with 0-10 scoring and JSON/Markdown reports"),
@@ -471,12 +474,13 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "the need underneath it has already moved."
     )
     solution = (
-        "HawkAI is a live circle-pack of topics across X, Reddit, and Hacker News, "
-        "clustered by Grok, with divergence computed in code (everywhere vs a "
-        "single-platform bubble). Beside the map sits the Booster Agent: capture "
-        "artifacts from real posts only, correlate why they are trending (never invent "
-        "a WHY), translate five age lenses, arm competitors with hook, timing, and "
-        "risk, and improvise the product after every run. The map stays the map. "
+        "HawkAI is a plug-and-play category desk on live topics across X, Reddit, "
+        "Hacker News, and public APIs. Plug Markets or Weather or Campaigns — the "
+        "same modules fill: current trends, a causation graph of measured drivers "
+        "(first print, source heat, lag, artifacts — never an invented WHY), and an "
+        "occurrence timeseries. Beside it sits the Booster Agent: capture artifacts "
+        "from real posts only, translate five age lenses, arm competitors with hook, "
+        "timing, and risk, and improvise after every run. The map is one more module. "
         "Booster is the intelligence layer that turns attention into a campaign."
     )
     if idea:

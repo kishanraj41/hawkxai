@@ -22,7 +22,7 @@ export default function BoosterInsights({ brief, lens = "all" }: BoosterInsights
   return (
     <section className="mt-5 border-t border-white/8 pt-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="signal-label">Brief</p>
+        <p className="signal-label">Brief · {brief.category}</p>
         <span className="font-mono text-[10px] tabular-nums text-white/45">
           {Math.round(brief.confidence * 100)}% evidence
         </span>

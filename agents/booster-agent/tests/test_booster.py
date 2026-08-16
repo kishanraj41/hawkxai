@@ -9,7 +9,9 @@ sys.path.insert(0, os.path.join(HERE, ".."))
 
 from booster_agent import (
     boost_trends,
+    build_causation,
     capture_artifacts,
+    classify_topic,
     load_payload,
     why_trending,
 )
@@ -46,6 +48,21 @@ class BoosterTests(unittest.TestCase):
         self.assertIn(report.improvisations[0].priority, {"P0", "P1", "P2"})
         blob = json.dumps(asdict(report.briefs[1]))
         self.assertIn("DAL", blob)
+
+    def test_category_plugs(self):
+        self.assertEqual(classify_topic(self.topics["qr-summer-drop"], capture_artifacts(self.topics["qr-summer-drop"])), "campaigns")
+        self.assertEqual(classify_topic(self.topics["airline-outage"], capture_artifacts(self.topics["airline-outage"])), "markets")
+        self.assertEqual(classify_topic(self.topics["gulf-storm"], capture_artifacts(self.topics["gulf-storm"])), "weather")
+
+    def test_causation_is_measured_not_invented(self):
+        thin = build_causation(self.topics["airline-outage"], capture_artifacts(self.topics["airline-outage"]))
+        self.assertTrue(thin.thin)
+        self.assertEqual(thin.first_platform, "x")
+        storm = build_causation(self.topics["gulf-storm"], capture_artifacts(self.topics["gulf-storm"]))
+        self.assertFalse(storm.thin)
+        self.assertTrue(any(d.id.startswith("heat-") for d in storm.drivers))
+        blob = " ".join(d.evidence.lower() for d in storm.drivers)
+        self.assertNotIn("invent", blob)
 
 
 if __name__ == "__main__":
