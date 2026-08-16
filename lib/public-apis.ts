@@ -1230,10 +1230,6 @@ function selectFeeds(topic?: string): Feed[] {
   return [...FEEDS.filter((f) => must.has(f.name)), ...extra].slice(0, budget + 6);
 }
 
-export function publicFeedNames(): string[] {
-  return FEEDS.map((f) => f.name);
-}
-
 export async function collectPublicApis(
   city: CityId = "all",
   topic?: string,

@@ -2,7 +2,7 @@
 
 Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
 
-**Additional tab:** look up a particular word or phrase. A marketing team opens **Footprint** from the trend desk (new browser tab, `/footprint`) and plugs a campaign name — `#HeatWaveFit`, Camry, Just Do It. The same modules fill with where that phrase is printing. Trending words stay on `/`. Phrase footprint is additive.
+**Additional desks:** look up a particular word or phrase. A marketing team opens **Footprint** (`/footprint`) and plugs a campaign name. A researcher opens **Research** (`/research`) and digs Wikipedia, the open web, HN, Reddit, and X for a topic brief with cited receipts. Trending words stay on `/`. Both desks are additive.
 
 ## Plug-and-play desk
 
@@ -39,7 +39,7 @@ The map stays the map. Booster sits beside it: capture trending words **or** loo
 ## Non-negotiables
 
 - Never invent posts or a fake WHY. If receipts are thin, sentiment says so and lowers confidence.
-- `/api/trends` remains the trending-word path. `/api/trends?topic=` and `/footprint` are the phrase-footprint path. Additive fields only.
+- `/api/trends` remains the trending-word path. `/api/trends?topic=` and `/footprint` are the phrase-footprint path. `/api/research` and `/research` are the topic-research path. Additive fields only.
 - A plugged query with no exact print returns nearest receipts and neighbors from the last tape — never “no trend yet,” and never invented posts.
 - Mind-map hub is the looked-up phrase. Bridges exist only when the same artifact key prints on two topics. Empty bridges stay empty.
 - If a source is degraded, say so — still boost the sources that worked.
@@ -52,6 +52,7 @@ The map stays the map. Booster sits beside it: capture trending words **or** loo
 | Surface | Owner |
 |---|---|
 | Phrase lookup | `components/desk/PhraseLookup.tsx` + header `⌘K` |
+| Research desk | `components/research/ResearchDesk.tsx` + `GET /api/research?q=` |
 | Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
 | Category filters + desk | `components/desk/` + `components/ChartDesk.tsx` |
 | Occurrence + sentiment | `lib/desk.ts` · `lib/sentiment.ts` (live) · `agents/booster-agent/` (CLI) |
@@ -76,4 +77,5 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 7. Geo / city pulse (Ask already hints at Austin-style questions).
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
-10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens as a new tab from the trend desk; trending words stay on `/`.
+10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens from the trend desk; trending words stay on `/`.
+11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + HN + Reddit + X + optional Grok deep pass; findings cite receipts only.

@@ -97,27 +97,38 @@ function HomeMark() {
 }
 
 function DeskSwitch({ desk }: { desk: DeskKind }) {
-  if (desk === "trends") {
-    return (
-      <a
-        href="/footprint"
-        className="signal-label flex h-9 shrink-0 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white"
-      >
-        Footprint
-      </a>
-    );
-  }
+  const link =
+    "signal-label flex h-9 shrink-0 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white";
+  const active =
+    "signal-label flex h-9 shrink-0 items-center rounded border border-white/30 bg-white px-2.5 text-black";
+
   return (
-    <a
-      href="/"
-      className="signal-label flex h-9 shrink-0 items-center rounded border border-white/10 px-2.5 hover:border-white/30 hover:text-white"
-      onClick={(e) => {
-        e.preventDefault();
-        goHome();
-      }}
-    >
-      Trends
-    </a>
+    <nav className="flex h-9 shrink-0 items-center gap-1" aria-label="Desks">
+      {desk === "trends" ? (
+        <span className={active}>Trends</span>
+      ) : (
+        <a
+          href="/"
+          className={link}
+          onClick={(e) => {
+            e.preventDefault();
+            goHome();
+          }}
+        >
+          Trends
+        </a>
+      )}
+      {desk === "footprint" ? (
+        <span className={active}>Footprint</span>
+      ) : (
+        <a href="/footprint" className={link}>
+          Footprint
+        </a>
+      )}
+      <a href="/research" className={link}>
+        Research
+      </a>
+    </nav>
   );
 }
 

@@ -240,3 +240,39 @@ export interface RawSignals {
   sources: SourceHealth;
   degraded: string[];
 }
+
+export type ResearchSourceKind =
+  | "wikipedia"
+  | "web"
+  | "hn"
+  | "reddit"
+  | "x"
+  | "public";
+
+export interface ResearchSource {
+  id: string;
+  kind: ResearchSourceKind;
+  title: string;
+  url: string;
+  snippet: string;
+  score?: number;
+  createdAt?: string;
+}
+
+export interface ResearchFinding {
+  claim: string;
+  evidenceIds: string[];
+  confidence: "high" | "medium" | "thin";
+}
+
+export interface ResearchPayload {
+  query: string;
+  updatedAt: string;
+  summary: string;
+  findings: ResearchFinding[];
+  openQuestions: string[];
+  angles: string[];
+  sources: ResearchSource[];
+  degraded: string[];
+  thin: boolean;
+}
