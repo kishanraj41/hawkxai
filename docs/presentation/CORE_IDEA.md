@@ -11,7 +11,9 @@ A **category is a plug**. Drop Markets, News, Weather, Tech, Sports, Health, Sec
 3. **Sentiment correlation** — pos/neg/risk word hits in receipt titles, split by platform. Never a generated story. First print still marks the occurrence chart.
 4. **Occurrence timeseries** — when receipts actually landed (area by source, CT). First print is marked.
 5. **Floor facts** — for a plugged campaign or product (Camry, #HeatWaveFit), kind + category + nearest receipts a sales team can quote. Empty search returns a close match, not “no trend yet.”
-6. **Campaign brief** — hook, timing, risk, five age lenses.
+6. **Campaign brief** — hook, timing, risk, five age lenses. Copy / Save .md / Print PDF from live receipts only.
+7. **Tape watch** — star a name; on refresh, show measured deltas (velocity, title lean, receipt count). Never explain the spike.
+8. **Audience compose** — one lens select. Same receipts, different takeaway on desk, map hover, mind subtitle, and the exported brief.
 
 The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses Ask.
 
@@ -51,7 +53,8 @@ The map stays the map. Booster sits beside it: capture → correlate → **plug 
 | Occurrence + sentiment | `lib/desk.ts` · `lib/sentiment.ts` (live) · `agents/booster-agent/` (CLI) |
 | Live map | `components/TrendMap.tsx` |
 | Topic receipts | `components/TopicDetailPanel.tsx` |
-| Booster briefing | `components/BoosterBriefBar.tsx` + `components/BoosterInsights.tsx` |
+| Booster briefing | `components/BoosterInsights.tsx` + `components/brief/KeepBrief.tsx` |
+| Tape watch | `lib/watch.ts` + `components/TapeWatch.tsx` |
 | Live boost API | `GET /api/booster` |
 | Offline / CLI brain | `agents/booster-agent/` |
 | Living upgrade backlog | `agents/booster-agent/IMPROVISATIONS.md` |
@@ -64,8 +67,8 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 2. QR *image* decode (scan attached media, not just QR-shaped URLs).
 3. Persist hourly snapshots so occurrence charts cover more than one ingest.
 4. Overlay GDELT / NWS events as lagged markers on the same timeseries (never as an invented WHY).
-5. Age-group toggle on the map itself.
+5. Age-group toggle on the map itself — **shipped:** header lens composes desk, map hover, mind subtitle, and the keepable brief.
 6. Brand-risk radar (controversy vs ride-along).
 7. Geo / city pulse (Ask already hints at Austin-style questions).
-8. Export a one-page campaign brief for a competitor.
+8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.

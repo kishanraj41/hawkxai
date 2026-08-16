@@ -5,21 +5,49 @@ import AmbientBackground from "@/components/AmbientBackground";
 import ChartDesk from "@/components/ChartDesk";
 import CategoryPlugs from "@/components/desk/CategoryPlugs";
 import TopicPlug from "@/components/desk/TopicPlug";
+import { KeepBrief } from "@/components/brief/KeepBrief";
 import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
 import MindDesk from "@/components/MindDesk";
 import OverviewRail from "@/components/OverviewRail";
+import TapeWatch from "@/components/TapeWatch";
 import TickerTape from "@/components/TickerTape";
 import TrendMap from "@/components/TrendMap";
 import { AUDIENCE_OPTIONS, boostTrends } from "@/lib/booster";
+import { lensCaption } from "@/lib/brief";
 import { categoryCounts, filterByCategory } from "@/lib/desk";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
+import {
+  ingestTape,
+  parseWatchStore,
+  TAPE_WATCH_KEY,
+  toggleWatch,
+  type TapeDelta,
+  type TapeWatchStore,
+} from "@/lib/watch";
 import type { AgeLens, BoosterPayload, DeskCategory, Platform, Topic, TrendsPayload } from "@/lib/types";
 
 type SortKey = "score" | Platform | "risk";
 type VelocityFilter = Topic["velocity"] | "all";
 type Surface = "mind" | "desk" | "map";
+
+function readWatch(): TapeWatchStore {
+  if (typeof window === "undefined") return { ids: [], snaps: {} };
+  try {
+    return parseWatchStore(window.localStorage.getItem(TAPE_WATCH_KEY));
+  } catch {
+    return parseWatchStore(null);
+  }
+}
+
+function writeWatch(store: TapeWatchStore) {
+  try {
+    window.localStorage.setItem(TAPE_WATCH_KEY, JSON.stringify(store));
+  } catch {
+    /* quota / private mode */
+  }
+}
 
 function MapSkeleton() {
   return (
@@ -48,6 +76,8 @@ export default function HawkAIApp() {
   const [category, setCategory] = useState<DeskCategory>("all");
   const [surface, setSurface] = useState<Surface>("mind");
   const [plugged, setPlugged] = useState("");
+  const [watchIds, setWatchIds] = useState<string[]>([]);
+  const [deltas, setDeltas] = useState<TapeDelta[]>([]);
   const askRef = useRef<HTMLInputElement>(null);
   const pluggedRef = useRef("");
   pluggedRef.current = plugged;
@@ -87,10 +117,31 @@ export default function HawkAIApp() {
   }, [city]);
 
   useEffect(() => {
+    if (!payload || !booster) return;
+    const next = ingestTape(
+      readWatch(),
+      payload.topics,
+      booster.briefs,
+      payload.updatedAt,
+    );
+    writeWatch(next.store);
+    setWatchIds(next.store.ids);
+    setDeltas(next.deltas);
+  }, [payload, booster]);
+
+  useEffect(() => {
     setSelected(null);
     setHighlightedIds([]);
     void loadTrends();
   }, [loadTrends]);
+
+  function ensureWatched(topicId: string) {
+    const store = readWatch();
+    if (store.ids.includes(topicId)) return;
+    const next = toggleWatch(store, topicId);
+    writeWatch(next);
+    setWatchIds(next.ids);
+  }
 
   async function handleAsk(event: FormEvent) {
     event.preventDefault();
@@ -105,6 +156,7 @@ export default function HawkAIApp() {
     try {
       const data = await loadTrends(true, q);
       setAskAnswer(data?.query?.floor ?? `Nearest receipts for “${q}”.`);
+      if (data?.topics[0]) ensureWatched(data.topics[0].id);
     } catch {
       setAskAnswer("Search failed — try a close alias (Camry → Toyota Camry).");
     } finally {
@@ -124,6 +176,7 @@ export default function HawkAIApp() {
     try {
       const data = await loadTrends(true, q);
       setAskAnswer(data?.query?.floor ?? `Nearest receipts for “${q}”.`);
+      if (data?.topics[0]) ensureWatched(data.topics[0].id);
     } finally {
       setAsking(false);
     }
@@ -228,11 +281,33 @@ export default function HawkAIApp() {
     });
   }
 
+  function handleToggleWatch(topicId: string) {
+    const next = toggleWatch(readWatch(), topicId);
+    writeWatch(next);
+    setWatchIds(next.ids);
+  }
+
+  const focus = selected ?? topics[0] ?? null;
+  const focusBrief = focus
+    ? booster?.briefs.find((b) => b.topicId === focus.id)
+    : undefined;
+  const focusCaption = lensCaption(focusBrief, lens);
+  const sinceLastLook = focus
+    ? (deltas.find((d) => d.topicId === focus.id)?.lines ?? [])
+    : [];
+
   return (
+    <KeepBrief.Provider
+      topic={focus}
+      brief={focusBrief}
+      query={payload?.query ?? null}
+      lens={lens}
+      since={sinceLastLook}
+    >
     <main className="relative flex h-screen flex-col overflow-hidden bg-[#07080b] text-white">
       <AmbientBackground />
 
-      <header className="relative z-50 mx-3 mt-3 shrink-0 rounded-lg border border-white/8 bg-[#0c0d10]">
+      <header className="no-print relative z-50 mx-3 mt-3 shrink-0 rounded-lg border border-white/8 bg-[#0c0d10]">
         <div className="flex items-center gap-2 overflow-x-auto px-3 py-2">
         <div className="flex shrink-0 items-center gap-3">
           <span className="flex shrink-0 items-center gap-2">
@@ -344,6 +419,7 @@ export default function HawkAIApp() {
           </button>
         </form>
 
+        <KeepBrief.Actions />
         <button
           type="button"
           onClick={() => void loadTrends(true)}
@@ -368,10 +444,12 @@ export default function HawkAIApp() {
       <TickerTape topics={payload?.topics ?? []} onSelect={pickTopic} />
 
       {askAnswer ? (
-        <div className="relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
+        <div className="no-print relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
           <p className="text-sm text-white/80">{askAnswer}</p>
         </div>
       ) : null}
+
+      <TapeWatch deltas={deltas} onPick={pickTopicId} />
 
       {error ? (
         <div className="relative z-20 mx-3 mt-2 rounded-lg border border-white/8 bg-[#0c0d10] px-4 py-2">
@@ -386,9 +464,11 @@ export default function HawkAIApp() {
           selectedId={selected?.id ?? null}
           hoverId={hoverId}
           sortKey={sortKey}
+          watchedIds={watchIds}
           onSort={setSortKey}
           onSelect={pickTopic}
           onHover={setHoverId}
+          onToggleWatch={handleToggleWatch}
         />
 
         {surface === "mind" ? (
@@ -399,6 +479,7 @@ export default function HawkAIApp() {
             hoverId={hoverId}
             booster={booster}
             loading={loading}
+            caption={focusCaption}
             onSelect={pickTopic}
             onHover={setHoverId}
           />
@@ -411,6 +492,7 @@ export default function HawkAIApp() {
             booster={booster}
             loading={loading}
             query={payload?.query ?? null}
+            takeaway={lens === "all" ? undefined : focusCaption}
             onSelect={pickTopic}
             onHover={setHoverId}
           />
@@ -431,6 +513,12 @@ export default function HawkAIApp() {
                 selectedId={selected?.id ?? null}
                 highlightedIds={highlightedIds}
                 hoverId={hoverId}
+                captionFor={(t) =>
+                  lensCaption(
+                    booster?.briefs.find((b) => b.topicId === t.id),
+                    lens,
+                  )
+                }
                 onSelect={pickTopic}
                 onHover={setHoverId}
               />
@@ -453,6 +541,8 @@ export default function HawkAIApp() {
           onHover={setHoverId}
         />
       </div>
+      <KeepBrief.Sheet />
     </main>
+    </KeepBrief.Provider>
   );
 }

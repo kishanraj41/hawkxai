@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { KeepBrief } from "@/components/brief/KeepBrief";
+import { takeawayFor } from "@/lib/brief";
 import type { AgeLens, BoosterTopicBrief } from "@/lib/types";
 
 const RISK_STYLE = {
@@ -16,16 +18,21 @@ interface BoosterInsightsProps {
 
 export default function BoosterInsights({ brief, lens = "all" }: BoosterInsightsProps) {
   const [picked, setPicked] = useState<AgeLens>("millennial");
-  const open = lens === "all" ? picked : lens;
-  const active = brief.audiences.find((a) => a.lens === open) ?? brief.audiences[0];
+  const locked = lens !== "all";
+  const active = locked
+    ? takeawayFor(brief, lens)
+    : (brief.audiences.find((a) => a.lens === picked) ?? brief.audiences[0]);
 
   return (
     <section className="mt-5 border-t border-white/8 pt-4">
       <div className="flex items-center justify-between gap-2">
         <p className="signal-label">Brief · {brief.category}</p>
-        <span className="font-mono text-[10px] tabular-nums text-white/45">
-          {Math.round(brief.confidence * 100)}% evidence
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10px] tabular-nums text-white/45">
+            {Math.round(brief.confidence * 100)}% evidence
+          </span>
+          <KeepBrief.Actions />
+        </div>
       </div>
 
       <p className="mt-2 text-pretty text-sm leading-relaxed text-white/70">{brief.whyTrending}</p>
@@ -57,22 +64,26 @@ export default function BoosterInsights({ brief, lens = "all" }: BoosterInsights
         </p>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1">
-        {brief.audiences.map((a) => (
-          <button
-            key={a.lens}
-            type="button"
-            onClick={() => setPicked(a.lens)}
-            className={`rounded px-2 py-1 font-mono text-[10px] tabular-nums transition-colors duration-150 ${
-              active?.lens === a.lens ? "bg-white text-black" : "text-white/50 hover:text-white"
-            }`}
-          >
-            {a.label}
-          </button>
-        ))}
-      </div>
+      {locked ? null : (
+        <div className="mt-3 flex flex-wrap gap-1">
+          {brief.audiences.map((a) => (
+            <button
+              key={a.lens}
+              type="button"
+              onClick={() => setPicked(a.lens)}
+              className={`rounded px-2 py-1 font-mono text-[10px] tabular-nums transition-colors duration-150 ${
+                active?.lens === a.lens ? "bg-white text-black" : "text-white/50 hover:text-white"
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
       {active ? (
-        <p className="mt-2 text-pretty text-xs leading-relaxed text-white/60">{active.takeaway}</p>
+        <p className="mt-2 text-pretty text-xs leading-relaxed text-white/60">
+          {locked ? `${active.label} · ${active.takeaway}` : active.takeaway}
+        </p>
       ) : null}
     </section>
   );

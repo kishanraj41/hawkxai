@@ -295,7 +295,6 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
   const hashtags = allArtifacts.filter((a) => a.kind === "hashtag");
   const qrs = allArtifacts.filter((a) => a.kind === "qr");
   const qrDecoded = qrs.some((a) => a.value.startsWith("decoded:"));
-  const rising = payload.topics.filter((t) => t.velocity === "rising").length;
   const bubbles = payload.topics.filter((t) => t.divergence >= 0.66).length;
 
   if (payload.degraded.some((d) => d.includes("x"))) {
@@ -346,14 +345,6 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       next: "One-click brief: format + hook + risk for the bubbling network only.",
     });
   }
-  if (rising >= 2) {
-    items.push({
-      priority: "P1",
-      title: "Audience toggle on the map",
-      why: "The same rising cluster reads differently for family, 18–24, and a brand CMO.",
-      next: "Compose five caption variants from BoosterInsights; filter map labels by lens.",
-    });
-  }
   if (!payload.topics.some((t) => t.tickers.length > 0)) {
     items.push({
       priority: "P1",
@@ -379,9 +370,9 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
   });
   items.push({
     priority: "P2",
-    title: "Export a one-page competitor brief",
-    why: "CMOs will not live inside the circle pack. They want a PDF/Slack card.",
-    next: "From BoosterPayload, render hook / risk / age takes / three receipts.",
+    title: "Persist tape-watch beyond this browser",
+    why: "Spike watch lives in localStorage. A CMO on another machine, or a Vercel cold start, sees no last look.",
+    next: "Store snapshots next to the feed bandit (KV) keyed by topic id; keep the same delta lines.",
   });
 
   const rank = { P0: 0, P1: 1, P2: 2 };

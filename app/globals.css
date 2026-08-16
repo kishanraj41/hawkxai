@@ -187,3 +187,40 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+.keep-brief-sheet {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.keep-brief-sheet pre {
+  white-space: pre-wrap;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .keep-brief-sheet,
+  .keep-brief-sheet * {
+    visibility: visible;
+  }
+  .keep-brief-sheet {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    color: #111;
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

@@ -23,6 +23,7 @@ interface TrendMapProps {
   selectedId: string | null;
   highlightedIds: string[];
   hoverId: string | null;
+  captionFor?: (topic: Topic) => string | undefined;
   onSelect: (topic: Topic | null) => void;
   onHover: (id: string | null) => void;
 }
@@ -64,6 +65,7 @@ export default function TrendMap({
   selectedId,
   highlightedIds,
   hoverId,
+  captionFor,
   onSelect,
   onHover,
 }: TrendMapProps) {
@@ -488,12 +490,24 @@ export default function TrendMap({
     <div ref={containerRef} className="absolute inset-0">
       <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkAI trend map" />
       {sweepOn ? <div className="signal-sweep" aria-hidden /> : null}
-      {tip ? <MapQuote topic={tip.topic} x={tip.x} y={tip.y} /> : null}
+      {tip ? (
+        <MapQuote topic={tip.topic} x={tip.x} y={tip.y} caption={captionFor?.(tip.topic)} />
+      ) : null}
     </div>
   );
 }
 
-function MapQuote({ topic, x, y }: { topic: Topic; x: number; y: number }) {
+function MapQuote({
+  topic,
+  x,
+  y,
+  caption,
+}: {
+  topic: Topic;
+  x: number;
+  y: number;
+  caption?: string;
+}) {
   const score = totalScore(topic);
   return (
     <div
@@ -501,6 +515,9 @@ function MapQuote({ topic, x, y }: { topic: Topic; x: number; y: number }) {
       style={{ left: Math.min(x + 12, 9999), top: Math.max(8, y - 8), transform: "translateY(-100%)" }}
     >
       <p className="line-clamp-2 text-[12px] leading-snug text-white">{topic.label}</p>
+      {caption ? (
+        <p className="mt-1 line-clamp-3 text-[11px] leading-snug text-white/70">{caption}</p>
+      ) : null}
       <p className="mt-1 font-mono text-[10px] tabular-nums text-white/55">
         {Math.round(score)} · {topic.velocity} · {topic.platforms.x?.score ?? 0} X · {topic.platforms.reddit?.score ?? 0} Reddit · {topic.platforms.hn?.score ?? 0} HN · {topic.platforms.public?.score ?? 0} APIs
       </p>

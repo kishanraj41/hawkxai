@@ -849,7 +849,6 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     hashtags = [a for a in artifacts if a.kind == "hashtag"]
     qrs = [a for a in artifacts if a.kind == "qr"]
     qr_decoded = any(a.value.startswith("decoded:") for a in qrs)
-    rising = sum(1 for t in topics if t.get("velocity") == "rising")
     bubbles = sum(1 for t in topics if float(t.get("divergence") or 0) >= 0.66)
 
     if any("x" in d for d in degraded):
@@ -864,8 +863,6 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P0", "QR image decode, not just QR-shaped URLs", "Campaigns hide the payload in images. Text regex cannot see a poster QR.", "Accept image URLs → decode with a QR library → treat payload as a first-class artifact."))
     if bubbles >= 3:
         items.append(Improvisation("P1", "Platform-native campaign studio", f"{bubbles} topics are still single-platform bubbles — the cheapest time to act.", "One-click brief: format + hook + risk for the bubbling network only."))
-    if rising >= 2:
-        items.append(Improvisation("P1", "Audience toggle on the map", "The same rising cluster reads differently for family, 18–24, and a brand CMO.", "Compose five caption variants from BoosterInsights; filter map labels by lens."))
     if not any((t.get("tickers") or []) for t in topics):
         items.append(Improvisation("P1", "Finance overlay even without explicit tickers", "Competitors still need category peers when $TICKER is absent.", "Map topic labels to a small industry lexicon — never invent symbols."))
     thin = sum(1 for b in briefs if b.causation.thin)
@@ -875,7 +872,7 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     if mind.bridges == 0:
         items.append(Improvisation("P1", "Shared-artifact bridges on the mind map", "The mind map only draws amber dashes when the same hashtag, QR, URL, or ticker prints on two names. Zero bridges means correlation is still a star, not a graph.", "Keep capturing overlapping campaign codes across topics — never invent a bridge to fill the map."))
     items.append(Improvisation("P2", "News + disaster markers on the same timeseries", "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.", "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY."))
-    items.append(Improvisation("P2", "Export a one-page competitor brief", "CMOs will not live inside the circle pack. They want a PDF/Slack card.", "From the booster payload, render hook / risk / age takes / three receipts."))
+    items.append(Improvisation("P2", "Persist tape-watch beyond this browser", "Spike watch lives in localStorage. A CMO on another machine, or a Vercel cold start, sees no last look.", "Store snapshots next to the feed bandit (KV) keyed by topic id; keep the same delta lines."))
     rank = {"P0": 0, "P1": 1, "P2": 2}
     items.sort(key=lambda i: rank.get(i.priority, 9))
     return items[:8]
@@ -918,6 +915,154 @@ def load_payload(path: str) -> Dict[str, Any]:
 
 def report_to_dict(report: BoosterReport) -> Dict[str, Any]:
     return asdict(report)
+
+
+def _top_posts(topic: Dict[str, Any], limit: int = 3) -> List[Dict[str, Any]]:
+    posts = list(_posts(topic))
+    posts.sort(key=lambda p: int(p.get("score") or 0), reverse=True)
+    return posts[:limit]
+
+
+def takeaway_for(brief: TopicBrief, lens: str) -> Optional[AgeTranslation]:
+    if not lens or lens == "all":
+        return None
+    for aud in brief.audiences:
+        if aud.lens == lens:
+            return aud
+    return brief.audiences[0] if brief.audiences else None
+
+
+def snapshot_of(topic: Dict[str, Any], brief: Optional[TopicBrief], at: str) -> Dict[str, Any]:
+    sent = brief.sentiment if brief else None
+    overall = sent.overall if sent else None
+    return {
+        "topic_id": topic.get("id"),
+        "label": topic.get("label"),
+        "velocity": topic.get("velocity"),
+        "lean": sent.lean if sent else "thin",
+        "pos": overall.pos if overall else 0,
+        "neg": overall.neg if overall else 0,
+        "receipt_count": len(_posts(topic)),
+        "first_at": brief.causation.first_at if brief else None,
+        "at": at,
+    }
+
+
+def diff_snapshots(prev: Dict[str, Any], nxt: Dict[str, Any]) -> List[str]:
+    lines: List[str] = []
+    if prev.get("velocity") != nxt.get("velocity"):
+        lines.append(f"{prev.get('velocity')} → {nxt.get('velocity')}")
+    if prev.get("lean") != nxt.get("lean"):
+        lines.append(f"titles {prev.get('lean')} → {nxt.get('lean')} ({nxt.get('pos')} pos / {nxt.get('neg')} neg)")
+    elif prev.get("pos") != nxt.get("pos") or prev.get("neg") != nxt.get("neg"):
+        lines.append(f"titles {nxt.get('pos')} pos / {nxt.get('neg')} neg (was {prev.get('pos')}/{prev.get('neg')})")
+    if prev.get("receipt_count") != nxt.get("receipt_count"):
+        delta = int(nxt.get("receipt_count") or 0) - int(prev.get("receipt_count") or 0)
+        sign = "+" if delta > 0 else ""
+        lines.append(f"receipts {prev.get('receipt_count')} → {nxt.get('receipt_count')} ({sign}{delta})")
+    if not prev.get("first_at") and nxt.get("first_at"):
+        lines.append(f"first print {nxt.get('first_at')}")
+    return lines
+
+
+def format_keep_brief(
+    topic: Dict[str, Any],
+    brief: TopicBrief,
+    query: Optional[Dict[str, Any]] = None,
+    lens: str = "all",
+    since: Optional[Sequence[str]] = None,
+) -> str:
+    audience = takeaway_for(brief, lens)
+    receipts = _top_posts(topic, 3)
+    mix = brief.sentiment.overall
+    first = (
+        f"{brief.causation.first_platform or 'tape'} · {brief.causation.first_at}"
+        if brief.causation.first_at
+        else "No dated receipt yet"
+    )
+    thin = (
+        "Receipts are thin — do not treat this as a cause."
+        if brief.sentiment.thin or brief.causation.thin
+        else None
+    )
+    lines = [
+        f"# HawkAI brief · {topic.get('label') or brief.label}",
+        "",
+        (query or {}).get("floor") or brief.why_trending,
+        "",
+    ]
+    if query:
+        lines.append(f"Kind: {query.get('kind')} · {query.get('category')} · {query.get('match')} · {query.get('hitCount') or query.get('hit_count')} hits")
+        lines.append("")
+    if since:
+        lines.append("## Since last look")
+        lines.append("")
+        for line in since:
+            lines.append(f"- {line}")
+        lines.append("")
+    lines.append("## Why (from receipts)")
+    lines.append("")
+    lines.append(brief.why_trending)
+    lines.append("")
+    lines.append(f"Evidence {int(brief.confidence * 100)}% · {brief.category}")
+    lines.append("")
+    lines.append("## Play")
+    lines.append("")
+    lines.append(brief.campaign.hook)
+    lines.append("")
+    lines.append(brief.campaign.for_competitors)
+    lines.append("")
+    lines.append(f"Risk: {brief.campaign.risk} · {brief.campaign.angle} · timing {brief.campaign.timing}")
+    lines.append("")
+    if audience:
+        lines.append(f"## Audience · {audience.label}")
+        lines.append("")
+        lines.append(audience.takeaway)
+        lines.append("")
+    else:
+        lines.append("## Audiences")
+        lines.append("")
+        for aud in brief.audiences:
+            lines.append(f"- **{aud.label}:** {aud.takeaway}")
+        lines.append("")
+    lines.append("## Title sentiment")
+    lines.append("")
+    lines.append(
+        "Thin — not enough titled receipts to lean."
+        if brief.sentiment.thin
+        else f"Lean {brief.sentiment.lean} · {mix.pos} pos / {mix.neg} neg / {mix.risk} risk · n={mix.n}"
+    )
+    for quote in brief.sentiment.quotes[:3]:
+        lines.append(f"- “{quote}”")
+    lines.append("")
+    lines.append("## First print")
+    lines.append("")
+    lines.append(first)
+    lines.append("")
+    if brief.artifacts:
+        arts = ", ".join(
+            a.value if a.kind in ("hashtag", "ticker") else f"{a.kind}: {a.value}"
+            for a in brief.artifacts[:8]
+        )
+        lines.append("## Artifacts")
+        lines.append("")
+        lines.append(arts)
+        lines.append("")
+    lines.append("## Receipts")
+    lines.append("")
+    if not receipts:
+        lines.append("No posts attached.")
+    else:
+        for i, post in enumerate(receipts, 1):
+            lines.append(f"{i}. {post.get('title', '')}")
+            lines.append(f"   {post.get('url', '')}")
+    lines.append("")
+    if thin:
+        lines.append(thin)
+        lines.append("")
+    lines.append("_Evidence only. Nothing here is an invented cause._")
+    lines.append("")
+    return "\n".join(lines)
 
 
 def report_markdown(report: BoosterReport) -> str:

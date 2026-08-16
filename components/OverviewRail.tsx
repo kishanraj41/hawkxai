@@ -42,9 +42,11 @@ interface OverviewRailProps {
   selectedId: string | null;
   hoverId: string | null;
   sortKey: SortKey;
+  watchedIds: string[];
   onSort: (key: SortKey) => void;
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
+  onToggleWatch: (topicId: string) => void;
 }
 
 export default function OverviewRail({
@@ -53,9 +55,11 @@ export default function OverviewRail({
   selectedId,
   hoverId,
   sortKey,
+  watchedIds,
   onSort,
   onSelect,
   onHover,
+  onToggleWatch,
 }: OverviewRailProps) {
   const xAvg =
     topics.length === 0 ? 0 : topics.reduce((s, t) => s + (t.platforms.x?.score ?? 0), 0) / topics.length;
@@ -94,6 +98,9 @@ export default function OverviewRail({
           {topics.length} names
         </span>
       </div>
+      <p className="mt-1 text-xs text-white/45">
+        ○ watches a name. Refresh to see tape deltas — never an invented cause.
+      </p>
       <p className="mt-1 text-xs text-white/45">
         {payload?.sources.x ? "X" : "X off"} · {payload?.sources.reddit ? "Reddit" : "Reddit off"} ·{" "}
         {payload?.sources.hn ? "HN" : "HN off"} · {payload?.sources.public ? "APIs" : "APIs off"}
@@ -167,17 +174,31 @@ export default function OverviewRail({
         {ranked.map((t) => {
           const active = selectedId === t.id || hoverId === t.id;
           const risk = topicRisk(t);
+          const watching = watchedIds.includes(t.id);
           return (
             <li key={t.id}>
-              <button
-                type="button"
-                onClick={() => onSelect(t)}
-                onMouseEnter={() => onHover(t.id)}
-                onMouseLeave={() => onHover(null)}
-                className={`flex w-full items-baseline gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-150 ${
+              <div
+                className={`flex w-full items-baseline gap-1 rounded-md px-1 py-1.5 transition-colors duration-150 ${
                   active ? "bg-white/8" : "hover:bg-white/[0.04]"
                 }`}
               >
+                <button
+                  type="button"
+                  onClick={() => onToggleWatch(t.id)}
+                  aria-label={watching ? `Unwatch ${t.label}` : `Watch ${t.label}`}
+                  className={`w-4 shrink-0 font-mono text-[11px] ${
+                    watching ? "text-amber-400" : "text-white/25 hover:text-white/60"
+                  }`}
+                >
+                  {watching ? "●" : "○"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelect(t)}
+                  onMouseEnter={() => onHover(t.id)}
+                  onMouseLeave={() => onHover(null)}
+                  className="flex min-w-0 flex-1 items-baseline gap-2 text-left"
+                >
                 <span className="w-8 shrink-0 text-right font-mono text-[11px] tabular-nums">
                   {Math.round(totalScore(t))}
                 </span>
@@ -202,7 +223,8 @@ export default function OverviewRail({
                         : "bg-emerald-400"
                   }`}
                 />
-              </button>
+                </button>
+              </div>
             </li>
           );
         })}
