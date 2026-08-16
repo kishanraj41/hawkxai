@@ -1,4 +1,4 @@
-import { cacheGet, cachePeek, cacheSet } from "./cache";
+import { cachePeek, cacheSet } from "./cache";
 
 const KEY = "rl:feeds:v1";
 const EPS = 0.12;
