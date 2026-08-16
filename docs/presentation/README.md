@@ -56,11 +56,9 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | `components/TickerTape.tsx` | Scrolling topic ticker |
 | `components/Sparkline.tsx` | Mini velocity sparkline |
 | `components/RiskBoard.tsx` | Risk board (low / medium / high) |
-| `components/CinematicVideo.tsx` | Scrubbed video backdrop |
 | `components/MapStage.tsx` | Center map stage |
 | `components/OverviewRail.tsx` | Left overview rail |
 | `components/IntelRail.tsx` | Right intel rail |
-| `components/BoosterBriefBar.tsx` | Always-on briefing strip |
 | `components/BoosterInsights.tsx` | Artifacts, age lenses, competitor move |
 | `app/api/trends/route.ts` | Live phrase footprint (`?topic=`) |
 | `app/api/booster/route.ts` | Intelligence API |

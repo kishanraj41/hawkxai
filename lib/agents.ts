@@ -15,9 +15,6 @@ import {
   type Topic,
 } from "./types";
 
-export type { CityId, GeoQuery } from "./geo";
-export { CITY_OPTIONS, geoAgent } from "./geo";
-
 export type SourceName = Platform;
 
 export interface SourceResult {

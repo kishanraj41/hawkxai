@@ -1,12 +1,6 @@
-import { fetchHn } from "./hn";
-import { fetchReddit } from "./reddit";
 import { grokJson } from "./grok";
 import { xTrendListSchema } from "./schemas";
-import type { Post, RawSignals, SourceHealth } from "./types";
-
-function emptyHealth(): SourceHealth {
-  return { x: false, reddit: false, hn: false, public: false };
-}
+import type { Post } from "./types";
 
 function parseJsonObject(raw: string): unknown {
   const t = raw.trim();
@@ -43,68 +37,4 @@ volume is relative heat 0-100. Prefer real x.com URLs.`;
     score: t.volume,
     createdAt: new Date().toISOString(),
   }));
-}
-
-function settleReddit(): Promise<Post[]> {
-  return fetchReddit().then(
-    (posts) => posts,
-    (err) => {
-      console.error("[reddit]", err);
-      return [] as Post[];
-    },
-  );
-}
-
-function settleHn(): Promise<Post[]> {
-  return fetchHn().then(
-    (posts) => posts,
-    (err) => {
-      console.error("[hn]", err);
-      return [] as Post[];
-    },
-  );
-}
-
-function settleX(): Promise<Post[]> {
-  if (!process.env.XAI_API_KEY) return Promise.resolve([] as Post[]);
-  return fetchX().then(
-    (posts) => {
-      console.log(`[x] ${posts.length} topics`);
-      return posts;
-    },
-    (err) => {
-      console.error("[x]", err);
-      return [] as Post[];
-    },
-  );
-}
-
-export function beginSignals(): {
-  core: Promise<Pick<RawSignals, "reddit" | "hn">>;
-  x: Promise<Post[]>;
-} {
-  return {
-    core: Promise.all([settleReddit(), settleHn()]).then(([reddit, hn]) => ({
-      reddit,
-      hn,
-    })),
-    x: settleX(),
-  };
-}
-
-export async function collectSignals(): Promise<RawSignals> {
-  const { core, x: xP } = beginSignals();
-  const [{ reddit, hn }, x] = await Promise.all([core, xP]);
-  const sources = emptyHealth();
-  const degraded: string[] = [];
-  if (reddit.length) sources.reddit = true;
-  else degraded.push("reddit offline");
-  if (hn.length) sources.hn = true;
-  else degraded.push("hn offline");
-  if (x.length) sources.x = true;
-  else degraded.push("x offline");
-  console.log(
-    `[signals] reddit=${reddit.length} hn=${hn.length} x=${x.length} degraded=${degraded.join(",") || "none"}`,
-  );
-  return { reddit, hn, x, public: [], sources, degraded };
 }

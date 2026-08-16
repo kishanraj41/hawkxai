@@ -166,5 +166,3 @@ export const SentimentChart = {
   Peek: SentimentPeek,
   Sheet: SentimentSheet,
 };
-
-export default SentimentPeek;

@@ -19,7 +19,7 @@ const plex = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "HawkAI",
-  description: "Live trend desk — X, Reddit, Hacker News. Footprint lookup at /footprint.",
+  description: "Live trend desk — Footprint for campaigns, Research for deep topic lookup.",
 };
 
 export default function RootLayout({
