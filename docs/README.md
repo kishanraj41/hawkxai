@@ -37,6 +37,7 @@ Copy `.env.example` to `.env.local` (gitignored). Never commit keys.
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `XAI_API_KEY` | Yes (for live Grok) | xAI key for clustering, Ask, and tickers. App still boots without it; Ask/trends degrade. | `xai-...` |
+| `YOUTUBE_API_KEY` | No | Official YouTube / Shorts titles. Feed is skipped when unset. | Google Cloud API key |
 
 Vercel: set the same variable in project env. Docker: `-e XAI_API_KEY=...`.
 

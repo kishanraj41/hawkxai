@@ -56,6 +56,10 @@ const SOURCE_CATEGORY: Record<string, CategoryId> = {
   openalex: "tech",
   coincap: "markets",
   cryptocompare: "markets",
+  bluesky: "culture",
+  "federal register": "news",
+  nhtsa: "markets",
+  youtube: "culture",
 };
 
 const KEYWORDS: Record<CategoryId, string[]> = {

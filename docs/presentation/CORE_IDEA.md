@@ -68,7 +68,7 @@ The map stays the map. Booster sits beside it: capture trending words **or** loo
 
 The Booster Agent re-ranks these from real gaps in each run. Seed list:
 
-1. TikTok / YouTube Shorts / Instagram ingest — Gen Z campaigns are mostly invisible today.
+1. TikTok / YouTube Shorts / Instagram ingest — **partial:** Bluesky what's-hot is live; official YouTube Data v3 runs when `YOUTUBE_API_KEY` is set. TikTok still needs a brand OAuth grant (no unofficial scraper).
 2. QR *image* decode (scan attached media, not just QR-shaped URLs).
 3. Persist hourly snapshots so occurrence charts cover more than one ingest.
 4. Overlay GDELT / NWS events as lagged markers on the same timeseries (never as an invented WHY).

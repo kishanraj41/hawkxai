@@ -62,6 +62,39 @@ class BoosterTests(unittest.TestCase):
         self.assertEqual(classify_topic(self.topics["airline-outage"], capture_artifacts(self.topics["airline-outage"])), "markets")
         self.assertEqual(classify_topic(self.topics["gulf-storm"], capture_artifacts(self.topics["gulf-storm"])), "weather")
 
+    def test_free_public_api_source_categories(self):
+        def topic(label, source, title):
+            return {
+                "id": label,
+                "label": label,
+                "platforms": {
+                    "x": {"score": 0, "posts": []},
+                    "reddit": {"score": 0, "posts": []},
+                    "hn": {"score": 0, "posts": []},
+                    "public": {
+                        "score": 40,
+                        "posts": [{
+                            "platform": "public",
+                            "title": title,
+                            "url": "https://example.com/receipt",
+                            "score": 40,
+                            "createdAt": "2026-08-16T00:00:00.000Z",
+                            "sourceApi": source,
+                        }],
+                    },
+                },
+                "velocity": "rising",
+                "divergence": 0.2,
+                "tickers": [],
+            }
+
+        recall = topic("Seat belt assembly", "NHTSA", "Recall 24V128000 · SEATS")
+        self.assertEqual(classify_topic(recall, capture_artifacts(recall)), "markets")
+        sky = topic("quiet hours", "Bluesky", "a post about nothing in particular")
+        self.assertEqual(classify_topic(sky, capture_artifacts(sky)), "culture")
+        fr = topic("agency notice", "Federal Register", "Notice of proposed rulemaking")
+        self.assertEqual(classify_topic(fr, capture_artifacts(fr)), "news")
+
     def test_causation_is_measured_not_invented(self):
         thin = build_causation(self.topics["airline-outage"], capture_artifacts(self.topics["airline-outage"]))
         self.assertTrue(thin.thin)
