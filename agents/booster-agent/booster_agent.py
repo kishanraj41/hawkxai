@@ -93,6 +93,24 @@ SOURCE_CATEGORY = {
     "open food facts": "health",
     "nager.date": "culture",
     "cisa": "security",
+    "google news": "news",
+    "bbc": "news",
+    "guardian": "news",
+    "nyt": "news",
+    "npr": "news",
+    "techcrunch": "tech",
+    "arxiv": "tech",
+    "reliefweb": "news",
+    "fear & greed": "markets",
+    "duckduckgo": "news",
+    "stack overflow": "tech",
+    "openalex": "tech",
+    "coincap": "markets",
+    "cryptocompare": "markets",
+    "bluesky": "culture",
+    "federal register": "news",
+    "nhtsa": "markets",
+    "youtube": "culture",
 }
 KEYWORDS = {
     "markets": ("bitcoin", "crypto", "nasdaq", "earnings", "inflation", "etf", "ipo", "stock", "camry", "civic", "tesla", "mustang", "f-150", "toyota", "honda", "ford"),
@@ -883,7 +901,7 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     if not payload.get("sources", {}).get("public"):
         items.append(Improvisation("P0", "Public-API ingest is offline", "News, weather, crypto, and sports receipts come from the public-apis catalog. Without them WHY stays social-only.", "Retry GDELT/NWS/CoinGecko feeds; keep catalog cache so the allowlist still configures the desk."))
     if len(hashtags) < 3:
-        items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.", "Add a caption scraper (or Grok search for TikTok-named trends) into capture."))
+        items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.", "Set YOUTUBE_API_KEY for official Shorts titles. TikTok Display API still needs a brand OAuth grant — no unofficial scraper."))
     if not qr_decoded:
         items.append(Improvisation("P0", "QR image decode, not just QR-shaped URLs", "Campaigns hide the payload in images. Text regex cannot see a poster QR.", "Accept image URLs → decode with a QR library → treat payload as a first-class artifact."))
     if bubbles >= 3:

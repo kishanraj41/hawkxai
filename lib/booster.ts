@@ -326,7 +326,7 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       priority: "P0",
       title: "Ingest TikTok / Reels / Shorts caption text",
       why: "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.",
-      next: "Add a caption scraper (or Grok x_search for TikTok-named trends) into capture.",
+      next: "Set YOUTUBE_API_KEY for official Shorts titles. TikTok Display API still needs a brand OAuth grant — no unofficial scraper.",
     });
   }
   if (!qrDecoded) {

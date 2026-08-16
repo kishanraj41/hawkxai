@@ -5,13 +5,30 @@ import type { Post, PublicApiFeedStat, PublicApiIngest } from "./types";
 
 const CATALOG_URL =
   "https://raw.githubusercontent.com/public-apis/public-apis/master/README.md";
-const UA = "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx)";
+const UA =
+  "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx; srihari.ec09@gmail.com)";
 const CATALOG_KEY = "public-apis:catalog";
 const PER_FEED = 8;
 const MAX_POSTS = 160;
 const FEED_MS = 8_000;
-const DEFAULT_FEED_BUDGET = 24;
-const TOPIC_FEED_BUDGET = 28;
+const DEFAULT_FEED_BUDGET = 28;
+const TOPIC_FEED_BUDGET = 32;
+const GDELT_TTL_MS = 10 * 60_000;
+const BSKY_HOT =
+  "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot";
+
+const CORE_TAPE = [
+  "Wikipedia",
+  "Google News",
+  "BBC",
+  "Guardian",
+  "NPR",
+  "NYT",
+  "National Weather Service",
+  "CoinGecko",
+  "Bluesky",
+  "Federal Register",
+];
 
 export interface PublicApiEntry {
   name: string;
@@ -33,6 +50,7 @@ interface Feed {
   category: string;
   match: string[];
   topicAware?: boolean;
+  include?: (topic?: string) => boolean;
   run: (city: CityId, topic?: string) => Promise<Post[]>;
 }
 
@@ -98,8 +116,17 @@ async function getJson(url: string, ms = FEED_MS): Promise<unknown> {
     headers: { Accept: "application/json, text/plain, */*", "User-Agent": UA },
     signal: AbortSignal.timeout(ms),
   });
+  const text = await res.text();
+  if (res.status === 429 || /limit requests/i.test(text)) {
+    throw new Error(`${url} 429`);
+  }
   if (!res.ok) throw new Error(`${url} ${res.status}`);
-  return res.json();
+  if (!text || text.startsWith("<")) throw new Error(`${url} not json`);
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error(`${url} not json`);
+  }
 }
 
 function asRecord(v: unknown): Record<string, unknown> | null {
@@ -176,6 +203,213 @@ function utcYmd(daysAgo: number) {
   };
 }
 
+function youtubeKey(): string {
+  return process.env.YOUTUBE_API_KEY?.trim() || "";
+}
+
+const MODEL_MAKE: Record<string, { make: string; model: string }> = {
+  camry: { make: "toyota", model: "camry" },
+  corolla: { make: "toyota", model: "corolla" },
+  civic: { make: "honda", model: "civic" },
+  accord: { make: "honda", model: "accord" },
+  mustang: { make: "ford", model: "mustang" },
+  "f-150": { make: "ford", model: "f-150" },
+  f150: { make: "ford", model: "f-150" },
+  tesla: { make: "tesla", model: "model 3" },
+};
+
+const VEHICLE_MAKES = [
+  "toyota",
+  "honda",
+  "ford",
+  "tesla",
+  "chevrolet",
+  "bmw",
+  "hyundai",
+  "kia",
+  "nissan",
+  "subaru",
+  "volkswagen",
+  "audi",
+  "mazda",
+  "jeep",
+  "lexus",
+  "volvo",
+  "gmc",
+  "ram",
+];
+
+export function vehicleQuery(topic: string): { make: string; model: string; year?: string } | null {
+  const raw = topic.trim().toLowerCase().replace(/[^a-z0-9 -]/g, " ");
+  if (!raw) return null;
+  const year = raw.match(/\b(20\d{2})\b/)?.[1];
+  for (const [alias, v] of Object.entries(MODEL_MAKE)) {
+    if (raw.includes(alias)) return year ? { ...v, year } : v;
+  }
+  const tokens = raw.split(/\s+/).filter(Boolean);
+  const make = tokens.find((t) => VEHICLE_MAKES.includes(t));
+  if (!make) return null;
+  const model = tokens.filter((t) => t !== make && t !== year).join(" ") || make;
+  return year ? { make, model, year } : { make, model };
+}
+
+function gdeltStamp(raw: string): string | undefined {
+  const m = raw.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+  if (!m) return raw || undefined;
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+}
+
+function mapGdeltArticles(data: unknown): Post[] {
+  return asArray(asRecord(data)?.articles)
+    .map((row) => {
+      const a = asRecord(row);
+      if (!a || !str(a.title) || !str(a.url)) return null;
+      return post(str(a.title), str(a.url), 70, "GDELT", gdeltStamp(str(a.seendate)));
+    })
+    .filter((p): p is Post => Boolean(p))
+    .slice(0, PER_FEED);
+}
+
+let gdeltTape: { exp: number; posts: Promise<Post[]> } | null = null;
+
+async function fetchGdelt(topic?: string): Promise<Post[]> {
+  const q = topic?.trim() ? `${topic.trim()} sourcelang:english` : "sourcelang:english";
+  const url =
+    `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}` +
+    `&mode=ArtList&maxrecords=20&format=json&sort=DateDesc&timespan=24h`;
+  return mapGdeltArticles(await getJson(url));
+}
+
+function wikiPostsFromFeatured(data: unknown): Post[] {
+  const most = asArray(asRecord(asRecord(data)?.mostread)?.articles);
+  const fromMost = most
+    .map((row) => {
+      const a = asRecord(row);
+      const titles = asRecord(a?.titles);
+      const title = str(titles?.normalized) || str(a?.title).replace(/_/g, " ");
+      const urls = asRecord(asRecord(a?.content_urls)?.desktop);
+      const href =
+        str(urls?.page) ||
+        (title ? `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}` : "");
+      if (!title || /^(Special:|Main Page|Wiki|Portal:|File:)/i.test(title) || !href) return null;
+      return post(
+        `Wikipedia: ${title}`,
+        href,
+        Math.min(100, Math.log10(num(a?.views) + 1) * 18),
+        "Wikipedia",
+      );
+    })
+    .filter((p): p is Post => Boolean(p));
+  if (fromMost.length) return fromMost.slice(0, PER_FEED);
+  const tfa = asRecord(asRecord(data)?.tfa);
+  const tfaTitle = str(asRecord(tfa?.titles)?.normalized) || str(tfa?.title);
+  const tfaHref = str(asRecord(asRecord(tfa?.content_urls)?.desktop)?.page);
+  return tfaTitle && tfaHref ? [post(`Wikipedia: ${tfaTitle}`, tfaHref, 80, "Wikipedia")] : [];
+}
+
+function wikiPostsFromPageviews(data: unknown): Post[] {
+  const articles = asArray(asRecord(asArray(asRecord(data)?.items)[0])?.articles);
+  return articles
+    .map((row) => {
+      const a = asRecord(row);
+      const title = str(a?.article).replace(/_/g, " ");
+      if (!title || /^(Special:|Main Page|Wiki|Portal:|File:)/i.test(title)) return null;
+      return post(
+        `Wikipedia: ${title}`,
+        `https://en.wikipedia.org/wiki/${encodeURIComponent(str(a?.article))}`,
+        Math.min(100, Math.log10(num(a?.views) + 1) * 18),
+        "Wikipedia",
+      );
+    })
+    .filter((p): p is Post => Boolean(p))
+    .slice(0, PER_FEED);
+}
+
+async function wikipediaTape(): Promise<Post[]> {
+  for (const ago of [0, 1, 2]) {
+    const { y, m, day } = utcYmd(ago);
+    try {
+      const posts = wikiPostsFromFeatured(
+        await getJson(`https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${day}`),
+      );
+      if (posts.length) return posts;
+    } catch {
+      /* try older featured, then pageviews */
+    }
+  }
+  for (const ago of [2, 3, 4, 5, 6]) {
+    const { y, m, day } = utcYmd(ago);
+    try {
+      const posts = wikiPostsFromPageviews(
+        await getJson(
+          `https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${y}/${m}/${day}`,
+        ),
+      );
+      if (posts.length) return posts;
+    } catch {
+      /* keep walking back */
+    }
+  }
+  throw new Error("Wikipedia empty");
+}
+
+function bskyHref(uri: string, handle: string): string {
+  const rkey = uri.split("/").pop() || "";
+  return handle && rkey ? `https://bsky.app/profile/${handle}/post/${rkey}` : "";
+}
+
+function mapBskyPost(row: unknown): Post | null {
+  const p = asRecord(row);
+  if (!p) return null;
+  const author = asRecord(p.author);
+  const record = asRecord(p.record);
+  const text = str(record?.text) || str(p.text);
+  const handle = str(author?.handle);
+  const href = bskyHref(str(p.uri), handle);
+  if (!text || !href) return null;
+  return post(text, href, 55, "Bluesky", str(record?.createdAt) || str(p.indexedAt) || undefined);
+}
+
+function mapBskySearch(data: unknown): Post[] {
+  return asArray(asRecord(data)?.posts)
+    .map(mapBskyPost)
+    .filter((p): p is Post => Boolean(p))
+    .slice(0, PER_FEED);
+}
+
+function mapBskyFeed(data: unknown): Post[] {
+  return asArray(asRecord(data)?.feed)
+    .map((row) => mapBskyPost(asRecord(row)?.post))
+    .filter((p): p is Post => Boolean(p))
+    .slice(0, PER_FEED);
+}
+
+async function blueskyPosts(topic?: string): Promise<Post[]> {
+  const q = topic?.trim();
+  if (q) {
+    try {
+      const hit = mapBskySearch(
+        await getJson(
+          `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(q)}&limit=${PER_FEED}`,
+        ),
+      );
+      if (hit.length) return hit;
+    } catch {
+      /* search is Cloudflare-blocked from some clouds; fall through to what's-hot */
+    }
+  }
+  const hot = mapBskyFeed(
+    await getJson(
+      `https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(BSKY_HOT)}&limit=25`,
+    ),
+  );
+  if (q) {
+    const needle = q.toLowerCase();
+    return hot.filter((p) => p.title.toLowerCase().includes(needle)).slice(0, PER_FEED);
+  }
+  return hot.slice(0, PER_FEED);
+}
+
 const FEEDS: Feed[] = [
   {
     name: "GDELT",
@@ -183,22 +417,11 @@ const FEEDS: Feed[] = [
     match: ["gdelt"],
     topicAware: true,
     run: async (_city, topic) => {
-      const q = topic?.trim()
-        ? `${topic.trim()} sourcelang:english`
-        : "sourcelang:english";
-      const data = asRecord(
-        await getJson(
-          `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=ArtList&maxrecords=20&format=json&sort=DateDesc`,
-        ),
-      );
-      return asArray(data?.articles)
-        .map((row) => {
-          const a = asRecord(row);
-          if (!a || !str(a.title) || !str(a.url)) return null;
-          return post(str(a.title), str(a.url), 70, "GDELT", str(a.seendate) || undefined);
-        })
-        .filter((p): p is Post => Boolean(p))
-        .slice(0, PER_FEED);
+      if (topic?.trim()) return fetchGdelt(topic);
+      if (gdeltTape && gdeltTape.exp > Date.now()) return gdeltTape.posts;
+      const posts = fetchGdelt();
+      gdeltTape = { exp: Date.now() + GDELT_TTL_MS, posts };
+      return posts;
     },
   },
   {
@@ -215,34 +438,14 @@ const FEEDS: Feed[] = [
         );
         const titles = asArray(data[1]).map(str);
         const urls = asArray(data[3]).map(str);
-        return titles
+        const posts = titles
           .map((title, i) =>
             title && urls[i] ? post(`Wikipedia: ${title}`, urls[i], 80 - i * 4, "Wikipedia") : null,
           )
           .filter((p): p is Post => Boolean(p));
+        if (posts.length) return posts;
       }
-      const { y, m, day } = utcYmd(1);
-      const data = asRecord(
-        await getJson(
-          `https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${y}/${m}/${day}`,
-        ),
-      );
-      const articles = asArray(asRecord(asArray(data?.items)[0])?.articles);
-      return articles
-        .map((row) => {
-          const a = asRecord(row);
-          const title = str(a?.article).replace(/_/g, " ");
-          if (!title || /^(Special:|Main Page|Wiki|Portal:|File:)/i.test(title)) return null;
-          const views = num(a?.views);
-          return post(
-            `Wikipedia: ${title}`,
-            `https://en.wikipedia.org/wiki/${encodeURIComponent(str(a?.article))}`,
-            Math.min(100, Math.log10(views + 1) * 18),
-            "Wikipedia",
-          );
-        })
-        .filter((p): p is Post => Boolean(p))
-        .slice(0, PER_FEED);
+      return wikipediaTape();
     },
   },
   {
@@ -457,21 +660,36 @@ const FEEDS: Feed[] = [
           })
           .filter((p): p is Post => Boolean(p));
       }
-      const data = asRecord(await getJson("https://openlibrary.org/trending/daily.json"));
-      return asArray(data?.works)
+      try {
+        const data = asRecord(await getJson("https://openlibrary.org/trending/daily.json"));
+        const trending = asArray(data?.works)
+          .map((row) => {
+            const w = asRecord(row);
+            if (!w || !str(w.title)) return null;
+            const key = str(w.key);
+            return post(
+              str(w.title),
+              key ? `https://openlibrary.org${key}` : "https://openlibrary.org/",
+              Math.min(90, num(w.logged_edition) || 50),
+              "Open Library",
+            );
+          })
+          .filter((p): p is Post => Boolean(p))
+          .slice(0, PER_FEED);
+        if (trending.length) return trending;
+      } catch {
+        /* trending often times out from serverless */
+      }
+      const fallback = asRecord(await getJson("https://openlibrary.org/search.json?q=language%3Aeng&limit=8"));
+      return asArray(fallback?.docs)
         .map((row) => {
           const w = asRecord(row);
-          if (!w || !str(w.title)) return null;
-          const key = str(w.key);
-          return post(
-            str(w.title),
-            key ? `https://openlibrary.org${key}` : "https://openlibrary.org/",
-            Math.min(90, num(w.logged_edition) || 50),
-            "Open Library",
-          );
+          const title = str(w?.title);
+          if (!title) return null;
+          const key = str(w?.key);
+          return post(title, key ? `https://openlibrary.org${key}` : "https://openlibrary.org/", 50, "Open Library");
         })
-        .filter((p): p is Post => Boolean(p))
-        .slice(0, PER_FEED);
+        .filter((p): p is Post => Boolean(p));
     },
   },
   {
@@ -688,22 +906,45 @@ const FEEDS: Feed[] = [
     category: "Science & Math",
     match: ["spacex"],
     run: async () => {
-      const rows = asArray(await getJson("https://api.spacexdata.com/v5/launches/upcoming"));
-      return rows
-        .slice(0, PER_FEED)
+      try {
+        const rows = asArray(await getJson("https://api.spacexdata.com/v5/launches/upcoming"));
+        const posts = rows
+          .slice(0, PER_FEED)
+          .map((row) => {
+            const l = asRecord(row);
+            const name = str(l?.name);
+            if (!name) return null;
+            return post(
+              `SpaceX: ${name}`,
+              str(asRecord(l?.links)?.webcast) || "https://www.spacex.com/launches/",
+              62,
+              "SpaceX",
+              str(l?.date_utc) || undefined,
+            );
+          })
+          .filter((p): p is Post => Boolean(p));
+        if (posts.length) return posts;
+      } catch {
+        /* api.spacexdata.com often 525s; Launch Library 2 is free and live */
+      }
+      const data = asRecord(
+        await getJson("https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=8&lsp__name=SpaceX"),
+      );
+      return asArray(data?.results)
         .map((row) => {
           const l = asRecord(row);
           const name = str(l?.name);
           if (!name) return null;
           return post(
             `SpaceX: ${name}`,
-            str(asRecord(l?.links)?.webcast) || "https://www.spacex.com/launches/",
+            str(l?.url) || "https://www.spacex.com/launches/",
             62,
             "SpaceX",
-            str(l?.date_utc) || undefined,
+            str(l?.net) || undefined,
           );
         })
-        .filter((p): p is Post => Boolean(p));
+        .filter((p): p is Post => Boolean(p))
+        .slice(0, PER_FEED);
     },
   },
   {
@@ -892,7 +1133,7 @@ const FEEDS: Feed[] = [
     run: async () => {
       const data = asRecord(
         await getJson(
-          "https://world.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&page_size=8&json=1",
+          "https://world.openfoodfacts.org/cgi/search.pl?action=process&sort_by=unique_scans_n&page_size=8&json=1&fields=product_name,code,url,unique_scans_n",
         ),
       );
       return asArray(data?.products)
@@ -1210,24 +1451,116 @@ const FEEDS: Feed[] = [
         .filter((p): p is Post => Boolean(p));
     },
   },
+  {
+    name: "Bluesky",
+    category: "Social",
+    match: ["bluesky", "bsky"],
+    topicAware: true,
+    run: async (_city, topic) => blueskyPosts(topic),
+  },
+  {
+    name: "Federal Register",
+    category: "Government",
+    match: ["federal register"],
+    topicAware: true,
+    run: async (_city, topic) => {
+      const q = topic?.trim();
+      const url = q
+        ? `https://www.federalregister.gov/api/v1/documents.json?conditions[term]=${encodeURIComponent(q)}&per_page=${PER_FEED}`
+        : `https://www.federalregister.gov/api/v1/documents.json?per_page=${PER_FEED}&order=newest`;
+      const data = asRecord(await getJson(url));
+      return asArray(data?.results)
+        .map((row) => {
+          const d = asRecord(row);
+          const title = str(d?.title);
+          const href = str(d?.html_url);
+          if (!title || !href) return null;
+          return post(title, href, 58, "Federal Register", str(d?.publication_date) || undefined);
+        })
+        .filter((p): p is Post => Boolean(p))
+        .slice(0, PER_FEED);
+    },
+  },
+  {
+    name: "NHTSA",
+    category: "Vehicle",
+    match: ["nhtsa"],
+    topicAware: true,
+    include: (topic) => Boolean(topic && vehicleQuery(topic)),
+    run: async (_city, topic) => {
+      const v = vehicleQuery(topic || "");
+      if (!v) return [];
+      const year = v.year || "2024";
+      const data = asRecord(
+        await getJson(
+          `https://api.nhtsa.gov/recalls/recallsByVehicle?make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}&modelYear=${encodeURIComponent(year)}`,
+        ),
+      );
+      return asArray(data?.results)
+        .map((row) => {
+          const r = asRecord(row);
+          const id = str(r?.NHTSACampaignNumber);
+          const component = str(r?.Component);
+          const title = [id && `Recall ${id}`, component, str(r?.Manufacturer)]
+            .filter(Boolean)
+            .join(" · ");
+          if (!title) return null;
+          return post(
+            title,
+            id ? `https://www.nhtsa.gov/recalls?nhtsaId=${encodeURIComponent(id)}` : "https://www.nhtsa.gov/recalls",
+            70,
+            "NHTSA",
+            str(r?.ReportReceivedDate) || undefined,
+          );
+        })
+        .filter((p): p is Post => Boolean(p))
+        .slice(0, PER_FEED);
+    },
+  },
+  {
+    name: "YouTube",
+    category: "Video",
+    match: ["youtube"],
+    topicAware: true,
+    include: () => Boolean(youtubeKey()),
+    run: async (_city, topic) => {
+      const key = youtubeKey();
+      if (!key) return [];
+      const q = topic?.trim();
+      const url = q
+        ? `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${PER_FEED}&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`
+        : `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=US&maxResults=${PER_FEED}&key=${encodeURIComponent(key)}`;
+      const data = asRecord(await getJson(url));
+      return asArray(data?.items)
+        .map((row) => {
+          const item = asRecord(row);
+          const snippet = asRecord(item?.snippet);
+          const title = str(snippet?.title);
+          const id = str(asRecord(item?.id)?.videoId) || str(item?.id);
+          if (!title || !id) return null;
+          return post(title, `https://www.youtube.com/watch?v=${id}`, 60, "YouTube", str(snippet?.publishedAt) || undefined);
+        })
+        .filter((p): p is Post => Boolean(p))
+        .slice(0, PER_FEED);
+    },
+  },
 ];
 
 function selectFeeds(topic?: string): Feed[] {
   const q = topic?.trim();
-  const names = FEEDS.map((f) => f.name);
+  const available = FEEDS.filter((f) => !f.include || f.include(q));
+  const names = available.map((f) => f.name);
   const core = q
-    ? FEEDS.filter((f) => f.topicAware).map((f) => f.name)
-    : ["GDELT", "Wikipedia", "CoinGecko", "Google News", "BBC", "Guardian", "NPR", "NYT"];
+    ? available.filter((f) => f.topicAware).map((f) => f.name)
+    : CORE_TAPE.filter((n) => names.includes(n));
   const budget = q ? TOPIC_FEED_BUDGET : DEFAULT_FEED_BUDGET;
-  const picked = new Set<string>([
-    ...core.filter((n) => names.includes(n)),
-    ...pickFeeds(names, budget),
-  ]);
-  const selected = FEEDS.filter((f) => picked.has(f.name));
-  if (selected.length <= budget + 6) return selected;
-  const must = new Set(core);
-  const extra = selected.filter((f) => !must.has(f.name));
-  return [...FEEDS.filter((f) => must.has(f.name)), ...extra].slice(0, budget + 6);
+  const picked = new Set<string>([...core, ...pickFeeds(names, budget)]);
+  const selected = available.filter((f) => picked.has(f.name));
+  const extras = selected.filter((f) => !core.includes(f.name));
+  return [...available.filter((f) => core.includes(f.name)), ...extras].slice(
+    0,
+    Math.max(core.length, budget),
+  );
 }
 
 export async function collectPublicApis(

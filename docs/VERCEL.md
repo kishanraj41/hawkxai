@@ -24,6 +24,7 @@ Do **not** put `XAI_API_KEY` in git. Local only: `.env.local`.
    | Name | Value |
    |---|---|
    | `XAI_API_KEY` | `xai-...` (from console.x.ai) |
+   | `YOUTUBE_API_KEY` | optional — official YouTube / Shorts titles. Skip the feed if unset. |
 
 7. Click **Deploy**.
 8. After the build succeeds, open `https://<project>.vercel.app`.
