@@ -18,7 +18,7 @@ The goal is to turn fragmented social signals into actionable trend intelligence
 python3 agents/booster-agent/booster_agent.py --self-check
 ```
 
-North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) · Agent: [agents/booster-agent/README.md](agents/booster-agent/README.md) · Live: `GET /api/booster` after `/api/trends`.
+North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) — plug a category, get trends + causation + occurrence. Live: `GET /api/booster` after `/api/trends`.
 
 Repo: https://github.com/snagaram3/grokhackx
 

@@ -108,7 +108,7 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
           <p className="signal-label mt-2">{CATEGORY_LABEL[brief.category]}</p>
         ) : null}
 
-        <div className="mt-5 space-y-4">
+      <div className="mt-5 space-y-4">
         <div>
           <p className="signal-label">Tape</p>
           <div className="mt-2 flex items-center gap-3">

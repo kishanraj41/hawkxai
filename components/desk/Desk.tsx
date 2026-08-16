@@ -169,8 +169,8 @@ function Trends() {
           <tr className="signal-label">
             <th className="px-2 py-1.5 font-normal">Score</th>
             <th className="px-2 py-1.5 font-normal">Name</th>
-            <th className="px-2 py-1.5 font-normal">First</th>
-            <th className="px-2 py-1.5 text-right font-normal">Lag</th>
+            <th className="px-2 py-1.5 font-normal">Peak</th>
+            <th className="px-2 py-1.5 text-right font-normal">Spread</th>
             <th className="px-2 py-1.5 text-right font-normal">Risk</th>
           </tr>
         </thead>
