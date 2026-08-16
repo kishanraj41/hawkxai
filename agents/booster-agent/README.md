@@ -38,8 +38,10 @@ The same brain runs in TypeScript:
 
 - `lib/booster.ts` — capture / correlate / campaign / improvise
 - `lib/desk.ts` — category plug, causation drivers, occurrence bins
+- `lib/mindmap.ts` — evidence-only correlation graph (shared artifacts only)
 - `GET /api/booster` — JSON for other clients (needs `/api/trends` cache)
-- `ChartDesk` — plug a category; trends + causation bars + timeseries
+- `MindDesk` — radial mind map of the plugged category (`G`)
+- `ChartDesk` — plug a category; mind strip + trends + causation bars + timeseries
 - `BoosterInsights` — per-topic artifacts, competitor move, age takes
 
 The D3 map and `/api/trends` contract are unchanged.

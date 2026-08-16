@@ -248,3 +248,21 @@ export async function fetchReddit(
   );
   return posts;
 }
+
+export async function searchReddit(query: string): Promise<Post[]> {
+  const q = query.trim();
+  if (!q) return fetchReddit();
+  const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(q)}&sort=hot&limit=25&raw_json=1`;
+  try {
+    const text = await httpText(url, "application/json");
+    if (text.trimStart().startsWith("<")) throw new Error("html-block");
+    const posts = parseListing(JSON.parse(text) as { data?: { children?: RedditChild[] } });
+    if (posts.length) {
+      console.log(`[reddit] search "${q}" ${posts.length}`);
+      return posts;
+    }
+  } catch (err) {
+    console.warn("[reddit] search failed", err instanceof Error ? err.message : err);
+  }
+  return fetchReddit();
+}

@@ -42,6 +42,20 @@ const SOURCE_CATEGORY: Record<string, CategoryId> = {
   "open food facts": "health",
   "nager.date": "culture",
   cisa: "security",
+  "google news": "news",
+  bbc: "news",
+  guardian: "news",
+  nyt: "news",
+  npr: "news",
+  techcrunch: "tech",
+  arxiv: "tech",
+  reliefweb: "news",
+  "fear & greed": "markets",
+  duckduckgo: "news",
+  "stack overflow": "tech",
+  openalex: "tech",
+  coincap: "markets",
+  cryptocompare: "markets",
 };
 
 const KEYWORDS: Record<CategoryId, string[]> = {

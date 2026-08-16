@@ -56,11 +56,13 @@ FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("app/api/ask/route.ts", "Natural-language Ask", "POST /api/ask answers live questions and zooms the matching topics"),
     ("app/api/booster/route.ts", "Booster intelligence API", "GET /api/booster returns artifacts, why-trending, age lenses, campaign moves"),
     ("components/ChartDesk.tsx", "Plug-and-play category dashboard", "Drop in a category; trends, causation bars, and occurrence area chart fill from receipts"),
+    ("components/MindDesk.tsx", "Correlation mind map", "Radial map of a category plug: topics, captured artifacts, first print; amber dashes only for shared receipts"),
+    ("lib/mindmap.ts", "Mind-map brain", "Builds evidence-only correlation graphs — never invents a bridge between names"),
     ("lib/desk.ts", "Category desk brain", "Classifies topics, graphs measured causation drivers, bins occurrence timeseries"),
     ("components/TrendMap.tsx", "Interactive D3 circle-pack map", "Full-viewport topic map; rising topics glow; click zooms to receipts"),
     ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
     ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
-    ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Timeseries / Causation / Trends — same parts in the rail"),
+    ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Mind / Timeseries / Causation / Trends — same parts in the rail"),
     ("components/BoosterBriefBar.tsx", "Global booster briefing", "Always-on strip: what is hot, why, and the campaign implication"),
     ("components/TopicDetailPanel.tsx", "Receipt panel", "Velocity, divergence, occurrence chart, causation drivers, source posts"),
     ("lib/cluster.ts", "Grok topic clustering", "xAI Grok 4.6 clusters raw posts into topics; divergence is computed in code"),
@@ -476,6 +478,7 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
     solution = (
         "HawkAI is a plug-and-play category desk on live topics across X, Reddit, HN, "
         "and public APIs. Plug Markets or Weather or Campaigns — the same modules fill: "
+        "a correlation mind map (hub is the plug; amber dashes are shared artifacts only), "
         "current trends, a causation graph of measured drivers (first print, source heat, "
         "lag, artifacts — never an invented WHY), and an occurrence timeseries. The "
         "Booster Agent captures artifacts from real posts only, translates five age "
@@ -493,9 +496,9 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
     )
     wedge = (
         "We do not sell another listening dashboard. We sell a category desk you "
-        "plug in: why it is trending (measured, never invented), when it printed, "
-        "who it lands on, and the campaign move that does not clone the meme. "
-        "That loop is encoded in the Booster Agent and the live desk, not a slide."
+        "plug in: a mind map of receipts, why it is trending (measured, never invented), "
+        "when it printed, who it lands on, and the campaign move that does not clone the "
+        "meme. That loop is encoded in the Booster Agent and the live desk, not a slide."
     )
     stage = (
         "Working product. Honest stage: hackathon-grade wedge with a live map, a live "

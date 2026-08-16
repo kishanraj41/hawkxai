@@ -8,8 +8,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 
 from booster_agent import (
+    boost_topic,
     boost_trends,
     build_causation,
+    build_mind_map,
     capture_artifacts,
     classify_topic,
     load_payload,
@@ -63,6 +65,35 @@ class BoosterTests(unittest.TestCase):
         self.assertTrue(any(d.id.startswith("heat-") for d in storm.drivers))
         blob = " ".join(d.evidence.lower() for d in storm.drivers)
         self.assertNotIn("invent", blob)
+
+    def test_mind_map_hub_and_receipts_only(self):
+        report = boost_trends(self.payload)
+        graph = report.mind
+        self.assertIsNotNone(graph)
+        self.assertTrue(any(n.kind == "hub" for n in graph.nodes))
+        captured = {a.value.lower()[:28] for b in report.briefs for a in b.artifacts}
+        for node in graph.nodes:
+            if node.kind == "artifact":
+                self.assertIn(node.label.lower(), captured)
+        # Fixture topics do not share artifacts — never invent a bridge.
+        self.assertEqual(graph.bridges, 0)
+        self.assertFalse(any(l.kind == "shared" for l in graph.links))
+
+    def test_mind_map_shared_link_requires_real_artifact(self):
+        a = json.loads(json.dumps(self.topics["qr-summer-drop"]))
+        b = json.loads(json.dumps(self.topics["qr-summer-drop"]))
+        a["id"] = "campaign-a"
+        b["id"] = "campaign-b"
+        b["label"] = "HeatWaveFit mall takeover"
+        briefs = [boost_topic(a), boost_topic(b)]
+        graph = build_mind_map([a, b], briefs)
+        self.assertGreaterEqual(graph.bridges, 1)
+        shared = [l for l in graph.links if l.kind == "shared"]
+        self.assertTrue(shared)
+        real = {art.value.lower() for brief in briefs for art in brief.artifacts}
+        for link in shared:
+            self.assertIsNotNone(link.label)
+            self.assertIn(link.label.lower(), real)
 
 
 if __name__ == "__main__":

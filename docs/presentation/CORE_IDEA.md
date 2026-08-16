@@ -6,12 +6,13 @@ Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and 
 
 A **category is a plug**. Drop Markets, News, Weather, Tech, Sports, Health, Security, Campaigns, or Culture into the desk — the same modules fill from live evidence:
 
-1. **Trends in that category** — ranked names, velocity, risk.
-2. **Causation graph** — measured drivers only: first print, source heat, cross-source lag, hashtag/QR/ticker load, risk words. Never a generated story.
-3. **Occurrence timeseries** — when receipts actually landed (area by source, CT). First print is marked.
-4. **Campaign brief** — hook, timing, risk, five age lenses.
+1. **Mind map** — hub is the plug, branches are names plus captured artifacts / first print / top driver. Amber dashes are **shared artifacts only** (same hashtag, QR, URL, or ticker on two names). Never an invented bridge.
+2. **Trends in that category** — ranked names, velocity, risk.
+3. **Causation graph** — measured drivers only: first print, source heat, cross-source lag, hashtag/QR/ticker load, risk words. Never a generated story.
+4. **Occurrence timeseries** — when receipts actually landed (area by source, CT). First print is marked.
+5. **Campaign brief** — hook, timing, risk, five age lenses.
 
-The map is one more module you can plug in (`M`). The desk is the operating surface (`D`). `J/K` walks the tape. `⌘K` focuses Ask.
+The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses Ask.
 
 Same modules compose into the topic rail when a name is selected. Swap the category plug; keep the UI.
 
@@ -21,18 +22,19 @@ HawkAI is not only a live circle-pack of topics. The **Booster Agent** is the in
 
 1. **Captures** live artifacts — hashtags, QR / short-link campaign codes, phrases, URLs, cashtags.
 2. **Analyzes** them against velocity, platform divergence, and receipt posts.
-3. **Correlates** *why* something is trending (evidence only — never invent a WHY). Drivers are graphed, not narrated.
-4. **Plugs** the same signal into a category desk — current trends, causation bars, occurrence timeseries.
+3. **Correlates** *why* something is trending (evidence only — never invent a WHY). Drivers are graphed, not narrated. Shared artifacts become mind-map bridges.
+4. **Plugs** the same signal into a category desk — mind map, current trends, causation bars, occurrence timeseries.
 5. **Translates** the same signal for every age group: kids, Gen Z, millennials, Gen X, boomers.
 6. **Arms competitors** with campaign moves: hook, timing, risk, and how to ride the need without copying the meme.
 7. **Improvises** after every run — ranked upgrades that make the dashboard more useful.
 
-The map stays the map. Booster sits beside it: capture → correlate → **plug a category** → campaign → improvise.
+The map stays the map. Booster sits beside it: capture → correlate → **plug a category** → mind map of receipts → campaign → improvise.
 
 ## Non-negotiables
 
 - Never invent posts or a fake WHY. If receipts are thin, the causation chart says so and lowers confidence.
-- `/api/trends` contract stays stable (additive fields only). Category, causation, and timeseries are derived from receipts already on the topic.
+- `/api/trends` contract stays stable (additive fields only). Category, causation, timeseries, and the mind map are derived from receipts already on the topic.
+- Mind-map bridges exist only when the same artifact key prints on two topics. Empty bridges stay empty.
 - If a source is degraded, say so — still boost the sources that worked.
 - Kids lens must prefer safety and plain language over slang.
 - Campaign advice must include risk, not just opportunity.
@@ -42,6 +44,7 @@ The map stays the map. Booster sits beside it: capture → correlate → **plug 
 
 | Surface | Owner |
 |---|---|
+| Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
 | Category plugs + desk | `components/desk/` + `components/ChartDesk.tsx` |
 | Occurrence + causation | `lib/desk.ts` (live) · `agents/booster-agent/` (CLI) |
 | Live map | `components/TrendMap.tsx` |
@@ -63,3 +66,4 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 6. Brand-risk radar (controversy vs ride-along).
 7. Geo / city pulse (Ask already hints at Austin-style questions).
 8. Export a one-page campaign brief for a competitor.
+9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.

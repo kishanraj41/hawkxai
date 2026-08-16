@@ -40,12 +40,20 @@ export interface SourceHealth {
   public: boolean;
 }
 
+export interface PublicApiFeedStat {
+  name: string;
+  category: string;
+  posts: number;
+}
+
 export interface PublicApiIngest {
   catalog: number;
   live: number;
   attempted: number;
   categories: string[];
   sources: string[];
+  feeds?: PublicApiFeedStat[];
+  topic?: string;
 }
 
 export interface TrendsPayload {
@@ -55,6 +63,7 @@ export interface TrendsPayload {
   degraded: string[];
   pipeline?: string;
   publicApis?: PublicApiIngest;
+  plugged?: string;
 }
 
 export type AgeLens = "kids" | "gen-z" | "millennial" | "gen-x" | "boomer";
@@ -100,6 +109,33 @@ export interface TimeBucket {
   hn: number;
   public: number;
   total: number;
+}
+
+export type MindNodeKind = "hub" | "topic" | "artifact" | "driver" | "source";
+
+export type MindLinkKind = "branch" | "shared";
+
+export interface MindNode {
+  id: string;
+  kind: MindNodeKind;
+  label: string;
+  topicId?: string;
+  weight: number;
+  detail?: string;
+}
+
+export interface MindLink {
+  source: string;
+  target: string;
+  kind: MindLinkKind;
+  label?: string;
+}
+
+export interface MindGraph {
+  hubId: string;
+  nodes: MindNode[];
+  links: MindLink[];
+  bridges: number;
 }
 
 export type ArtifactKind = "hashtag" | "phrase" | "url" | "qr" | "ticker";
