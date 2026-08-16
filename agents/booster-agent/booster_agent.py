@@ -150,7 +150,7 @@ def _divergence_label(topic: Dict[str, Any]) -> str:
 
 def _total_score(topic: Dict[str, Any]) -> float:
     plats = topic.get("platforms") or {}
-    return sum((plats.get(p) or {}).get("score") or 0 for p in ("x", "reddit", "hn"))
+    return sum((slice or {}).get("score") or 0 for slice in plats.values())
 
 
 def _domain(url: str) -> Optional[str]:
@@ -333,6 +333,8 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P0", "Stabilize X ingest", "Hashtag and QR campaigns mostly start on X. Offline X blinds the booster.", "Keep x_search, add a Google Trends fallback so capture still runs."))
     if any("reddit" in d for d in degraded):
         items.append(Improvisation("P0", "Reddit fallback (OAuth or last-good cache)", "403s wipe phrase capture from the largest long-form platform.", "Authenticated Reddit client + cache last-good posts for 15m."))
+    if not payload.get("sources", {}).get("public"):
+        items.append(Improvisation("P0", "Public-API ingest is offline", "News, weather, crypto, and sports receipts come from the public-apis catalog. Without them WHY stays social-only.", "Retry GDELT/NWS/CoinGecko feeds; keep catalog cache so the allowlist still configures the desk."))
     if len(hashtags) < 3:
         items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.", "Add a caption scraper (or Grok search for TikTok-named trends) into capture."))
     if not qr_decoded:
@@ -343,7 +345,7 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P1", "Audience toggle on the map", "The same rising cluster reads differently for family, 18–24, and a brand CMO.", "Compose five caption variants from BoosterInsights; filter map labels by lens."))
     if not any((t.get("tickers") or []) for t in topics):
         items.append(Improvisation("P1", "Finance overlay even without explicit tickers", "Competitors still need category peers when $TICKER is absent.", "Map topic labels to a small industry lexicon — never invent symbols."))
-    items.append(Improvisation("P2", "News + disaster time-lag correlation", "Why-trending is still social-only. Campaigns miss weather, outages, and filings.", "Join GDELT/NOAA on a 0–24h lag next to velocity."))
+    items.append(Improvisation("P2", "News + disaster time-lag correlation", "GDELT and NWS now land on the map, but they are not yet lagged against social velocity.", "Join public-api events on a 0–24h lag next to velocity instead of attaching by title overlap only."))
     items.append(Improvisation("P2", "Export a one-page competitor brief", "CMOs will not live inside the circle pack. They want a PDF/Slack card.", "From the booster payload, render hook / risk / age takes / three receipts."))
     rank = {"P0": 0, "P1": 1, "P2": 2}
     items.sort(key=lambda i: rank.get(i.priority, 9))

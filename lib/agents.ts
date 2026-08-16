@@ -1,25 +1,32 @@
 import { fetchHn } from "./hn";
 import { fetchReddit } from "./reddit";
+import { collectPublicApis } from "./public-apis";
 import { fetchX } from "./signals";
 import { grokChat } from "./grok";
 import { divergenceOf } from "./metrics";
 import { geoAgent, type GeoQuery } from "./geo";
 import { whyListSchema } from "./schemas";
-import type { Platform, Post, SourceHealth, Topic } from "./types";
+import {
+  PLATFORMS,
+  type Platform,
+  type Post,
+  type PublicApiIngest,
+  type SourceHealth,
+  type Topic,
+} from "./types";
 
 export type { CityId, GeoQuery } from "./geo";
 export { CITY_OPTIONS, geoAgent } from "./geo";
 
-export type SourceName = "x" | "reddit" | "hn";
+export type SourceName = Platform;
 
 export interface SourceResult {
   source: SourceName;
   ok: boolean;
   count: number;
   posts: Post[];
+  publicApis?: PublicApiIngest;
 }
-
-const PLATFORMS: Platform[] = ["x", "reddit", "hn"];
 
 function fmt(r: SourceResult): string {
   return `${r.source} ${r.ok ? "ok" : "fail"}(${r.count})`;
@@ -45,15 +52,35 @@ async function collectSource(
   }
 }
 
-/** Parallel X / Reddit / HN fetchers. Roles over existing calls — no new infra. */
+async function collectPublicSource(city: GeoQuery["city"]): Promise<SourceResult> {
+  try {
+    const { posts, ingest } = await collectPublicApis(city);
+    const result: SourceResult = {
+      source: "public",
+      ok: posts.length > 0,
+      count: posts.length,
+      posts,
+      publicApis: ingest,
+    };
+    console.log(`collector: ${fmt(result)}`);
+    return result;
+  } catch (err) {
+    console.error("collector: public fail(0)", err);
+    return { source: "public", ok: false, count: 0, posts: [] };
+  }
+}
+
+/** Parallel X / Reddit / HN / public-apis fetchers. */
 export function collectorAgent(geo: GeoQuery = geoAgent("all")): {
   reddit: Promise<SourceResult>;
   hn: Promise<SourceResult>;
   x: Promise<SourceResult>;
+  public: Promise<SourceResult>;
 } {
   return {
     reddit: collectSource("reddit", () => fetchReddit(geo.redditSubs)),
     hn: collectSource("hn", fetchHn),
+    public: collectPublicSource(geo.city),
     x: process.env.XAI_API_KEY
       ? collectSource("x", () => fetchX(geo.label ?? undefined))
       : Promise.resolve({ source: "x", ok: false, count: 0, posts: [] }),
@@ -68,7 +95,7 @@ export function healthFrom(results: SourceResult[]): {
   sources: SourceHealth;
   degraded: string[];
 } {
-  const sources: SourceHealth = { x: false, reddit: false, hn: false };
+  const sources: SourceHealth = { x: false, reddit: false, hn: false, public: false };
   const degraded: string[] = [];
   for (const r of results) {
     sources[r.source] = r.ok;
@@ -101,7 +128,8 @@ export function validatorAgent(topics: Topic[]): {
   for (const topic of topics) {
     const platforms = { ...topic.platforms };
     for (const p of PLATFORMS) {
-      const kept = topic.platforms[p].posts.filter((post) => {
+      const slice = topic.platforms[p] ?? { score: 0, posts: [] as Post[] };
+      const kept = slice.posts.filter((post) => {
         if (!post.url || !validUrl(post.url)) {
           droppedPosts += 1;
           return false;
@@ -110,13 +138,10 @@ export function validatorAgent(topics: Topic[]): {
       });
       platforms[p] = {
         posts: kept,
-        score: Math.max(0, Math.min(100, topic.platforms[p].score)),
+        score: Math.max(0, Math.min(100, slice.score)),
       };
     }
-    const n =
-      platforms.x.posts.length +
-      platforms.reddit.posts.length +
-      platforms.hn.posts.length;
+    const n = PLATFORMS.reduce((s, p) => s + platforms[p].posts.length, 0);
     if (n === 0) {
       droppedTopics += 1;
       continue;

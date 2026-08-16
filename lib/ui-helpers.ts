@@ -1,5 +1,5 @@
 import { totalScore } from "./metrics";
-import type { Platform, Post, Topic } from "./types";
+import { PLATFORMS, type Platform, type Post, type Topic } from "./types";
 
 export { totalScore };
 
@@ -7,18 +7,18 @@ const PLATFORM_LABEL: Record<Platform, string> = {
   x: "X",
   reddit: "Reddit",
   hn: "HN",
+  public: "APIs",
 };
 
 export const PLATFORM_COLOR: Record<Platform, string> = {
   x: "#ffffff",
   reddit: "#ff4500",
   hn: "#ff6600",
+  public: "#7dd3fc",
 };
 
 export function dominantPlatform(topic: Topic): Platform | null {
-  const active = (["x", "reddit", "hn"] as Platform[]).filter(
-    (p) => topic.platforms[p].score > 20,
-  );
+  const active = PLATFORMS.filter((p) => topic.platforms[p]?.score > 20);
   return active.length === 1 ? active[0] : null;
 }
 

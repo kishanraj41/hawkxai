@@ -1,7 +1,11 @@
-import type { Platform, Post, Topic } from "./types";
+import { PLATFORMS, type Post, type Topic } from "./types";
 
 function emptySlice() {
   return { score: 0, posts: [] as Post[] };
+}
+
+function emptyPlatforms() {
+  return { x: emptySlice(), reddit: emptySlice(), hn: emptySlice(), public: emptySlice() };
 }
 
 export function slug(label: string): string {
@@ -13,10 +17,8 @@ export function slug(label: string): string {
 }
 
 export function divergenceOf(topic: Pick<Topic, "platforms">): number {
-  const n = (["x", "reddit", "hn"] as Platform[]).filter(
-    (p) => topic.platforms[p].score > 20,
-  ).length;
-  return 1 - n / 3;
+  const n = PLATFORMS.filter((p) => topic.platforms[p].score > 20).length;
+  return 1 - n / PLATFORMS.length;
 }
 
 export function velocityOf(
@@ -33,11 +35,7 @@ export function velocityOf(
 }
 
 export function totalScore(topic: Pick<Topic, "platforms">): number {
-  return (
-    topic.platforms.x.score +
-    topic.platforms.reddit.score +
-    topic.platforms.hn.score
-  );
+  return PLATFORMS.reduce((s, p) => s + (topic.platforms[p]?.score ?? 0), 0);
 }
 
 export function peakHourCT(posts: Post[]): string | undefined {
@@ -69,7 +67,7 @@ export function scalePosts(posts: Post[], cap = 100): number {
 export function singletonTopics(posts: Post[], limit = 18): Topic[] {
   const ranked = [...posts].sort((a, b) => b.score - a.score).slice(0, limit);
   return ranked.map((p) => {
-    const platforms = { x: emptySlice(), reddit: emptySlice(), hn: emptySlice() };
+    const platforms = emptyPlatforms();
     platforms[p.platform] = {
       score: Math.min(100, Math.round(Math.log10(p.score + 1) * 40)),
       posts: [p],

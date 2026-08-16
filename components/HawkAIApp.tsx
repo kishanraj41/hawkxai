@@ -2,18 +2,22 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
+import ChartDesk from "@/components/ChartDesk";
+import CategoryPlugs from "@/components/desk/CategoryPlugs";
 import IntelRail from "@/components/IntelRail";
 import MapStage from "@/components/MapStage";
 import OverviewRail from "@/components/OverviewRail";
 import TickerTape from "@/components/TickerTape";
 import TrendMap from "@/components/TrendMap";
 import { AUDIENCE_OPTIONS, boostTrends } from "@/lib/booster";
+import { categoryCounts, filterByCategory } from "@/lib/desk";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
-import type { AgeLens, BoosterPayload, Platform, Topic, TrendsPayload } from "@/lib/types";
+import type { AgeLens, BoosterPayload, DeskCategory, Platform, Topic, TrendsPayload } from "@/lib/types";
 
 type SortKey = "score" | Platform | "risk";
 type VelocityFilter = Topic["velocity"] | "all";
+type Surface = "map" | "desk";
 
 function MapSkeleton() {
   return (
@@ -39,6 +43,8 @@ export default function HawkAIApp() {
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [velocityFilter, setVelocityFilter] = useState<VelocityFilter>("all");
   const [lens, setLens] = useState<AgeLens | "all">("all");
+  const [category, setCategory] = useState<DeskCategory>("all");
+  const [surface, setSurface] = useState<Surface>("desk");
 
   const loadTrends = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -68,17 +74,6 @@ export default function HawkAIApp() {
     setHighlightedIds([]);
     void loadTrends();
   }, [loadTrends]);
-
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setSelected(null);
-        setHighlightedIds([]);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
 
   async function handleAsk(event: FormEvent) {
     event.preventDefault();
@@ -120,11 +115,54 @@ export default function HawkAIApp() {
     }
   }
 
+  const artifactsById = useMemo(() => {
+    const map = new Map<string, NonNullable<BoosterPayload["briefs"][number]["artifacts"]>>();
+    for (const brief of booster?.briefs ?? []) map.set(brief.topicId, brief.artifacts);
+    return map;
+  }, [booster]);
+
   const topics = useMemo(() => {
     const all = payload?.topics ?? [];
-    if (velocityFilter === "all") return all;
-    return all.filter((t) => t.velocity === velocityFilter);
-  }, [payload, velocityFilter]);
+    const byVelocity = velocityFilter === "all" ? all : all.filter((t) => t.velocity === velocityFilter);
+    return filterByCategory(byVelocity, category, artifactsById);
+  }, [payload, velocityFilter, category, artifactsById]);
+
+  const counts = useMemo(() => {
+    const all = payload?.topics ?? [];
+    const byVelocity = velocityFilter === "all" ? all : all.filter((t) => t.velocity === velocityFilter);
+    return categoryCounts(byVelocity, artifactsById);
+  }, [payload, velocityFilter, artifactsById]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT");
+      if (event.key === "Escape") {
+        setSelected(null);
+        setHighlightedIds([]);
+        return;
+      }
+      if (typing) return;
+      if (event.key === "m" || event.key === "M") setSurface("map");
+      if (event.key === "d" || event.key === "D") setSurface("desk");
+      if (event.key === "j" || event.key === "k" || event.key === "J" || event.key === "K") {
+        event.preventDefault();
+        if (!topics.length) return;
+        const idx = selected ? topics.findIndex((t) => t.id === selected.id) : -1;
+        const next =
+          event.key.toLowerCase() === "j"
+            ? topics[Math.min(topics.length - 1, Math.max(0, idx) + (idx < 0 ? 0 : 1))]
+            : topics[Math.max(0, idx < 0 ? 0 : idx - 1)];
+        if (next) {
+          setSelected(next);
+          setHighlightedIds([next.id]);
+        }
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected, topics]);
 
   function pickTopicId(id: string) {
     const topic = topics.find((t) => t.id === id) ?? payload?.topics.find((t) => t.id === id) ?? null;

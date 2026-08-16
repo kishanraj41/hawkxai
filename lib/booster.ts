@@ -1,16 +1,18 @@
 import { divergenceLabel } from "./ui-helpers";
 import { totalScore } from "./metrics";
-import type {
-  AgeLens,
-  AgeTranslation,
-  BoosterPayload,
-  BoosterTopicBrief,
-  CampaignMove,
-  CapturedArtifact,
-  Improvisation,
-  Platform,
-  Topic,
-  TrendsPayload,
+import { buildCausation, classifyTopic } from "./desk";
+import {
+  PLATFORMS,
+  type AgeLens,
+  type AgeTranslation,
+  type BoosterPayload,
+  type BoosterTopicBrief,
+  type CampaignMove,
+  type CapturedArtifact,
+  type Improvisation,
+  type Platform,
+  type Topic,
+  type TrendsPayload,
 } from "./types";
 
 const HASHTAG_RE = /#[\p{L}\p{N}_]{2,48}/gu;
@@ -68,7 +70,7 @@ function postsOf(topic: Topic) {
 
 function platformsFor(topic: Topic, test: (text: string) => boolean): Platform[] {
   const hit: Platform[] = [];
-  for (const p of ["x", "reddit", "hn"] as Platform[]) {
+  for (const p of PLATFORMS) {
     const slice = topic.platforms[p];
     const text = [topic.label, ...slice.posts.map((x) => `${x.title} ${x.url}`)].join(" ");
     if (slice.score > 0 && test(text)) hit.push(p);
@@ -165,7 +167,7 @@ export function captureArtifacts(topic: Topic): CapturedArtifact[] {
 export function whyTrending(topic: Topic, artifacts: CapturedArtifact[]): { why: string; confidence: number } {
   const div = divergenceLabel(topic);
   const score = totalScore(topic);
-  const active = (["x", "reddit", "hn"] as Platform[]).filter((p) => topic.platforms[p].score > 0);
+  const active = PLATFORMS.filter((p) => topic.platforms[p]?.score > 0);
   const tags = artifacts.filter((a) => a.kind === "hashtag").slice(0, 3).map((a) => a.value);
   const domains = artifacts
     .filter((a) => a.kind === "url" || a.kind === "qr")
@@ -268,9 +270,11 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
     topicId: topic.id,
     whyTrending: why,
     confidence,
+    category: classifyTopic(topic, artifacts),
     artifacts,
     audiences: ageTranslations(topic),
     campaign: campaignMove(topic, artifacts),
+    causation: buildCausation(topic, artifacts),
   };
 }
 
@@ -297,6 +301,14 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       title: "Reddit fallback (OAuth or Pushshift-style)",
       why: "403s wipe phrase capture from the largest long-form platform.",
       next: "Authenticated Reddit client + cache last-good posts for 15m.",
+    });
+  }
+  if (!payload.sources.public) {
+    items.push({
+      priority: "P0",
+      title: "Public-API ingest is offline",
+      why: "News, weather, crypto, and sports receipts come from the public-apis catalog. Without them WHY stays social-only.",
+      next: "Retry GDELT/NWS/CoinGecko feeds; keep catalog cache so the allowlist still configures the desk.",
     });
   }
   if (hashtags.length < 3) {
@@ -339,11 +351,20 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       next: "Map topic labels to a small industry lexicon (retail, AI, airlines) — never invent symbols.",
     });
   }
+  const thinCausation = briefs.filter((b) => b.causation.thin).length;
+  if (thinCausation >= 3) {
+    items.push({
+      priority: "P1",
+      title: "Persist ingest snapshots for multi-day occurrence charts",
+      why: `${thinCausation} topics have fewer than two dated receipts — the timeseries cannot show a peak, only a point.`,
+      next: "Write hourly topic-score snapshots and join them on the area chart next to live posts.",
+    });
+  }
   items.push({
     priority: "P2",
-    title: "News + disaster time-lag correlation",
-    why: "Why-trending is still social-only. Campaigns miss weather, outages, and filings.",
-    next: "Join GDELT/NOAA on a 0–24h lag next to velocity.",
+    title: "News + disaster markers on the same timeseries",
+    why: "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.",
+    next: "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY.",
   });
   items.push({
     priority: "P2",

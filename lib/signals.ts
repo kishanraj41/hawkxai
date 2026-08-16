@@ -5,7 +5,7 @@ import { xTrendListSchema } from "./schemas";
 import type { Post, RawSignals, SourceHealth } from "./types";
 
 function emptyHealth(): SourceHealth {
-  return { x: false, reddit: false, hn: false };
+  return { x: false, reddit: false, hn: false, public: false };
 }
 
 function parseJsonObject(raw: string): unknown {
@@ -99,5 +99,5 @@ export async function collectSignals(): Promise<RawSignals> {
   console.log(
     `[signals] reddit=${reddit.length} hn=${hn.length} x=${x.length} degraded=${degraded.join(",") || "none"}`,
   );
-  return { reddit, hn, x, sources, degraded };
+  return { reddit, hn, x, public: [], sources, degraded };
 }

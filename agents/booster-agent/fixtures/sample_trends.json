@@ -28,7 +28,8 @@
             }
           ]
         },
-        "hn": { "score": 0, "posts": [] }
+        "hn": { "score": 0, "posts": [] },
+        "public": { "score": 0, "posts": [] }
       },
       "velocity": "rising",
       "divergence": 0.33,
@@ -52,7 +53,8 @@
           ]
         },
         "reddit": { "score": 0, "posts": [] },
-        "hn": { "score": 0, "posts": [] }
+        "hn": { "score": 0, "posts": [] },
+        "public": { "score": 0, "posts": [] }
       },
       "velocity": "peaking",
       "divergence": 1,
@@ -60,6 +62,6 @@
     }
   ],
   "updatedAt": "2026-08-15T17:00:00.000Z",
-  "sources": { "x": true, "reddit": true, "hn": false },
+  "sources": { "x": true, "reddit": true, "hn": false, "public": false },
   "degraded": ["hn offline"]
 }

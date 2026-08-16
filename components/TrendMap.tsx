@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { useEffect, useRef, useState } from "react";
 import { motionDuration, motionTokens } from "@/lib/motionTokens";
 import { totalScore } from "@/lib/ui-helpers";
-import type { Platform, Topic } from "@/lib/types";
+import { PLATFORMS, type Platform, type Topic } from "@/lib/types";
 
 const INK = "#f4f1ea";
 const AMBER = "#ffb24d";
@@ -38,9 +38,7 @@ function buildHierarchy(topics: Topic[]): PackDatum {
     children: topics.map((topic) => {
       const tot = Math.max(totalScore(topic), 1);
       const area = rOf(tot) ** 2;
-      const slices = (["x", "reddit", "hn"] as Platform[]).filter(
-        (p) => topic.platforms[p].score > 0,
-      );
+      const slices = PLATFORMS.filter((p) => (topic.platforms[p]?.score ?? 0) > 0);
       return {
         id: topic.id,
         topic,
@@ -504,7 +502,7 @@ function MapQuote({ topic, x, y }: { topic: Topic; x: number; y: number }) {
     >
       <p className="line-clamp-2 text-[12px] leading-snug text-white">{topic.label}</p>
       <p className="mt-1 font-mono text-[10px] tabular-nums text-white/55">
-        {Math.round(score)} · {topic.velocity} · {topic.platforms.x.score} X · {topic.platforms.reddit.score} Reddit · {topic.platforms.hn.score} HN
+        {Math.round(score)} · {topic.velocity} · {topic.platforms.x?.score ?? 0} X · {topic.platforms.reddit?.score ?? 0} Reddit · {topic.platforms.hn?.score ?? 0} HN · {topic.platforms.public?.score ?? 0} APIs
       </p>
     </div>
   );
@@ -530,6 +528,7 @@ function dashFor(d: d3.HierarchyCircularNode<PackDatum>): string | null {
   if (d.data.platform === "x") return null;
   if (d.data.platform === "reddit") return "5 3";
   if (d.data.platform === "hn") return "1.5 2.4";
+  if (d.data.platform === "public") return "2 3";
   return null;
 }
 

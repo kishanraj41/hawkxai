@@ -5,7 +5,7 @@ import BoosterInsights from "@/components/BoosterInsights";
 import Sparkline from "@/components/Sparkline";
 import { divergenceLabel, sparkValues, topPosts } from "@/lib/ui-helpers";
 import { motionTokens } from "@/lib/motionTokens";
-import type { AgeLens, BoosterTopicBrief, Platform, Topic } from "@/lib/types";
+import { PLATFORMS, type AgeLens, type BoosterTopicBrief, type Platform, type Topic } from "@/lib/types";
 
 function VelocityMark({ velocity }: { velocity: Topic["velocity"] }) {
   if (velocity === "rising") {
@@ -37,7 +37,13 @@ function DivergenceMeter({ value }: { value: number }) {
 
 function SourceMark({ platform }: { platform: Platform }) {
   const dash =
-    platform === "reddit" ? "5 3" : platform === "hn" ? "1.5 2.4" : undefined;
+    platform === "reddit"
+      ? "5 3"
+      : platform === "hn"
+        ? "1.5 2.4"
+        : platform === "public"
+          ? "2 3"
+          : undefined;
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden className="shrink-0">
       <circle
@@ -63,9 +69,7 @@ interface TopicDetailPanelProps {
 export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicDetailPanelProps) {
   const reduce = useReducedMotion();
   const receipts = topPosts(topic);
-  const platformScores = (["x", "reddit", "hn"] as const).filter(
-    (p) => topic.platforms[p].score > 0,
-  );
+  const platformScores = PLATFORMS.filter((p) => (topic.platforms[p]?.score ?? 0) > 0);
 
   return (
     <motion.div
@@ -153,7 +157,10 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
                 <SourceMark platform={post.platform} />
                 <span className="min-w-0">
                   <span className="line-clamp-2 text-pretty">{post.title}</span>
-                  <span className="signal-label mt-1 block tabular-nums">{post.score}</span>
+                  <span className="signal-label mt-1 block tabular-nums">
+                    {post.sourceApi ? `${post.sourceApi} · ` : ""}
+                    {post.score}
+                  </span>
                 </span>
               </a>
             ))

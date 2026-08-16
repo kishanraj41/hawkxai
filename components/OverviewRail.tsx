@@ -58,13 +58,17 @@ export default function OverviewRail({
   onHover,
 }: OverviewRailProps) {
   const xAvg =
-    topics.length === 0 ? 0 : topics.reduce((s, t) => s + t.platforms.x.score, 0) / topics.length;
+    topics.length === 0 ? 0 : topics.reduce((s, t) => s + (t.platforms.x?.score ?? 0), 0) / topics.length;
   const redditAvg =
     topics.length === 0
       ? 0
-      : topics.reduce((s, t) => s + t.platforms.reddit.score, 0) / topics.length;
+      : topics.reduce((s, t) => s + (t.platforms.reddit?.score ?? 0), 0) / topics.length;
   const hnAvg =
-    topics.length === 0 ? 0 : topics.reduce((s, t) => s + t.platforms.hn.score, 0) / topics.length;
+    topics.length === 0 ? 0 : topics.reduce((s, t) => s + (t.platforms.hn?.score ?? 0), 0) / topics.length;
+  const publicAvg =
+    topics.length === 0
+      ? 0
+      : topics.reduce((s, t) => s + (t.platforms.public?.score ?? 0), 0) / topics.length;
 
   const ranked = [...topics].toSorted((a, b) => {
     const av =
@@ -92,8 +96,13 @@ export default function OverviewRail({
       </div>
       <p className="mt-1 text-xs text-white/45">
         {payload?.sources.x ? "X" : "X off"} · {payload?.sources.reddit ? "Reddit" : "Reddit off"} ·{" "}
-        {payload?.sources.hn ? "HN" : "HN off"}
+        {payload?.sources.hn ? "HN" : "HN off"} · {payload?.sources.public ? "APIs" : "APIs off"}
       </p>
+      {payload?.publicApis ? (
+        <p className="mt-1 font-mono text-[10px] tabular-nums text-white/40">
+          {payload.publicApis.live}/{payload.publicApis.attempted} live · {payload.publicApis.catalog} catalog
+        </p>
+      ) : null}
 
       <div className="mt-4 space-y-2.5">
         <HeatBar label="X" value={xAvg} active={sortKey === "x"} onClick={() => onSort("x")} />
@@ -104,6 +113,12 @@ export default function OverviewRail({
           onClick={() => onSort("reddit")}
         />
         <HeatBar label="HN" value={hnAvg} active={sortKey === "hn"} onClick={() => onSort("hn")} />
+        <HeatBar
+          label="APIs"
+          value={publicAvg}
+          active={sortKey === "public"}
+          onClick={() => onSort("public")}
+        />
       </div>
 
       <div className="mt-4 flex gap-2">

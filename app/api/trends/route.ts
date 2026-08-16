@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet, cachePeek, cacheSet } from "@/lib/cache";
-import { attachXPosts, clusterTopics } from "@/lib/cluster";
+import { attachPublicPosts, attachXPosts, clusterTopics } from "@/lib/cluster";
 import {
   collectorAgent,
   collectorSummary,
@@ -22,7 +22,11 @@ const inflight = new Map<string, Promise<TrendsPayload>>();
 async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
   const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
   const collected = collectorAgent(geo);
-  const [redditR, hnR] = await Promise.all([collected.reddit, collected.hn]);
+  const [redditR, hnR, publicR] = await Promise.all([
+    collected.reddit,
+    collected.hn,
+    collected.public,
+  ]);
 
   const [clustered, xR] = await Promise.all([
     clusterTopics(
@@ -30,7 +34,8 @@ async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
         reddit: redditR.posts,
         hn: hnR.posts,
         x: [],
-        sources: { x: false, reddit: redditR.ok, hn: hnR.ok },
+        public: [],
+        sources: { x: false, reddit: redditR.ok, hn: hnR.ok, public: publicR.ok },
         degraded: [],
       },
       prev,
@@ -38,9 +43,10 @@ async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
     collected.x,
   ]);
   if (xR.ok) attachXPosts(clustered, xR.posts);
-  const { sources, degraded } = healthFrom([xR, redditR, hnR]);
+  if (publicR.ok) attachPublicPosts(clustered, publicR.posts);
+  const { sources, degraded } = healthFrom([xR, redditR, hnR, publicR]);
 
-  const collectorLog = collectorSummary([xR, redditR, hnR]);
+  const collectorLog = collectorSummary([xR, redditR, hnR, publicR]);
   const clusterLog = `cluster: ${clustered.length} topics`;
   console.log(clusterLog);
 
@@ -57,6 +63,7 @@ async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
     sources,
     degraded,
     pipeline,
+    publicApis: publicR.publicApis,
   };
   cacheSet(cacheKey, payload);
   cacheSet(LAST_KEY, payload);
