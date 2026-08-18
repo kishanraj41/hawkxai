@@ -488,7 +488,7 @@ export default function TrendMap({
 
   return (
     <div ref={containerRef} className="absolute inset-0">
-      <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkAI trend map" />
+      <svg ref={svgRef} className="h-full w-full" role="img" aria-label="HawkxAI trend map" />
       {sweepOn ? <div className="signal-sweep" aria-hidden /> : null}
       {tip ? (
         <MapQuote topic={tip.topic} x={tip.x} y={tip.y} caption={captionFor?.(tip.topic)} />

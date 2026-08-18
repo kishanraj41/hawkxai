@@ -34,12 +34,14 @@ Last run: 2026-08-16T21:05:00+00:00
 - **Why:** GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.
 - **Next:** Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY.
 
-## P2 — Persist tape-watch beyond this browser
+## P2 — Wire the provisioned Postgres server
 
-- **Why:** Spike watch lives in localStorage. A CMO on another machine, or a Vercel cold start, sees no last look.
-- **Next:** Store snapshots next to the feed bandit (KV) keyed by topic id; keep the same delta lines.
+- **Why:** Leaf calls currently land in the warm-instance memory store. Ten category databases are ready once credentials arrive.
+- **Next:** Set TREND_DB_HOST / USER / PASSWORD, run npm run provision:trend-db, confirm GET /api/collect says backend=postgres.
 
 ## Shipped this pass (free APIs)
+
+- Category collect → leaf prediction on the mind map (memory now; 10 Postgres databases when TREND_DB_* is set).
 
 - Wikipedia featured feed + pageview walk-back (yesterday's pageviews 404).
 - GDELT 24h window + 10-minute in-process memo so we stop 429-spamming.

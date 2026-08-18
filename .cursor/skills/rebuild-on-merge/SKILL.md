@@ -2,7 +2,7 @@
 name: rebuild-on-merge
 description: >-
   Every 5 minutes, check snagaram3/grokhackx for PRs newly merged to main.
-  If one landed, rebuild the HawkAI image from that commit and refresh
+  If one landed, rebuild the HawkxAI image from that commit and refresh
   docker run. If none, skip. Use when looping /rebuild-on-merge, watching
   PR merges, or the user asks to rebuild after merge.
 ---
@@ -33,7 +33,7 @@ State file (gitignored): `.cursor/skills/builddocker/.last-merge.json`.
 Only after JSON with at least one merge:
 
 1. `git fetch origin main`
-2. Follow `grokhackx/.cursor/skills/builddocker/SKILL.md` in full — build **`origin/main`** (worktree if this branch is dirty / not main), then replace the `hawkai` container. Reuse the existing host port.
+2. Follow `grokhackx/.cursor/skills/builddocker/SKILL.md` in full — build **`origin/main`** (worktree if this branch is dirty / not main), then replace the `hawkxai` container. Reuse the existing host port.
 3. The detect script writes `.last-merge.json` before you build. **If the docker build fails, restore `sha` in that file to JSON `previous_sha`** so the next tick retries.
 
 ## 3. Report

@@ -1,6 +1,6 @@
 # SmartSalesGuy
 
-Unicorn-founder sales agent. Checks out HawkAI, reads what is actually built, and writes a **one-page VC proposal**: core problem, solution, what's live, what's next.
+Unicorn-founder sales agent. Checks out HawkxAI, reads what is actually built, and writes a **one-page VC proposal**: core problem, solution, what's live, what's next.
 
 It does extremely smart things: evidence from the git tree, not invented traction. If a number is not in the checkout, it does not appear on the page.
 

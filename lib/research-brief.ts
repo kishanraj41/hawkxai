@@ -6,14 +6,14 @@ export function researchBriefFilename(label: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 48);
-  return `hawkai-research-${slug || "topic"}.md`;
+  return `hawkxai-research-${slug || "topic"}.md`;
 }
 
 /** Markdown pack of findings + URLs. Evidence only — never invents. */
 export function formatResearchBrief(payload: ResearchPayload): string {
   const byId = new Map(payload.sources.map((s) => [s.id, s]));
   const lines = [
-    `# HawkAI research · ${payload.query}`,
+    `# HawkxAI research · ${payload.query}`,
     "",
     payload.summary,
     "",

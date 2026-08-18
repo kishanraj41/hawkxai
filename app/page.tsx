@@ -1,5 +1,5 @@
-import HawkAIApp from "@/components/HawkAIApp";
+import HawkxAIApp from "@/components/HawkxAIApp";
 
 export default function Home() {
-  return <HawkAIApp />;
+  return <HawkxAIApp />;
 }

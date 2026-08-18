@@ -38,7 +38,7 @@ export function briefFilename(label: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 48);
-  return `hawkai-brief-${slug || "topic"}.md`;
+  return `hawkxai-brief-${slug || "topic"}.md`;
 }
 
 /** One-page brief from live receipts only. Never invents a WHY. */
@@ -56,7 +56,7 @@ export function formatKeepBrief(input: KeepBriefInput): string {
       : null;
 
   const lines = [
-    `# HawkAI brief · ${topic.label}`,
+    `# HawkxAI brief · ${topic.label}`,
     "",
     query?.floor ?? brief.whyTrending,
     "",

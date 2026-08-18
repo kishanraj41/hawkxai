@@ -42,7 +42,7 @@ jobs:
           file: ./Dockerfile
           push: false
           load: true
-          tags: hawkai:ci
+          tags: hawkxai:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -55,7 +55,7 @@ jobs:
         run: >
           python3 agents/docker-ci/ci_agent.py
           --skip-build
-          --image hawkai:ci
+          --image hawkxai:ci
           --event ${{ github.event_name }}
           --ensure-pr
           ${{ github.event.pull_request.number && format('--pr {0}', github.event.pull_request.number) || '' }}

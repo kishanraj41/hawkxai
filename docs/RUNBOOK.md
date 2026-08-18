@@ -1,6 +1,6 @@
 # Runbook
 
-Operational path for HawkAI: local, Docker, Vercel, and CI.
+Operational path for HawkxAI: local, Docker, Vercel, and CI.
 
 ## Health
 
@@ -11,6 +11,7 @@ There is no `/health` route. Treat these as live checks:
 | `GET /` | 200, lookup desk |
 | `GET /api/trends?topic=Camry` | 200 JSON after first lookup (30–60s cold) |
 | `GET /api/booster` | 200 after a phrase is cached; **409** if lookup never ran |
+| `GET /api/collect?category=markets` | 200 `{ backend, databases, snapshots, forecasts }` after a tape exists |
 | `POST /api/ask` `{"q":"..."}` | 200 `{ answer, topicIds }`; **400** if `q` missing; **409** if no lookup |
 
 `degraded` on trends (e.g. `reddit offline`) is expected on some networks — still render other sources.
@@ -25,11 +26,23 @@ npm run dev
 
 Force refresh: `GET /api/trends?topic=Camry&refresh=1`. Cache TTL is 5 minutes.
 
+After the server is provisioned:
+
+```bash
+# .env.local
+TREND_DB_HOST=...
+TREND_DB_USER=...
+TREND_DB_PASSWORD=...
+npm run provision:trend-db
+```
+
+That creates `hawkxai_all` plus one database per category plug. Until those vars are set, collection stays in memory on the warm instance.
+
 ## Docker
 
 ```bash
-docker build -t hawkai:latest .
-docker run --rm -p 3001:3000 -e XAI_API_KEY=xai-... hawkai:latest
+docker build -t hawkxai:latest .
+docker run --rm -p 3001:3000 -e XAI_API_KEY=xai-... hawkxai:latest
 ```
 
 Host **:3000** is often Grafana. Map the container to **:3001**. Image user is `nextjs` (non-root).

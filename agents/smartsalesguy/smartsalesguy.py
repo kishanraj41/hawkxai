@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartSalesGuy — unicorn-founder sales agent for HawkAI.
+SmartSalesGuy — unicorn-founder sales agent for HawkxAI.
 
 Checks out the repo, reads what is actually built, and writes a one-page
 venture proposal: core problem, solution, current features, future features.
@@ -478,7 +478,7 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "the footprint has already moved."
     )
     solution = (
-        "HawkAI is a phrase footprint desk. Look up a campaign name, hashtag, product, "
+        "HawkxAI is a phrase footprint desk. Look up a campaign name, hashtag, product, "
         "or event — Camry, #HeatWaveFit, Just Do It — and the same modules fill from "
         "live evidence across X, Reddit, HN, and public APIs: a mind map (hub is the "
         "phrase; amber dashes are shared artifacts only), related prints, title "
@@ -506,13 +506,13 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "fake ARR slide."
     )
     one_liner = (
-        "HawkAI is the live footprint desk for a word or phrase a marketing team "
+        "HawkxAI is the live footprint desk for a word or phrase a marketing team "
         "already owns — and the campaign move that follows."
     )
     if product_para:
         sources.append(f"{(core_src.split(' @', 1)[0] or CORE_IDEA_RELS[0])}#product")
     return Dossier(
-        product="HawkAI",
+        product="HawkxAI",
         one_liner=one_liner,
         problem=problem,
         solution=solution,
@@ -561,7 +561,7 @@ def compose_one_pager(dossier: Dossier) -> str:
             f"{_bullets(dossier.agents, 12)}\n"
         )
 
-    return f"""# HawkAI
+    return f"""# HawkxAI
 **Confidential · one-page venture proposal**
 
 {dossier.one_liner}
@@ -613,7 +613,7 @@ We are raising to turn this wedge into the default war-room for cultural attenti
 
 We will not pitch fake users. The proof is the product: a live map, a live booster loop, and a checkout you can run.
 
-— Founder, HawkAI
+— Founder, HawkxAI
 """.strip() + "\n"
 
 
@@ -713,7 +713,7 @@ def run_sales(root: Path = REPO_ROOT) -> Proposal:
 def self_check(root: Path = REPO_ROOT) -> int:
     root = Path(root)
     proposal = run_sales(root)
-    assert proposal.dossier.product == "HawkAI"
+    assert proposal.dossier.product == "HawkxAI"
     assert proposal.dossier.git is not None
     assert proposal.dossier.current, "checkout found no live features"
     names = " ".join(f.name.lower() for f in proposal.dossier.current)
@@ -734,7 +734,7 @@ def self_check(root: Path = REPO_ROOT) -> int:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        description="SmartSalesGuy — checkout HawkAI and write a VC one-pager.",
+        description="SmartSalesGuy — checkout HawkxAI and write a VC one-pager.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

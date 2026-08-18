@@ -7,7 +7,7 @@ import type { Post, PublicApiFeedStat, PublicApiIngest } from "./types";
 const CATALOG_URL =
   "https://raw.githubusercontent.com/public-apis/public-apis/master/README.md";
 const UA =
-  "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx; srihari.ec09@gmail.com)";
+  "HawkxAI/1.0 (+https://github.com/snagaram3/grokhackx; srihari.ec09@gmail.com)";
 const CATALOG_KEY = "public-apis:catalog";
 const PER_FEED = 8;
 const MAX_POSTS = 160;
@@ -1362,8 +1362,8 @@ const FEEDS: Feed[] = [
     run: async (_city, topic) => {
       const q = topic?.trim();
       const url = q
-        ? `https://api.reliefweb.int/v1/reports?appname=hawkai&limit=${PER_FEED}&sort[]=date:desc&query[value]=${encodeURIComponent(q)}`
-        : `https://api.reliefweb.int/v1/reports?appname=hawkai&limit=${PER_FEED}&sort[]=date:desc`;
+        ? `https://api.reliefweb.int/v1/reports?appname=hawkxai&limit=${PER_FEED}&sort[]=date:desc&query[value]=${encodeURIComponent(q)}`
+        : `https://api.reliefweb.int/v1/reports?appname=hawkxai&limit=${PER_FEED}&sort[]=date:desc`;
       const data = asRecord(await getJson(url));
       return asArray(data?.data)
         .map((row) => {

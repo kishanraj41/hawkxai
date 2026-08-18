@@ -1,4 +1,4 @@
-# HawkAI — Hackathon
+# HawkxAI — Hackathon
 
 A live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters related topics, while divergence is calculated in code. A topic exploding on one platform tells a different story from one gaining momentum across all platforms.
 
@@ -126,7 +126,9 @@ Do not commit `.env.local`. Docker CI still builds the production image on every
 
 ## Stack
 
-Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · no database · no auth
+Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · Cloud SQL Postgres (10 category DBs) · no auth
+
+Runtime topology (Mermaid): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · live at `/architecture`.
 
 ## Agents
 

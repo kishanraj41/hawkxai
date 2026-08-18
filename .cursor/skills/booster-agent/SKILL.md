@@ -1,11 +1,11 @@
 ---
 name: booster-agent
 description: >-
-  HawkAI Booster Agent — looks up a word or phrase (campaign name) and maps
+  HawkxAI Booster Agent — looks up a word or phrase (campaign name) and maps
   its internet footprint; captures hashtags, QRs, phrases, and URLs around it;
   correlates why those receipts exist; translates insights for all age groups and
   business competitors; and always suggests improvisations. Use when working on
-  grokhackx, HawkAI, phrase lookup, campaign footprint, hashtags, QR codes,
+  grokhackx, HawkxAI, phrase lookup, campaign footprint, hashtags, QR codes,
   campaign intelligence, the booster agent, dashboard insights, or product betterment.
 ---
 
@@ -20,7 +20,7 @@ This agent does extremely smart things. Treat it as the product's core idea, not
 
 ## When this skill is on
 
-Any HawkAI / grokhackx work: capture, clustering, map UI, Ask box, campaign copy, age-group UX, or "what should we build next."
+Any HawkxAI / grokhackx work: capture, clustering, map UI, Ask box, campaign copy, age-group UX, or "what should we build next."
 
 ## Core loop
 

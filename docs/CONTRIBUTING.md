@@ -1,6 +1,6 @@
 # Contributing
 
-HawkAI is a hackathon wedge. Keep the map and `/api/trends` stable. Never invent posts or a WHY.
+HawkxAI is a hackathon wedge. Keep the map and `/api/trends` stable. Never invent posts or a WHY.
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ App: http://localhost:3000 · lookup: `/?q=Camry` · booster: `/api/booster` (af
 | `python3 -m unittest agents/booster-agent/tests/test_booster.py` | Booster unit tests |
 | `python3 -m unittest agents/smartsalesguy/tests/test_smartsalesguy.py` | One-pager unit tests |
 | `python3 agents/bug-bot/bug_bot.py app --fail-on critical` | Bug Bot CI-style scan |
-| `docker build -t hawkai:latest .` | Production image |
+| `docker build -t hawkxai:latest .` | Production image |
 
 <!-- /AUTO-GENERATED: commands -->
 

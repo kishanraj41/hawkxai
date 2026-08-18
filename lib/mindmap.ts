@@ -3,6 +3,7 @@ import { totalScore } from "./metrics";
 import type {
   BoosterTopicBrief,
   DeskCategory,
+  LeafForecast,
   MindGraph,
   MindLink,
   MindNode,
@@ -17,6 +18,7 @@ export function buildMindMap(
   briefs: BoosterTopicBrief[] = [],
   category: DeskCategory = "all",
   hub?: { label: string; detail?: string },
+  forecasts: LeafForecast[] = [],
 ): MindGraph {
   const briefById = new Map(briefs.map((b) => [b.topicId, b]));
   const scoped =
@@ -118,6 +120,12 @@ export function buildMindMap(
         bridges += 1;
       }
     }
+  }
+
+  const forecastById = new Map(forecasts.map((f) => [f.leafId, f]));
+  for (const node of nodes) {
+    const forecast = forecastById.get(node.id);
+    if (forecast) node.forecast = forecast;
   }
 
   return { hubId, nodes, links, bridges };
