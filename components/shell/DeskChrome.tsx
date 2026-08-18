@@ -18,7 +18,7 @@ export function HomeMark() {
   return (
     <a
       href="/"
-      aria-label="hawkai home"
+      aria-label="hawkxai home"
       className="group flex shrink-0 items-center gap-2.5"
       onClick={(e) => {
         e.preventDefault();
@@ -36,7 +36,7 @@ export function HomeMark() {
         </svg>
       </span>
       <span className="flex items-center gap-2">
-        <span className="text-[18px] font-medium tracking-[-0.02em] text-white">hawkai</span>
+        <span className="text-[18px] font-medium tracking-[-0.02em] text-white">hawkxai</span>
         <span className="signal-live" aria-label="Live" />
       </span>
     </a>

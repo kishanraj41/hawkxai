@@ -1,6 +1,6 @@
 # Booster Agent
 
-HawkAI's core intelligence layer. It does extremely smart things: look up a word or phrase, map its internet footprint, capture live artifacts around it, explain *why* those receipts exist, translate that for every age group, arm competitors with campaign moves, and keep improvising the product.
+HawkxAI's core intelligence layer. It does extremely smart things: look up a word or phrase, map its internet footprint, capture live artifacts around it, explain *why* those receipts exist, translate that for every age group, arm competitors with campaign moves, and keep improvising the product.
 
 Look up a campaign name. The same interactive dashboard fills with where that phrase is printing — useful for every age group and for competitors who will leverage their campaigns.
 
@@ -39,7 +39,9 @@ The same brain runs in TypeScript:
 - `lib/booster.ts` — capture / correlate / campaign / improvise
 - `lib/desk.ts` — category plug, causation drivers, occurrence bins
 - `lib/mindmap.ts` — evidence-only correlation graph (shared artifacts only)
+- `lib/collect.ts` + `lib/predict.ts` — persist trending words/sentiment into 10 category databases, call the next window on each mind-map leaf
 - `GET /api/booster` — JSON for other clients (needs `/api/trends` cache)
+- `GET /api/collect` — collection backend + leaf forecasts
 - `MindDesk` — radial mind map of the looked-up phrase (`G`)
 - `ChartDesk` — look up a phrase; mind strip + related prints + causation bars + timeseries
 - `PhraseLookup` — empty desk: campaign name or phrase in, footprint out

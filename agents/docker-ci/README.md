@@ -1,6 +1,6 @@
 # Docker CI Agent
 
-Builds the HawkAI production `Dockerfile`, smoke-tests the image, and gates
+Builds the HawkxAI production `Dockerfile`, smoke-tests the image, and gates
 the change with Bug Bot. On pull requests it also runs PR Review Bot and posts
 a sticky comment. Every push to a feature branch opens a PR against `main`
 if one is not already open.
@@ -25,7 +25,7 @@ GitHub Actions workflow: `.github/workflows/docker-ci.yml`.
 python3 agents/docker-ci/ci_agent.py
 
 # If the image is already built
-python3 agents/docker-ci/ci_agent.py --skip-build --image hawkai:ci
+python3 agents/docker-ci/ci_agent.py --skip-build --image hawkxai:ci
 
 # Open a PR for the current feature branch if CI would (needs gh + GITHUB_TOKEN)
 python3 agents/docker-ci/ci_agent.py --skip-build --skip-smoke --skip-bugbot --ensure-pr --event push

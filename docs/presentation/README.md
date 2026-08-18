@@ -1,6 +1,6 @@
 # Presentation
 
-Investor and pitch materials for HawkAI. Ops docs stay in [docs/](../README.md) (`CONTRIBUTING.md`, `RUNBOOK.md`).
+Investor and pitch materials for HawkxAI. Ops docs stay in [docs/](../README.md) (`CONTRIBUTING.md`, `RUNBOOK.md`).
 
 - **[VC one-pager](./VC_ONE_PAGER.md)** — SmartSalesGuy investor proposal (problem, solution, live / next)
 - **[Core idea](./CORE_IDEA.md)** — product contract: look up a phrase → capture → correlate → footprint desk (mind map, related prints, causation, occurrence) → campaign
@@ -52,7 +52,7 @@ Open beside chat: Cursor canvas `proposal-presentation.canvas.tsx` (workspace ca
 | File | Use in the deck |
 |---|---|
 | `app/page.tsx` | App entry |
-| `components/HawkAIApp.tsx` | Live desk shell: ticker, map, rails, risk board |
+| `components/HawkxAIApp.tsx` | Live desk shell: ticker, map, rails, risk board |
 | `components/TickerTape.tsx` | Scrolling topic ticker |
 | `components/Sparkline.tsx` | Mini velocity sparkline |
 | `components/RiskBoard.tsx` | Risk board (low / medium / high) |

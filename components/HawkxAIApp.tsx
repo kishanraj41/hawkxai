@@ -86,7 +86,7 @@ export function FootprintDesk() {
   return <LiveDesk desk="footprint" />;
 }
 
-export default function HawkAIApp() {
+export default function HawkxAIApp() {
   return <TrendDesk />;
 }
 
@@ -134,7 +134,19 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       if (!res.ok) throw new Error(`Trends failed (${res.status})`);
       const data = (await res.json()) as TrendsPayload;
       setPayload(data);
-      setBooster(boostTrends(data));
+      const local = boostTrends(data);
+      setBooster(local);
+      void fetch("/api/booster")
+        .then((boostRes) => (boostRes.ok ? boostRes.json() : null))
+        .then((remote: BoosterPayload | null) => {
+          if (!remote?.forecasts?.length) return;
+          setBooster((prev) =>
+            prev && prev.sourceUpdatedAt === remote.sourceUpdatedAt
+              ? { ...prev, forecasts: remote.forecasts, collection: remote.collection }
+              : prev,
+          );
+        })
+        .catch(() => undefined);
       if (data.plugged) {
         setPlugged(data.plugged);
         if (footprint) setQueryUrl(data.plugged);

@@ -1,11 +1,11 @@
 ---
-description: HawkAI /builddocker — build the Dockerfile and update docker run
+description: HawkxAI /builddocker — build the Dockerfile and update docker run
 globs: grokhackx/{Dockerfile,.dockerignore,docs/RUNBOOK.md}
 alwaysApply: false
 ---
 
-When the user invokes `/builddocker` or asks to rebuild the HawkAI image, follow `grokhackx/.cursor/skills/builddocker/SKILL.md`.
+When the user invokes `/builddocker` or asks to rebuild the HawkxAI image, follow `grokhackx/.cursor/skills/builddocker/SKILL.md`.
 
 On a 5-minute loop / PR-merge watch, follow `grokhackx/.cursor/skills/rebuild-on-merge/SKILL.md` first — rebuild only when a PR merged to `main`.
 
-build the dockerfile and update docker run. Tag `hawkai:latest`. Reuse the running `hawkai` host port (often 3002 if 3001 is `next dev`).
+build the dockerfile and update docker run. Tag `hawkxai:latest`. Reuse the running `hawkxai` host port (often 3002 if 3001 is `next dev`).

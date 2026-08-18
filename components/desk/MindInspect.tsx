@@ -1,6 +1,6 @@
 import { leavesOf, sharedWith } from "@/lib/mindmap";
 import { topPosts, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { BoosterTopicBrief, MindGraph, MindNode, Topic } from "@/lib/types";
+import type { BoosterTopicBrief, LeafForecast, MindGraph, MindNode, Topic } from "@/lib/types";
 
 interface MindInspectProps {
   node: MindNode;
@@ -18,6 +18,22 @@ const KIND: Record<MindNode["kind"], string> = {
   driver: "Measured driver",
   source: "First print",
 };
+
+function ForecastBlock({ forecast }: { forecast: LeafForecast }) {
+  return (
+    <div className="mt-4">
+      <p className="signal-label">Analysis</p>
+      <p className="mt-1 text-[12px] leading-relaxed text-white/85">{forecast.analysis}</p>
+      <p className="signal-label mt-3">Next window</p>
+      <p className="mt-1 text-[12px] text-white/85">
+        {forecast.outlook}
+        {forecast.thin ? " — need another collect" : ` · evidence ${Math.round(forecast.confidence * 100)}%`}
+        {` · titles ${forecast.sentimentLean}`}
+      </p>
+      <p className="mt-0.5 font-mono text-[10px] text-white/45">{forecast.evidence}</p>
+    </div>
+  );
+}
 
 export default function MindInspect({
   node,
@@ -64,6 +80,12 @@ export default function MindInspect({
               <p className="mt-0.5 text-[12px] text-white/85">{leaf.label}</p>
               {leaf.detail ? (
                 <p className="mt-0.5 font-mono text-[10px] text-white/45">{leaf.detail}</p>
+              ) : null}
+              {leaf.forecast ? (
+                <p className="mt-0.5 font-mono text-[10px] text-white/55">
+                  {leaf.forecast.outlook}
+                  {leaf.forecast.thin ? " · thin" : ` · ${Math.round(leaf.forecast.confidence * 100)}%`}
+                </p>
               ) : null}
             </li>
           ))}
@@ -119,6 +141,8 @@ export default function MindInspect({
           </ul>
         </div>
       ) : null}
+
+      {node.forecast ? <ForecastBlock forecast={node.forecast} /> : null}
 
       {brief?.sentiment ? (
         <p className="signal-label mt-4">

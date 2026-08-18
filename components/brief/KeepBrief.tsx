@@ -42,7 +42,7 @@ function Provider({
     if (!topic || !brief) return "";
     return formatKeepBrief({ topic, brief, query, lens, since });
   }, [topic, brief, query, lens, since]);
-  const filename = topic ? briefFilename(topic.label) : "hawkai-brief.md";
+  const filename = topic ? briefFilename(topic.label) : "hawkxai-brief.md";
   return (
     <KeepBriefContext.Provider value={{ markdown, filename, ready: Boolean(markdown) }}>
       {children}

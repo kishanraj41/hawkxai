@@ -10,7 +10,7 @@ import type {
   ResearchSourceKind,
 } from "./types";
 
-const UA = "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx)";
+const UA = "HawkxAI/1.0 (+https://github.com/snagaram3/grokhackx)";
 
 const briefSchema = z.object({
   summary: z.string().min(1).transform((s) => s.slice(0, 1200)),
@@ -330,7 +330,7 @@ async function synthesize(
     snippet: s.snippet.slice(0, 280),
   }));
 
-  const prompt = `You are HawkAI Research. Topic: ${JSON.stringify(query)}
+  const prompt = `You are HawkxAI Research. Topic: ${JSON.stringify(query)}
 Use ONLY the evidence list below. Never invent a fact, URL, or citation.
 If evidence is thin, say so and set confidence to "thin".
 Every finding.claim must be grounded in at least one evidenceIds id from the list.

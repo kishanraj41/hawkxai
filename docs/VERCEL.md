@@ -1,4 +1,4 @@
-# Host HawkAI on Vercel
+# Host HawkxAI on Vercel
 
 The app is Next.js 14 (App Router). Demo locally with `npm run dev`. Use Vercel for a public URL.
 
@@ -25,10 +25,37 @@ Do **not** put `XAI_API_KEY` in git. Local only: `.env.local`.
    |---|---|
    | `XAI_API_KEY` | `xai-...` (from console.x.ai) |
    | `YOUTUBE_API_KEY` | optional — official YouTube / Shorts titles. Skip the feed if unset. |
+   | `TREND_DB_HOST` | Cloud SQL primary (`35.245.139.208`). Skip to collect in memory. |
+   | `TREND_DB_USER` | `postgres` |
+   | `TREND_DB_PASSWORD` | Cloud SQL password (sensitive on Production / Preview) |
+   | `TREND_DB_PORT` | `5432` |
+   | `TREND_DB_SSL` | `1` |
+   | `TREND_DB_PREFIX` | `hawkxai` |
+   | `TREND_DB_ADMIN` | `postgres` (provision script) |
 
 7. Click **Deploy**.
-8. After the build succeeds, open `https://<project>.vercel.app`.
-9. First visit: wait up to a minute for `/api/trends`. Open **Footprint ↗** for a campaign-name lookup in a new tab. If you see a 504, refresh once.
+8. After the build succeeds, open `https://hawkxai.vercel.app` (legacy `https://grokhackx.vercel.app` redirects here).
+9. First visit: wait up to a minute for `/api/trends`. Open **Footprint** for a campaign-name lookup. If you see a 504, refresh once.
+
+## Custom domain (`hawkxai.com`)
+
+The Vercel project already has `hawkxai.com` and `www.hawkxai.com`. Apex redirects to `www`. GoDaddy still uses `ns55.domaincontrol.com` / `ns56.domaincontrol.com`, so DNS must be edited **at GoDaddy** (Vercel cannot write those records).
+
+In GoDaddy → hawkxai.com → **DNS** → **Records**:
+
+1. Turn off **Forwarding** / the parking page if it is on (it owns the extra A records).
+2. Delete A records for `@` that are **not** `216.198.79.1` or `64.29.17.1` (today that is `13.248.243.5` and `76.223.105.230`).
+3. Set these records (TTL 600 is fine):
+
+| Type | Name | Value |
+|---|---|---|
+| A | `@` | `216.198.79.1` |
+| A | `@` | `64.29.17.1` |
+| CNAME | `www` | `ec5f747d6cfb4611.vercel-dns-017.com` |
+
+4. Save. Wait 5–30 minutes, then `https://www.hawkxai.com` should serve the desk (`https://hawkxai.com` 308s to www).
+
+Do not switch nameservers unless you want Vercel to own all DNS. Keep GoDaddy NS and only change the records above.
 
 ## 3. Deploy from the CLI
 
@@ -49,12 +76,13 @@ npx vercel --prod
 ## 4. What this repo already configures
 
 - `vercel.json` — framework, `iad1` region, function time limits
+- Cloud SQL `hawkxai-trends` in `us-east4` — see [ARCHITECTURE.md](./ARCHITECTURE.md). Hobby currently allowlists `0.0.0.0/0` so functions can reach Postgres; replace with Static IPs later.
 - `next.config.mjs` — `output: "standalone"` only **off** Vercel (Docker still works)
 - `package.json` — `next build` / `next start`
 
 ## 5. After deploy checklist
 
-- [ ] `https://<url>/` shows HAWKAI header
+- [ ] `https://<url>/` shows HAWKXAI header
 - [ ] Circles appear (or “clustering…” then circles)
 - [ ] Click a circle → WHY + 3 receipt links
 - [ ] Ask box returns an answer

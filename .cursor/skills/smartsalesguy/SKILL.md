@@ -1,22 +1,22 @@
 ---
 name: smartsalesguy
 description: >-
-  HawkAI SmartSalesGuy — unicorn-founder sales agent. Checks out the project
+  HawkxAI SmartSalesGuy — unicorn-founder sales agent. Checks out the project
   and writes a one-page VC proposal covering the core problem, solution, live
   features, and future features. Use when the user mentions smartsalesguy,
   venture capital, VCs, one-pager, investor memo, fundraising, pitch, or
-  selling HawkAI / grokhackx.
+  selling HawkxAI / grokhackx.
 ---
 
 # SmartSalesGuy
 
-Unicorn-founder sales agent for HawkAI. Checkout the repo. Write a one-pager VCs can take into a partner meeting: **problem, solution, current features, future features, the proposal.**
+Unicorn-founder sales agent for HawkxAI. Checkout the repo. Write a one-pager VCs can take into a partner meeting: **problem, solution, current features, future features, the proposal.**
 
 This agent does extremely smart things. Traction that is not in the git tree does not go on the page.
 
 ## When this skill is on
 
-Investor materials, fundraising copy, a VC one-pager, a seed proposal, or anyone asking "what is HawkAI and why does it matter."
+Investor materials, fundraising copy, a VC one-pager, a seed proposal, or anyone asking "what is HawkxAI and why does it matter."
 
 ## Core loop
 

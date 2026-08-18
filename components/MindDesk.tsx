@@ -41,6 +41,7 @@ export default function MindDesk({
         phrase
           ? { label: phrase.slice(0, 42), detail: `${topics.length} related prints` }
           : undefined,
+        booster?.forecasts ?? [],
       ),
     [topics, booster, category, phrase],
   );
@@ -64,13 +65,17 @@ export default function MindDesk({
           <p className="mt-0.5 text-xs text-white/45">
             {caption
               ? caption
-              : "Tap a print, artifact, or first print. Amber dashes are shared receipts — never an invented link."}
+              : "Tap a print or leaf. Analysis and next-window call come from collected snapshots — never an invented WHY."}
           </p>
         </div>
         <div className="flex shrink-0 gap-4 font-mono text-[11px] tabular-nums">
           <Kpi label="Prints" value={String(topics.length)} />
           <Kpi label="Artifacts" value={String(artifacts)} />
           <Kpi label="Bridges" value={String(graph.bridges)} />
+          <Kpi
+            label="Called"
+            value={String((booster?.forecasts ?? []).filter((f) => !f.thin && f.kind !== "hub").length)}
+          />
         </div>
       </div>
       <div className="relative flex min-h-0 flex-1">

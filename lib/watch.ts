@@ -1,6 +1,6 @@
 import type { BoosterTopicBrief, SentimentLean, Topic } from "./types";
 
-export const TAPE_WATCH_KEY = "hawkai:tape-watch:v1";
+export const TAPE_WATCH_KEY = "hawkxai:tape-watch:v1";
 
 export interface TapeSnapshot {
   topicId: string;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { boostTrends } from "@/lib/booster";
 import { cacheGet, cacheSet } from "@/lib/cache";
+import { attachCollection } from "@/lib/collect";
 import type { BoosterPayload, TrendsPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +19,12 @@ export async function GET() {
   }
 
   const cached = cacheGet<BoosterPayload>(BOOSTER_KEY);
-  if (cached && cached.sourceUpdatedAt === trends.updatedAt) {
+  if (cached && cached.sourceUpdatedAt === trends.updatedAt && cached.forecasts?.length) {
     return NextResponse.json(cached);
   }
 
-  const payload = boostTrends(trends);
+  const boosted = cached?.sourceUpdatedAt === trends.updatedAt ? cached : boostTrends(trends);
+  const payload = await attachCollection(trends, boosted);
   cacheSet(BOOSTER_KEY, payload);
   return NextResponse.json(payload);
 }
