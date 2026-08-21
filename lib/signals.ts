@@ -1,4 +1,5 @@
 import { geminiJson } from "./gemini";
+import { stampPosts } from "./lineage";
 import { xTrendListSchema } from "./schemas";
 import type { Post } from "./types";
 
@@ -32,11 +33,14 @@ volume is relative heat 0-100.`;
     (raw) => xTrendListSchema.parse(parseJsonObject(raw)),
     true,
   );
-  return parsed.topics.map((t) => ({
-    platform: "x" as const,
-    title: t.topic,
-    url: t.urls[0] ?? "https://x.com",
-    score: t.volume,
-    createdAt: new Date().toISOString(),
-  }));
+  return stampPosts(
+    parsed.topics.map((t) => ({
+      platform: "x" as const,
+      title: t.topic,
+      url: t.urls[0] ?? "https://x.com",
+      score: t.volume,
+      createdAt: new Date().toISOString(),
+    })),
+    "collect_x",
+  );
 }

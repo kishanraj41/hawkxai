@@ -40,6 +40,8 @@ function asPost(raw: unknown): Post | null {
   if (Number.isNaN(parsed)) post.createdAt = "";
   else post.createdAt = new Date(parsed).toISOString();
   if (typeof p.sourceApi === "string" && p.sourceApi) post.sourceApi = p.sourceApi;
+  if (typeof p.tool === "string" && p.tool) post.tool = p.tool;
+  if (typeof p.collectedAt === "string" && p.collectedAt) post.collectedAt = p.collectedAt;
   return post;
 }
 

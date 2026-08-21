@@ -4,7 +4,7 @@ Live diagrams: [`/architecture`](../app/architecture/page.tsx) (Mermaid). Source
 
 **Stack:** Next.js 14 / React 18 · Vercel `iad1` · Cloud SQL Postgres 16 `us-east4` · ten category databases on one instance.
 
-Hobby has no static egress IPs. Cloud SQL currently allows `0.0.0.0/0` plus this laptop (`47.221.162.22/32`). SSL is `ENCRYPTED_ONLY`. Replace the open range with Vercel Static IPs later.
+Hobby has no static egress IPs. Cloud SQL currently allows `0.0.0.0/0` plus this laptop (`35.146.43.76/32`). SSL is `ENCRYPTED_ONLY`. Replace the open range with Vercel Static IPs later.
 
 ## Deploy path
 
@@ -30,7 +30,7 @@ flowchart LR
 | Vercel team / project | `hawk-ai4` / `grokhackx` (`prj_8yCxNZaUrJhVFDL9Ijbp5pqhJ1Gb`) |
 | Production | [hawkxai.com](https://hawkxai.com) |
 | Function region | `iad1` (Northern Virginia) |
-| GCP project | `hawkxai` |
+| GCP project (fleet / Cloud Run) | `project-16647bb0-5d45-4404-956` (display **Hawkxai**). Cloud SQL `hawkxai-trends` is a separate instance — reuse it; do not create a second one here. |
 | Instance | `hawkxai-trends` · `POSTGRES_16` · `db-g1-small` · `us-east4` |
 | Host | `35.245.139.208:5432` (primary). Do not use the outgoing IP as host. |
 | User | `postgres` via `TREND_DB_USER` / `TREND_DB_PASSWORD` |
@@ -105,5 +105,5 @@ Do **not** run `vercel env pull` over `.env.local` — it replaces the file.
 ## Later (not now)
 
 - Turn off `0.0.0.0/0` once Vercel Static IPs (Pro) are on `iad1`.
-- Keep `47.221.162.22/32` (or the current laptop `/32`) for local provision.
+- Keep `35.146.43.76/32` (or the current laptop `/32`) for local provision.
 - `--authorized-networks` **replaces** the whole list — always include every IP you still need.

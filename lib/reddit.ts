@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { WORLD_REDDIT } from "./geo";
+import { stampPosts } from "./lineage";
 import type { Post } from "./types";
 
 const execFileP = promisify(execFile);
@@ -246,7 +247,7 @@ export async function fetchReddit(
   console.log(
     `[reddit] ${posts.length} posts (official=${official.length ? probe : "none"}, archive=${archiveOk}/${rest.length})`,
   );
-  return posts;
+  return stampPosts(posts, "collect_reddit");
 }
 
 export async function searchReddit(query: string): Promise<Post[]> {
@@ -259,7 +260,7 @@ export async function searchReddit(query: string): Promise<Post[]> {
     const posts = parseListing(JSON.parse(text) as { data?: { children?: RedditChild[] } });
     if (posts.length) {
       console.log(`[reddit] search "${q}" ${posts.length}`);
-      return posts;
+      return stampPosts(posts, "collect_reddit");
     }
   } catch (err) {
     console.warn("[reddit] search failed", err instanceof Error ? err.message : err);

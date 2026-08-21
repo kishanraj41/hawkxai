@@ -94,3 +94,4 @@ agents/smartsalesguy/runs/*.md
 # Fleet generated snapshots / handbook output
 fleet/snapshots/
 fleet/handbook/out/
+tmp-ingest/

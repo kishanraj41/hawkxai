@@ -112,6 +112,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
   const [plugged, setPlugged] = useState("");
   const [watchIds, setWatchIds] = useState<string[]>([]);
   const [deltas, setDeltas] = useState<TapeDelta[]>([]);
+  const [watchingPoi, setWatchingPoi] = useState(false);
   const askRef = useRef<HTMLInputElement>(null);
   const pluggedRef = useRef("");
   const bootedRef = useRef(false);
@@ -371,6 +372,21 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     });
   }
 
+  async function watchPlugged() {
+    const name = plugged.trim();
+    if (!name) return;
+    setWatchingPoi(true);
+    try {
+      await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ label: name }),
+      });
+    } finally {
+      setWatchingPoi(false);
+    }
+  }
+
   function handleToggleWatch(topicId: string) {
     const next = toggleWatch(readWatch(), topicId);
     writeWatch(next);
@@ -523,6 +539,11 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
           ))}
         </div>
         <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
+          {footprint && plugged ? (
+            <GhostButton onClick={() => void watchPlugged()} disabled={watchingPoi}>
+              {watchingPoi ? "Watching…" : "Watch this"}
+            </GhostButton>
+          ) : null}
           <KeepBrief.Actions />
           <GhostButton
             onClick={() => void loadTrends(true)}

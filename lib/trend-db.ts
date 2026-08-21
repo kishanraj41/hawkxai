@@ -90,6 +90,8 @@ CREATE TABLE IF NOT EXISTS receipts (
   score INT NOT NULL,
   created_at TIMESTAMPTZ,
   source_api TEXT,
+  tool TEXT,
+  collected_at TIMESTAMPTZ,
   PRIMARY KEY (snapshot_id, topic_id, url)
 );
 CREATE TABLE IF NOT EXISTS predictions (

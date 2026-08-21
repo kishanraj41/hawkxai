@@ -1,4 +1,5 @@
 import { cacheGet, cacheSet } from "./cache";
+import { stampPost } from "./lineage";
 import type { CityId } from "./geo";
 import { tvCountry, weatherSpots, youtubeRegions } from "./geo";
 import { pickFeeds, recordPulls } from "./rl";
@@ -81,14 +82,17 @@ function post(
   sourceApi: string,
   createdAt?: string,
 ): Post {
-  return {
-    platform: "public",
-    title: title.slice(0, 180),
-    url,
-    score: Math.max(1, Math.round(score)),
-    createdAt: createdAt ?? new Date().toISOString(),
-    sourceApi,
-  };
+  return stampPost(
+    {
+      platform: "public",
+      title: title.slice(0, 180),
+      url,
+      score: Math.max(1, Math.round(score)),
+      createdAt: createdAt ?? new Date().toISOString(),
+      sourceApi,
+    },
+    "collect_public_apis",
+  );
 }
 
 async function getText(url: string, ms = FEED_MS): Promise<string> {

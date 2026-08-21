@@ -1,4 +1,5 @@
 import type { ResearchPayload, ResearchSource } from "./types";
+import { formatLineageSection } from "./lineage";
 
 export function researchBriefFilename(label: string): string {
   const slug = label
@@ -70,6 +71,17 @@ export function formatResearchBrief(payload: ResearchPayload): string {
     });
   }
   lines.push("");
+  lines.push(
+    ...formatLineageSection(
+      payload.sources.map((s) => ({
+        title: s.title,
+        url: s.url,
+        tool: s.tool,
+        collectedAt: s.collectedAt,
+        channel: s.kind,
+      })),
+    ),
+  );
   lines.push("_Evidence only. Nothing here is an invented citation._");
   lines.push("");
   return lines.join("\n");

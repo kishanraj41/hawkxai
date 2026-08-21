@@ -223,6 +223,12 @@ body {
   background: #f4f4f5;
 }
 
+@media (max-width: 1200px) {
+  .desk-nav__blurb {
+    display: none;
+  }
+}
+
 .status-chip {
   display: inline-flex;
   align-items: center;

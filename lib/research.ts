@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { geminiChat, geminiDeepResearch, hasGoogleKey } from "./gemini";
 import { searchHn } from "./hn";
+import { stampSources } from "./lineage";
 import { searchReddit } from "./reddit";
 import { fetchX } from "./signals";
 import type {
@@ -259,7 +260,7 @@ async function uspto(query: string): Promise<ResearchSource[]> {
 
 function postsToSources(
   kind: Extract<ResearchSourceKind, "hn" | "reddit" | "x">,
-  posts: { title: string; url: string; score: number; createdAt: string }[],
+  posts: { title: string; url: string; score: number; createdAt: string; tool?: string; collectedAt?: string }[],
   limit: number,
 ): ResearchSource[] {
   return posts.slice(0, limit).map((p, i) => ({
@@ -270,6 +271,8 @@ function postsToSources(
     snippet: p.title.slice(0, 400),
     score: p.score,
     createdAt: p.createdAt,
+    tool: p.tool,
+    collectedAt: p.collectedAt,
   }));
 }
 
@@ -455,7 +458,7 @@ export async function researchTopic(rawQuery: string): Promise<ResearchPayload> 
     findings: brief.findings,
     openQuestions: brief.openQuestions,
     angles: brief.angles,
-    sources: deduped,
+    sources: stampSources(deduped),
     degraded: [...new Set(degraded)],
     thin,
   };

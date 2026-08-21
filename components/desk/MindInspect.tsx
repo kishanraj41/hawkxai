@@ -1,5 +1,6 @@
 import { leavesOf, sharedWith } from "@/lib/mindmap";
 import { topPosts, VELOCITY_MARK } from "@/lib/ui-helpers";
+import LineageStrip from "@/components/desk/LineageStrip";
 import type { BoosterTopicBrief, LeafForecast, MindGraph, MindNode, Topic } from "@/lib/types";
 
 interface MindInspectProps {
@@ -136,6 +137,7 @@ export default function MindInspect({
                   {post.platform}
                   {post.sourceApi ? ` · ${post.sourceApi}` : ""} · {post.score}
                 </p>
+                <LineageStrip tool={post.tool} collectedAt={post.collectedAt} />
               </li>
             ))}
           </ul>

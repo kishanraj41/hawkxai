@@ -94,7 +94,7 @@ def _architecture_md() -> str:
             "  vercelApi --> footprint",
             "```",
             "",
-            "Lineage (AutoLineage, credited only): each receipt keeps `tool` + `collectedAt` from the collect step that produced it.",
+            "Lineage (AutoLineage): each receipt keeps `tool` + `collectedAt` from the collect step that produced it. RudriQ is the extraction layer. Visible on the desk as a lineage strip; Save .md includes the table.",
             "",
             "## Files",
             "",
@@ -150,7 +150,7 @@ def render() -> Path:
                 "```",
                 "",
                 "## Lineage",
-                "Each post may include `tool` and `collectedAt`. Credit AutoLineage as the extraction-and-facts layer inside this handbook. Do not demo it as a second product.",
+                "Each post may include `tool` and `collectedAt`. RudriQ extracts receipts. AutoLineage records which collect step produced which one. The Footprint and Research desks show a lineage strip and write it into Save .md.",
                 "",
             ]
         ),

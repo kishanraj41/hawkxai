@@ -1,0 +1,40 @@
+-- Watchlist lives on hawkxai_all. One demo owner until real auth.
+CREATE TABLE IF NOT EXISTS watchlist (
+  id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL DEFAULT 'demo',
+  label TEXT NOT NULL,
+  aliases TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS watchlist_owner_idx ON watchlist (owner);
+
+-- Public × POI overlap snapshots (one row per matched receipt).
+CREATE TABLE IF NOT EXISTS poi_overlap (
+  entity_id TEXT NOT NULL,
+  snapshot_id TEXT NOT NULL,
+  url TEXT NOT NULL,
+  title TEXT NOT NULL,
+  host TEXT NOT NULL DEFAULT '',
+  official BOOLEAN NOT NULL DEFAULT false,
+  collected_at TIMESTAMPTZ,
+  PRIMARY KEY (entity_id, snapshot_id, url)
+);
+CREATE INDEX IF NOT EXISTS poi_overlap_entity_idx ON poi_overlap (entity_id);
+
+-- Latest L1/L2 scores per entity.
+CREATE TABLE IF NOT EXISTS poi_scores (
+  entity_id TEXT PRIMARY KEY,
+  scored_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  receipt_count INT NOT NULL,
+  official_count INT NOT NULL,
+  occupied_count INT NOT NULL,
+  organic REAL NOT NULL,
+  occupancy REAL NOT NULL,
+  outlook TEXT NOT NULL,
+  confidence REAL NOT NULL,
+  thin BOOLEAN NOT NULL,
+  delta INT NOT NULL DEFAULT 0,
+  baseline_ratio REAL NOT NULL DEFAULT 0,
+  snapshot_count INT NOT NULL DEFAULT 0,
+  rank_score REAL NOT NULL DEFAULT 0
+);

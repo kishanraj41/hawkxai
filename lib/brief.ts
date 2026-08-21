@@ -1,4 +1,5 @@
 import { topPosts } from "./ui-helpers";
+import { formatLineageSection } from "./lineage";
 import type {
   AgeLens,
   AgeTranslation,
@@ -45,7 +46,7 @@ export function briefFilename(label: string): string {
 export function formatKeepBrief(input: KeepBriefInput): string {
   const { topic, brief, query, lens = "all", since = [] } = input;
   const audience = takeawayFor(brief, lens);
-  const receipts = topPosts(topic, 3);
+  const receipts = topPosts(topic, 8);
   const mix = brief.sentiment.overall;
   const first = brief.causation.firstAt
     ? `${brief.causation.firstPlatform ?? "tape"} · ${brief.causation.firstAt}`
@@ -146,6 +147,17 @@ export function formatKeepBrief(input: KeepBriefInput): string {
     });
   }
   lines.push("");
+  lines.push(
+    ...formatLineageSection(
+      receipts.map((p) => ({
+        title: p.title,
+        url: p.url,
+        tool: p.tool,
+        collectedAt: p.collectedAt,
+        channel: p.sourceApi ?? p.platform,
+      })),
+    ),
+  );
   if (thin) {
     lines.push(thin);
     lines.push("");

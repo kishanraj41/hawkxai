@@ -88,4 +88,18 @@ for (const category of CATEGORIES) {
   console.log(`schema ${name}`);
 }
 
+const watchSql = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "sql", "watchlist.sql"), "utf8");
+const watchClient = new pg.Client({
+  host,
+  port,
+  user,
+  password,
+  database: `${prefix}_all`,
+  ssl: ssl ? { rejectUnauthorized: false } : undefined,
+});
+await watchClient.connect();
+await watchClient.query(watchSql);
+await watchClient.end();
+console.log(`schema ${prefix}_all watchlist`);
+
 console.log(`provisioned ${CATEGORIES.length} databases on ${host}:${port}`);

@@ -11,7 +11,7 @@ Contest: [All Things Agentic](https://allthingsagentichackathon.devpost.com/) ·
 | **HawkxAI** | The product. Live desk: Trends / Footprint / Research. Receipts only — never an invented WHY. | **Yes** — Footprint plug is the opening beat |
 | **Ingest fleet (new)** | Contest-window work. ADK + Gemini 3.5 + Cloud Run. Per-channel agents write snapshots the desk already knows how to show. | **Yes** — terminal logs + desk filling |
 | **Handbook wedge** | Documents the fleet. Generates the architecture diagram the submission requires. Gate 1 artifact for agency DMs after Sep 1. | **Yes** — 2–3 days, after one channel is live |
-| **RudriQ / AutoLineage** | Extraction-and-facts layer *inside* the handbook (which collect step produced which receipt). Credit it. Do not demo as a second product. | No |
+| **RudriQ / AutoLineage** | Extraction-and-facts layer on receipts (`tool` + `collectedAt`) plus the Save .md lineage section. Startup test on the desk. Not a second product page. | Thin — strip + download |
 
 HawkxAI is not rebuilt on ADK. The Vercel frontend stays. The fleet on Cloud Run is the Google Cloud proof.
 

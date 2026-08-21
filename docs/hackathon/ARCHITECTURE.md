@@ -19,7 +19,7 @@ flowchart LR
   vercelApi --> footprint
 ```
 
-Lineage (AutoLineage, credited only): each receipt keeps `tool` + `collectedAt` from the collect step that produced it.
+Lineage (AutoLineage): each receipt keeps `tool` + `collectedAt` from the collect step that produced it. RudriQ is the extraction layer. Visible on the desk as a lineage strip; Save .md includes the table.
 
 ## Files
 
