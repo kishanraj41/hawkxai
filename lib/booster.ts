@@ -1,6 +1,7 @@
 import { divergenceLabel } from "./ui-helpers";
 import { totalScore } from "./metrics";
 import { buildCausation, classifyTopic } from "./desk";
+import { payloadFromQrImageUrl } from "./qr";
 import { buildSentiment } from "./sentiment";
 import {
   PLATFORMS,
@@ -138,7 +139,10 @@ export function captureArtifacts(topic: Topic): CapturedArtifact[] {
   for (const raw of urls) {
     const url = raw.replace(/[).,]+$/, "");
     const plats = platformsFor(topic, (t) => t.includes(url));
-    if (QR_HINT_RE.test(url) || SHORT_LINK_RE.test(url) || /utm_medium=qr/i.test(url)) {
+    const qrPayload = payloadFromQrImageUrl(url);
+    if (qrPayload) {
+      bump("qr", qrPayload, plats);
+    } else if (QR_HINT_RE.test(url) || SHORT_LINK_RE.test(url) || /utm_medium=qr/i.test(url)) {
       bump("qr", url, plats);
     } else {
       bump("url", url, plats);
@@ -302,7 +306,7 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       priority: "P0",
       title: "Stabilize X ingest",
       why: "Hashtag and QR campaigns mostly start on X. Offline X blinds the booster.",
-      next: "Keep x_search, add a Google Trends fallback so capture still runs.",
+      next: "Keep Gemini Google Search for X mentions, add a Google Trends fallback so capture still runs.",
     });
   }
   if (payload.degraded.some((d) => d.includes("reddit"))) {
@@ -370,18 +374,18 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       next: "Write hourly topic-score snapshots and join them on the area chart next to live posts.",
     });
   }
+    items.push({
+      priority: "P2",
+      title: "News + disaster markers on the same timeseries",
+      why: "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.",
+      next: "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY.",
+    });
   items.push({
-    priority: "P2",
-    title: "News + disaster markers on the same timeseries",
-    why: "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.",
-    next: "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY.",
-  });
-  items.push({
-    priority: "P2",
-    title: "Persist tape-watch beyond this browser",
-    why: "Spike watch lives in localStorage. A CMO on another machine, or a Vercel cold start, sees no last look.",
-    next: "Store snapshots next to the feed bandit (KV) keyed by topic id; keep the same delta lines.",
-  });
+      priority: "P2",
+      title: "Wire the provisioned Postgres server",
+      why: "Leaf calls currently land in the warm-instance memory store. Ten category databases are ready once credentials arrive.",
+      next: "Set TREND_DB_HOST / USER / PASSWORD, run npm run provision:trend-db, confirm GET /api/collect says backend=postgres.",
+    });
 
   const rank = { P0: 0, P1: 1, P2: 2 };
   return items.toSorted((a, b) => rank[a.priority] - rank[b.priority]).slice(0, 8);

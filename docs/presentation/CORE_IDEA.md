@@ -1,4 +1,4 @@
-# HawkAI Core Idea
+# HawkxAI Core Idea
 
 Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
 
@@ -17,13 +17,13 @@ A **phrase is the plug**. Drop a campaign, product, hashtag, ticker, or event in
 7. **Tape watch** — star a print; on refresh, show measured deltas (velocity, title lean, receipt count). Never explain the spike.
 8. **Audience compose** — one lens select. Same receipts, different takeaway on desk, map hover, mind subtitle, and the exported brief.
 
-The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses lookup.
+The mind map is the operating surface (`G`). The desk (`D`) and map (`M`) are the other modules. `J/K` walks the tape. `⌘K` focuses lookup. After each ingest, trending words and title sentiment land in **10 category databases** (the nine plugs plus `all`). The next-window call on each leaf is measured from those collected snapshots — never an invented WHY.
 
 Same modules compose into the topic rail when a print is selected. Swap the phrase; keep the UI.
 
 ## What this means in product terms
 
-HawkAI is a live circle-pack of what is trending, plus an optional phrase war-room. The **Booster Agent** is the intelligence layer that:
+HawkxAI is a live circle-pack of what is trending, plus an optional phrase war-room. The **Booster Agent** is the intelligence layer that:
 
 1. **Looks up** a word or phrase a team already owns — campaign name, hashtag, product, ticker, event.
 2. **Captures** live artifacts around that phrase — hashtags, QR / short-link campaign codes, co-occurring phrases, URLs, cashtags.
@@ -54,6 +54,7 @@ The map stays the map. Booster sits beside it: capture trending words **or** loo
 | Phrase lookup | `components/desk/PhraseLookup.tsx` + header `⌘K` |
 | Research desk | `components/research/ResearchDesk.tsx` + `GET /api/research?q=` + `lib/research-brief.ts` |
 | Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
+| Category collect + leaf prediction | `lib/collect.ts` · `lib/predict.ts` · `lib/trend-store.ts` · `GET /api/collect` |
 | Category filters + desk | `components/desk/` + `components/ChartDesk.tsx` |
 | Occurrence + sentiment | `lib/desk.ts` · `lib/sentiment.ts` (live) · `agents/booster-agent/` (CLI) |
 | Live map | `components/TrendMap.tsx` |
@@ -78,4 +79,7 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
 10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens from the trend desk; trending words stay on `/`.
-11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + PubMed + arXiv + USPTO + HN + Reddit + X + optional Grok deep pass; Copy / Save .md / Print; click an open question to dig that angle.
+11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + PubMed + arXiv + USPTO + HN + Reddit + X + optional Gemini + Google Search pass; Copy / Save .md / Print; click an open question to dig that angle.
+12. Collect trending words + sentiment into 10 category databases, then predict on each mind-map leaf — **shipped:** memory/JSON now; Postgres `hawkxai_{category}` once `TREND_DB_*` is set.
+13. RudriQ / AutoLineage on receipts — **shipped thin:** `tool` + `collectedAt` on each receipt, lineage strip on Footprint and Research, lineage table inside Save .md. Not a second product page.
+14. Watchlist desk (`/watchlist`) — **shipped phase 1:** persist companies/campaigns on Cloud SQL, Public × POI overlap snapshots, organic vs occupancy, last-window Δ, next-window from snapshot history. Click a row → Footprint. Trained HistGB waits for labeled Camry rows.

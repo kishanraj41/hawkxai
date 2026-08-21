@@ -46,6 +46,7 @@ export default function ChartDesk({
         query
           ? { label: query.raw.slice(0, 42), detail: `${topics.length} related prints` }
           : undefined,
+        booster?.forecasts ?? [],
       ),
     [topics, booster, category, query],
   );

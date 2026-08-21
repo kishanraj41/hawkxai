@@ -2,11 +2,13 @@
 
 import type { ReactNode } from "react";
 
-export type DeskId = "trends" | "footprint" | "research";
+export type DeskId = "trends" | "footprint" | "research" | "watchlist" | "insights";
 
 const DESKS: { id: DeskId; href: string; label: string; blurb: string }[] = [
   { id: "trends", href: "/", label: "Trends", blurb: "What's printing now" },
+  { id: "watchlist", href: "/watchlist", label: "Watch", blurb: "Companies you track" },
   { id: "footprint", href: "/footprint", label: "Footprint", blurb: "Look up a phrase" },
+  { id: "insights", href: "/insights", label: "Insights", blurb: "Deep analysis" },
   { id: "research", href: "/research", label: "Research", blurb: "Dig a topic" },
 ];
 
@@ -18,7 +20,7 @@ export function HomeMark() {
   return (
     <a
       href="/"
-      aria-label="hawkai home"
+      aria-label="hawkxai home"
       className="group flex shrink-0 items-center gap-2.5"
       onClick={(e) => {
         e.preventDefault();
@@ -36,7 +38,7 @@ export function HomeMark() {
         </svg>
       </span>
       <span className="flex items-center gap-2">
-        <span className="text-[18px] font-medium tracking-[-0.02em] text-white">hawkai</span>
+        <span className="text-[18px] font-medium tracking-[-0.02em] text-white">hawkxai</span>
         <span className="signal-live" aria-label="Live" />
       </span>
     </a>

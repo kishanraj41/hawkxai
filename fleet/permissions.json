@@ -1,0 +1,20 @@
+{
+  "tools": {
+    "collect_hn": {
+      "enabled": true,
+      "channel": "hn",
+      "note": "HN Algolia. First reliable channel."
+    },
+    "collect_public_apis": {
+      "enabled": true,
+      "channel": "public",
+      "note": "Wikipedia, Google News RSS, NHTSA. Not the full desk catalog."
+    },
+    "score_and_dedup": {
+      "enabled": true,
+      "channel": "all",
+      "note": "Dedup existing URLs/titles, then Gemini ranks survivors. Never invents posts."
+    }
+  }
+}
+

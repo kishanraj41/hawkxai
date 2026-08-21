@@ -1,5 +1,5 @@
 """
-Booster Agent — HawkAI's core intelligence layer.
+Booster Agent — HawkxAI's core intelligence layer.
 
 Look up a word or a phrase. See its footprint on the internet.
 A marketing team plugs a campaign name; the same desk fills with where
@@ -51,6 +51,7 @@ CONTROVERSY = (
 CATEGORIES = (
     "markets", "news", "weather", "tech", "sports", "health", "security", "campaigns", "culture",
 )
+TREND_DATABASES = ("all",) + CATEGORIES
 CATEGORY_LABEL = {
     "all": "All",
     "markets": "Markets",
@@ -135,6 +136,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_RUNS = os.path.join(HERE, "runs")
 IMPROVISATIONS_PATH = os.path.join(HERE, "IMPROVISATIONS.md")
 FIXTURE_PATH = os.path.join(HERE, "fixtures", "sample_trends.json")
+STORE_DIR = os.path.join(HERE, "store")
+RISE = 1.08
+FALL = 0.92
 
 
 @dataclass
@@ -232,6 +236,20 @@ class Improvisation:
 
 
 @dataclass
+class LeafForecast:
+    leaf_id: str
+    topic_id: str
+    category: str
+    kind: str
+    outlook: str
+    sentiment_lean: str
+    confidence: float
+    analysis: str
+    evidence: str
+    thin: bool
+
+
+@dataclass
 class MindNode:
     id: str
     kind: str
@@ -239,6 +257,7 @@ class MindNode:
     weight: float
     topic_id: Optional[str] = None
     detail: Optional[str] = None
+    forecast: Optional[LeafForecast] = None
 
 
 @dataclass
@@ -266,6 +285,8 @@ class BoosterReport:
     improvisations: List[Improvisation] = field(default_factory=list)
     captured: Dict[str, int] = field(default_factory=dict)
     mind: Optional[MindGraph] = None
+    forecasts: List[LeafForecast] = field(default_factory=list)
+    collection: Dict[str, Any] = field(default_factory=dict)
 
 
 def _posts(topic: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -917,13 +938,13 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     if mind.bridges == 0:
         items.append(Improvisation("P1", "Shared-artifact bridges on the mind map", "The mind map only draws amber dashes when the same hashtag, QR, URL, or ticker prints on two names. Zero bridges means correlation is still a star, not a graph.", "Keep capturing overlapping campaign codes across topics — never invent a bridge to fill the map."))
     items.append(Improvisation("P2", "News + disaster markers on the same timeseries", "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.", "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY."))
-    items.append(Improvisation("P2", "Persist tape-watch beyond this browser", "Spike watch lives in localStorage. A CMO on another machine, or a Vercel cold start, sees no last look.", "Store snapshots next to the feed bandit (KV) keyed by topic id; keep the same delta lines."))
+    items.append(Improvisation("P2", "Wire the provisioned Postgres server", "Leaf calls currently land in the warm-instance memory store (or local JSON). Ten category databases are provisioned once credentials arrive.", "Set TREND_DB_HOST / USER / PASSWORD, run npm run provision:trend-db, confirm GET /api/collect says backend=postgres."))
     rank = {"P0": 0, "P1": 1, "P2": 2}
     items.sort(key=lambda i: rank.get(i.priority, 9))
     return items[:8]
 
 
-def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
+def boost_trends(payload: Dict[str, Any], store_dir: str = STORE_DIR) -> BoosterReport:
     topics = list(payload.get("topics") or [])
     topics.sort(key=_total_score, reverse=True)
     briefs = [boost_topic(t) for t in topics[:16]]
@@ -931,6 +952,13 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
     captured = Counter(a.kind for b in briefs for a in b.artifacts)
     plugged = str(payload.get("plugged") or "").strip()
     mind = build_mind_map(topics[:16], briefs, hub_label=plugged or None)
+    collect_tape(payload, briefs, store_dir=store_dir)
+    history_by_topic: Dict[str, List[Dict[str, Any]]] = {}
+    for topic in topics[:16]:
+        tid = str(topic.get("id") or "")
+        brief = next((b for b in briefs if b.topic_id == tid), None)
+        history_by_topic[tid] = load_history(tid, "all", store_dir=store_dir) or [history_point_of(topic, brief, str(payload.get("updatedAt") or ""))]
+    forecasts = forecast_graph(mind, history_by_topic, "all", briefs)
     top = briefs[0] if briefs else None
     if plugged and top:
         summary = f"“{plugged}” footprint · {top.campaign.hook}"
@@ -946,11 +974,18 @@ def boost_trends(payload: Dict[str, Any]) -> BoosterReport:
         improvisations=improvisations,
         captured=dict(captured),
         mind=mind,
+        forecasts=forecasts,
+        collection={
+            "backend": "json",
+            "databases": [f"hawkxai_{name}" for name in TREND_DATABASES],
+            "snapshots": sum(1 for _ in forecasts),
+            "predicted": sum(1 for f in forecasts if not f.thin),
+        },
     )
 
 
 def fetch_trends(url: str, timeout: int = 90) -> Dict[str, Any]:
-    req = urllib.request.Request(url, headers={"User-Agent": "HawkAI-Booster/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "HawkxAI-Booster/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as res:
         return json.loads(res.read().decode("utf-8"))
 
@@ -1012,6 +1047,187 @@ def diff_snapshots(prev: Dict[str, Any], nxt: Dict[str, Any]) -> List[str]:
     return lines
 
 
+def outlook_from_scores(prev: float, last: float, kind: str) -> str:
+    if last > prev * RISE:
+        return "rising"
+    if last < prev * FALL:
+        return "fading"
+    return "peaking" if kind == "topic" else "stable"
+
+
+def confidence_of(n: int, thin_sentiment: bool) -> float:
+    if n < 2:
+        return 0.0
+    base = min(0.85, 0.35 + 0.15 * (n - 1))
+    return round(base * 0.6, 2) if thin_sentiment else round(base, 2)
+
+
+def history_point_of(topic: Dict[str, Any], brief: Optional[TopicBrief], at: str) -> Dict[str, Any]:
+    snap = snapshot_of(topic, brief, at)
+    artifacts = brief.artifacts if brief else []
+    return {
+        **snap,
+        "score": _total_score(topic),
+        "risk": brief.sentiment.overall.risk if brief else 0,
+        "n": brief.sentiment.overall.n if brief else 0,
+        "first_platform": brief.causation.first_platform if brief else None,
+        "driver_weight": brief.causation.drivers[0].weight if brief and brief.causation.drivers else None,
+        "artifacts": [{"kind": a.kind, "value": a.value, "mentions": a.mentions} for a in artifacts],
+    }
+
+
+def _metric_for(node: MindNode, point: Dict[str, Any]) -> float:
+    if node.kind == "artifact":
+        key = node.id.split(":art:", 1)[-1]
+        for art in point.get("artifacts") or []:
+            if f"{art.get('kind')}:{str(art.get('value') or '').lower()}" == key:
+                return float(art.get("mentions") or 0)
+        return 0.0
+    if node.kind == "driver":
+        return float(point.get("driver_weight") or 0)
+    if node.kind == "source":
+        return 1.0 if point.get("first_platform") else 0.0
+    return float(point.get("score") or 0)
+
+
+def forecast_node(
+    node: MindNode,
+    history: Sequence[Dict[str, Any]],
+    category: str,
+    brief: Optional[TopicBrief] = None,
+) -> LeafForecast:
+    lean = brief.sentiment.lean if brief else (history[-1].get("lean") if history else "thin")
+    last = history[-1] if history else None
+    if node.kind == "hub":
+        return LeafForecast(
+            leaf_id=node.id,
+            topic_id=node.topic_id or "",
+            category=category,
+            kind=node.kind,
+            outlook="thin",
+            sentiment_lean=str(lean or "thin"),
+            confidence=0.0,
+            analysis=f"{len(history)} collected ingest{'s' if len(history) != 1 else ''} in this plug — hub is the filter, not a print",
+            evidence=f"{len(history)} snapshot{'s' if len(history) != 1 else ''} in hawkxai_{category}",
+            thin=True,
+        )
+    if not last or len(history) < 2:
+        now = (
+            f"Now: {last.get('velocity')} · titles {last.get('lean')} · {last.get('receipt_count')} receipts · score {round(float(last.get('score') or 0))}"
+            if last
+            else "First ingest of this print in the category database"
+        )
+        return LeafForecast(
+            leaf_id=node.id,
+            topic_id=node.topic_id or "",
+            category=category,
+            kind=node.kind,
+            outlook="thin",
+            sentiment_lean=str(lean or "thin"),
+            confidence=0.0,
+            analysis=f"{now}. Need a second collect before a next-window call.",
+            evidence=f"{len(history)} snapshot{'s' if len(history) != 1 else ''} in hawkxai_{category}",
+            thin=True,
+        )
+    prev = history[-2]
+    outlook = outlook_from_scores(_metric_for(node, prev), _metric_for(node, last), node.kind)
+    thin_sentiment = lean == "thin" or int(last.get("n") or 0) < 2
+    if node.kind == "artifact":
+        series = "→".join(str(int(_metric_for(node, p))) for p in history)
+        analysis = f"Mentions {series} · titles {last.get('lean')} ({last.get('pos')} pos / {last.get('neg')} neg)"
+    elif node.kind == "source":
+        platforms = " → ".join(str(p.get("first_platform") or "—") for p in history)
+        analysis = f"First print {platforms}. Recurrence is counted, not a cause."
+    elif node.kind == "driver":
+        series = "→".join(str(p.get("driver_weight") or 0) for p in history)
+        analysis = f"Driver weight {series} · still the measured bar, not a story"
+    else:
+        series = "→".join(str(round(float(p.get("score") or 0))) for p in history)
+        analysis = f"Score {series} · {last.get('velocity')} · titles {last.get('lean')} ({last.get('pos')} pos / {last.get('neg')} neg / n={last.get('n')})"
+    clocks = " → ".join(str(p.get("at") or "")[11:16] for p in history if p.get("at"))
+    return LeafForecast(
+        leaf_id=node.id,
+        topic_id=node.topic_id or str(last.get("topic_id") or ""),
+        category=category,
+        kind=node.kind,
+        outlook=outlook,
+        sentiment_lean=str(lean or "thin"),
+        confidence=confidence_of(len(history), thin_sentiment),
+        analysis=analysis,
+        evidence=f"{len(history)} snapshots in hawkxai_{category} · {clocks}".strip(" ·"),
+        thin=False,
+    )
+
+
+def forecast_graph(
+    graph: MindGraph,
+    history_by_topic: Dict[str, List[Dict[str, Any]]],
+    category: str,
+    briefs: Sequence[TopicBrief] = (),
+) -> List[LeafForecast]:
+    brief_by_id = {b.topic_id: b for b in briefs}
+    hub_history = sorted((p for rows in history_by_topic.values() for p in rows), key=lambda p: str(p.get("at") or ""))
+    out: List[LeafForecast] = []
+    for node in graph.nodes:
+        if node.kind == "hub":
+            forecast = forecast_node(node, hub_history[-6:], category)
+        else:
+            forecast = forecast_node(node, history_by_topic.get(node.topic_id or "", []), category, brief_by_id.get(node.topic_id or ""))
+        node.forecast = forecast
+        out.append(forecast)
+    return out
+
+
+def collect_tape(
+    payload: Dict[str, Any],
+    briefs: Sequence[TopicBrief],
+    store_dir: str = STORE_DIR,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Append one ingest into each category JSON file. Same shape the Postgres tables will hold."""
+    os.makedirs(store_dir, exist_ok=True)
+    at = str(payload.get("updatedAt") or datetime.now(timezone.utc).isoformat())
+    snapshot_id = f"{at}|{payload.get('plugged') or 'tape'}"
+    brief_by_id = {b.topic_id: b for b in briefs}
+    by_category: Dict[str, List[Dict[str, Any]]] = {name: [] for name in TREND_DATABASES}
+    for topic in payload.get("topics") or []:
+        brief = brief_by_id.get(str(topic.get("id") or ""))
+        cat = brief.category if brief else classify_topic(topic, [])
+        point = history_point_of(topic, brief, at)
+        by_category.setdefault(cat, []).append(point)
+        by_category["all"].append(point)
+    for category, words in by_category.items():
+        if category not in TREND_DATABASES:
+            continue
+        path = os.path.join(store_dir, f"hawkxai_{category}.json")
+        db = {"snapshots": []}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                db = json.load(f)
+        snaps = db.setdefault("snapshots", [])
+        if any(s.get("id") == snapshot_id for s in snaps):
+            continue
+        snaps.append({"id": snapshot_id, "ingested_at": at, "words": words})
+        db["snapshots"] = snaps[-48:]
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(db, f)
+    return by_category
+
+
+def load_history(topic_id: str, category: str, store_dir: str = STORE_DIR, limit: int = 8) -> List[Dict[str, Any]]:
+    path = os.path.join(store_dir, f"hawkxai_{category}.json")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        db = json.load(f)
+    points = [
+        word
+        for snap in db.get("snapshots") or []
+        for word in snap.get("words") or []
+        if word.get("topic_id") == topic_id
+    ]
+    return points[-limit:]
+
+
 def format_keep_brief(
     topic: Dict[str, Any],
     brief: TopicBrief,
@@ -1033,7 +1249,7 @@ def format_keep_brief(
         else None
     )
     lines = [
-        f"# HawkAI brief · {topic.get('label') or brief.label}",
+        f"# HawkxAI brief · {topic.get('label') or brief.label}",
         "",
         (query or {}).get("floor") or brief.why_trending,
         "",
@@ -1166,6 +1382,14 @@ def report_markdown(report: BoosterReport) -> str:
         else:
             lines.append("No shared artifacts in this ingest — no invented bridges.")
             lines.append("")
+        leaf_calls = [f for f in report.forecasts if f.kind != "hub"]
+        if leaf_calls:
+            lines.append("### Leaf analysis + next window")
+            lines.append("")
+            for forecast in leaf_calls[:12]:
+                flag = "thin" if forecast.thin else forecast.outlook
+                lines.append(f"- `{forecast.leaf_id}` · {flag} · {forecast.analysis}")
+            lines.append("")
     lines.append("## Improvisations")
     lines.append("")
     for item in report.improvisations:
@@ -1208,7 +1432,9 @@ def save_report(report: BoosterReport, runs_dir: str = DEFAULT_RUNS) -> Tuple[st
 
 def self_check() -> int:
     payload = load_payload(FIXTURE_PATH)
-    report = boost_trends(payload)
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        report = boost_trends(payload, store_dir=tmp)
     assert report.briefs, "expected briefs from fixture"
     kinds = {a.kind for b in report.briefs for a in b.artifacts}
     assert "hashtag" in kinds, kinds
@@ -1220,6 +1446,8 @@ def self_check() -> int:
     assert all(b.causation.drivers for b in report.briefs)
     assert report.mind is not None
     assert any(n.kind == "hub" for n in report.mind.nodes)
+    assert report.forecasts, "expected leaf forecasts"
+    assert all(f.outlook == "thin" for f in report.forecasts), "fixture is a single ingest"
     captured_values = {a.value.lower()[:28] for b in report.briefs for a in b.artifacts}
     for node in report.mind.nodes:
         if node.kind == "artifact":
@@ -1232,6 +1460,7 @@ def self_check() -> int:
     print("self-check ok")
     print(f"  briefs={len(report.briefs)} captured={report.captured}")
     print(f"  mind nodes={len(report.mind.nodes)} bridges={report.mind.bridges}")
+    print(f"  forecasts={len(report.forecasts)} predicted={report.collection.get('predicted')}")
     print(f"  top={report.briefs[0].label}")
     print(f"  next={report.improvisations[0].priority} {report.improvisations[0].title}")
     return 0
@@ -1249,7 +1478,7 @@ Examples:
   python3 agents/booster-agent/booster_agent.py --self-check
         """,
     )
-    parser.add_argument("--url", default=os.environ.get("HAWKAI_TRENDS_URL", "http://localhost:3000/api/trends"))
+    parser.add_argument("--url", default=os.environ.get("HAWKXAI_TRENDS_URL", "http://localhost:3000/api/trends"))
     parser.add_argument("--file", help="Trends JSON file (skips live fetch)")
     parser.add_argument("--runs-dir", default=DEFAULT_RUNS)
     parser.add_argument("--self-check", action="store_true")

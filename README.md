@@ -1,6 +1,6 @@
-# HawkAI — Hackathon
+# HawkxAI — Hackathon
 
-A live trend map across X, Reddit, and Hacker News. Grok 4.6 clusters related topics, while divergence is calculated in code. A topic exploding on one platform tells a different story from one gaining momentum across all platforms.
+A live trend map across X, Reddit, and Hacker News. Gemini 3.5 clusters related topics, while divergence is calculated in code. A topic exploding on one platform tells a different story from one gaining momentum across all platforms.
 
 **Additional tab:** Footprint (`/footprint`) opens from the dashboard in a new browser tab. Look up a campaign name or phrase and see its internet footprint on the same desk, mind, and map.
 
@@ -12,13 +12,13 @@ It also looks up a particular word or phrase a marketing team already owns, and 
 
 Capture signals → Correlate trends → Explain why → Identify audience relevance → Generate campaign insights → Continuously improve
 
-Phrase lookup is additive: `/` stays the trending desk. `/footprint` is the campaign-name war-room.
+Phrase lookup is additive: `/` stays the trending desk. `/footprint` is the campaign-name war-room. Footprint ingest is the Cloud Run ADK fleet (`POST /api/fleet`). Trends stay on `GET /api/trends`.
 
 ```bash
 python3 agents/booster-agent/booster_agent.py --self-check
 ```
 
-North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) — trending desk on `/`, phrase footprint on `/footprint`. Live: `GET /api/trends` and `GET /api/trends?topic=Camry`.
+North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) — trending desk on `/`, phrase footprint on `/footprint`. Live: `GET /api/trends`. Footprint plug: `POST /api/fleet` `{ "phrase": "Camry" }` (needs `FLEET_URL`).
 
 Repo: https://github.com/snagaram3/grokhackx
 
@@ -27,7 +27,7 @@ Repo: https://github.com/snagaram3/grokhackx
 | Person | Owns | Do not touch |
 |---|---|---|
 | Backend | `lib/*`, `app/api/*` | D3 map UI |
-| Map | `app/page.tsx`, `components/` (new) | Grok prompts, fetchers |
+| Map | `app/page.tsx`, `components/` (new) | Gemini prompts, fetchers |
 | Polish | top bar, Ask box, detail panel, Vercel | pipeline timeouts |
 
 **No extra features.** If you are behind, cut tickers and peak-hour — never the map, never `/api/trends`.
@@ -42,10 +42,12 @@ npm install
 cp .env.example .env.local
 ```
 
-Put the xAI key only in `.env.local` (gitignored). Never commit it, never paste it in Discord.
+Put the Gemini key only in `.env.local` (gitignored). Never commit it, never paste it in Discord.
 
 ```
-XAI_API_KEY=xai-...
+GOOGLE_API_KEY=...
+GEMINI_MODEL=gemini-3.5-flash
+FLEET_URL=http://localhost:8080
 ```
 
 ```bash
@@ -53,14 +55,15 @@ npm run dev
 ```
 
 - App: http://localhost:3000
-- Footprint tab: http://localhost:3000/footprint
+- Footprint tab: http://localhost:3000/footprint (plug goes to `POST /api/fleet`)
 - Data: http://localhost:3000/api/trends
-- Phrase lookup: http://localhost:3000/api/trends?topic=Camry
 - Force refresh: http://localhost:3000/api/trends?refresh=1
+- Fleet ingest: `POST /api/fleet` body `{ "phrase": "Camry" }`
 - Ask: `POST /api/ask` body `{ "q": "what's printing worldwide?" }`
 - Booster: http://localhost:3000/api/booster  (after trends are cached)
+- Contest fleet: [fleet/README.md](fleet/README.md) · architecture: [docs/hackathon/ARCHITECTURE.md](docs/hackathon/ARCHITECTURE.md)
 
-First `/api/trends` can take ~60–90s (Grok cluster). After that it caches **5 minutes**.
+First `/api/trends` can take ~60–90s (Gemini cluster). After that it caches **5 minutes**.
 
 ## Map teammate — payload contract
 
@@ -108,7 +111,7 @@ D3 is already in `package.json`.
 ## Known degradations (expected)
 
 - **Reddit** may 403 on some networks. Pill: `reddit offline`. Try venue wifi.
-- **X live search** can time out. Clustering still runs on HN (+ Reddit when available).
+- **X via Google Search** can time out. Clustering still runs on HN (+ Reddit when available).
 - **Tickers** are skipped until the map boots.
 
 Never invent posts or a fake WHY.
@@ -119,14 +122,16 @@ Public URL: host on **Vercel**. Step-by-step: [docs/VERCEL.md](docs/VERCEL.md).
 
 1. Import `snagaram3/grokhackx` at [vercel.com/new](https://vercel.com/new)
 2. Framework: Next.js · root: `.`
-3. Env: `XAI_API_KEY` (Production + Preview)
+3. Env: `GOOGLE_API_KEY` and `FLEET_URL` (Production + Preview)
 4. Deploy. First `/api/trends` can take up to ~60s.
 
 Do not commit `.env.local`. Docker CI still builds the production image on every PR and opens a PR on every feature-branch push (`agents/docker-ci`).
 
 ## Stack
 
-Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · xAI Grok 4.6 · no database · no auth
+Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · Gemini 3.5 · Google Search · Cloud SQL Postgres (10 category DBs) · no auth
+
+Runtime topology (Mermaid): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · live at `/architecture`.
 
 ## Agents
 

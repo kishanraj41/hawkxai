@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import tempfile
 import unittest
 from dataclasses import asdict
 
@@ -15,10 +16,15 @@ from booster_agent import (
     build_sentiment,
     capture_artifacts,
     classify_topic,
+    collect_tape,
     diff_snapshots,
+    forecast_node,
     format_keep_brief,
+    history_point_of,
     infer_query_intent,
+    load_history,
     load_payload,
+    outlook_from_scores,
     snapshot_of,
     takeaway_for,
     why_trending,
@@ -32,6 +38,11 @@ class BoosterTests(unittest.TestCase):
     def setUp(self):
         self.payload = load_payload(FIXTURE)
         self.topics = {t["id"]: t for t in self.payload["topics"]}
+        self._tmp = tempfile.TemporaryDirectory()
+        self.store = self._tmp.name
+
+    def tearDown(self):
+        self._tmp.cleanup()
 
     def test_captures_hashtag_qr_url(self):
         arts = capture_artifacts(self.topics["qr-summer-drop"])
@@ -50,7 +61,7 @@ class BoosterTests(unittest.TestCase):
         self.assertNotIn("invent", why.lower())
 
     def test_age_lenses_and_improvisations(self):
-        report = boost_trends(self.payload)
+        report = boost_trends(self.payload, store_dir=self.store)
         self.assertEqual(len(report.briefs[0].audiences), 5)
         self.assertTrue(report.improvisations)
         self.assertIn(report.improvisations[0].priority, {"P0", "P1", "P2"})
@@ -106,14 +117,14 @@ class BoosterTests(unittest.TestCase):
         self.assertNotIn("invent", blob)
 
     def test_mind_map_hub_is_looked_up_phrase(self):
-        report = boost_trends(self.payload)
+        report = boost_trends(self.payload, store_dir=self.store)
         graph = build_mind_map(self.payload["topics"], report.briefs, hub_label="#HeatWaveFit")
         hub = next(n for n in graph.nodes if n.kind == "hub")
         self.assertEqual(hub.label, "#HeatWaveFit")
         self.assertIn("prints", hub.detail.lower())
 
     def test_mind_map_hub_and_receipts_only(self):
-        report = boost_trends(self.payload)
+        report = boost_trends(self.payload, store_dir=self.store)
         graph = report.mind
         self.assertIsNotNone(graph)
         self.assertTrue(any(n.kind == "hub" for n in graph.nodes))
@@ -179,7 +190,7 @@ class BoosterTests(unittest.TestCase):
         topic = self.topics["qr-summer-drop"]
         brief = boost_topic(topic)
         md = format_keep_brief(topic, brief, query={"kind": "hashtag", "category": "campaigns", "match": "exact", "hitCount": 2, "floor": "Floor: #HeatWaveFit printed."}, lens="kids")
-        self.assertIn("# HawkAI brief", md)
+        self.assertIn("# HawkxAI brief", md)
         self.assertIn("Play", md)
         self.assertIn("Family", md)
         self.assertIn("Evidence only", md)
@@ -209,6 +220,46 @@ class BoosterTests(unittest.TestCase):
         self.assertNotIn("invent", blob)
         same = diff_snapshots(prev, prev)
         self.assertEqual(same, [])
+
+    def test_leaf_forecast_needs_two_ingests(self):
+        topic = self.topics["qr-summer-drop"]
+        brief = boost_topic(topic)
+        graph = build_mind_map([topic], [brief], category="campaigns")
+        leaf = next(n for n in graph.nodes if n.kind == "topic")
+        first = forecast_node(leaf, [history_point_of(topic, brief, "2026-08-16T12:00:00.000Z")], "campaigns", brief)
+        self.assertTrue(first.thin)
+        self.assertEqual(first.outlook, "thin")
+        self.assertNotIn("because", first.analysis.lower())
+
+    def test_leaf_forecast_rising_from_collected_scores(self):
+        topic = json.loads(json.dumps(self.topics["qr-summer-drop"]))
+        brief = boost_topic(topic)
+        point = history_point_of(topic, brief, "2026-08-16T12:00:00.000Z")
+        hotter = dict(point)
+        hotter["at"] = "2026-08-16T12:15:00.000Z"
+        hotter["score"] = float(point["score"]) * 1.4
+        hotter["velocity"] = "rising"
+        graph = build_mind_map([topic], [brief], category="campaigns")
+        leaf = next(n for n in graph.nodes if n.kind == "topic")
+        call = forecast_node(leaf, [point, hotter], "campaigns", brief)
+        self.assertFalse(call.thin)
+        self.assertEqual(call.outlook, "rising")
+        self.assertGreater(call.confidence, 0)
+        self.assertIn("hawkxai_campaigns", call.evidence)
+        self.assertEqual(outlook_from_scores(10, 10, "artifact"), "stable")
+        self.assertEqual(outlook_from_scores(10, 8, "artifact"), "fading")
+
+    def test_collect_splits_ten_category_databases(self):
+        collect_tape(self.payload, [boost_topic(t) for t in self.payload["topics"]], store_dir=self.store)
+        names = {name for name in os.listdir(self.store) if name.startswith("hawkxai_")}
+        self.assertIn("hawkxai_all.json", names)
+        self.assertTrue(any(name != "hawkxai_all.json" for name in names))
+        topic_id = self.payload["topics"][0]["id"]
+        history = load_history(topic_id, "all", store_dir=self.store)
+        self.assertEqual(len(history), 1)
+        report = boost_trends(self.payload, store_dir=self.store)
+        self.assertTrue(report.forecasts)
+        self.assertEqual(len(report.collection["databases"]), 10)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,9 @@
     },
     "app/api/booster/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/fleet/route.ts": {
+      "maxDuration": 60
     }
   }
 }

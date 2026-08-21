@@ -7,6 +7,7 @@ import Sparkline from "@/components/Sparkline";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
 import { buildTimeseries, CATEGORY_LABEL } from "@/lib/desk";
 import { divergenceLabel, sparkValues, topPosts } from "@/lib/ui-helpers";
+import LineageStrip from "@/components/desk/LineageStrip";
 import { motionTokens } from "@/lib/motionTokens";
 import { PLATFORMS, type AgeLens, type BoosterTopicBrief, type Platform, type Topic } from "@/lib/types";
 
@@ -182,6 +183,7 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
                     {post.sourceApi ? `${post.sourceApi} · ` : ""}
                     {post.score}
                   </span>
+                  <LineageStrip tool={post.tool} collectedAt={post.collectedAt} />
                 </span>
               </a>
             ))

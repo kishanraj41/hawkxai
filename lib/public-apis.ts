@@ -1,4 +1,5 @@
 import { cacheGet, cacheSet } from "./cache";
+import { stampPost } from "./lineage";
 import type { CityId } from "./geo";
 import { tvCountry, weatherSpots, youtubeRegions } from "./geo";
 import { pickFeeds, recordPulls } from "./rl";
@@ -7,7 +8,7 @@ import type { Post, PublicApiFeedStat, PublicApiIngest } from "./types";
 const CATALOG_URL =
   "https://raw.githubusercontent.com/public-apis/public-apis/master/README.md";
 const UA =
-  "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx; srihari.ec09@gmail.com)";
+  "HawkxAI/1.0 (+https://github.com/snagaram3/grokhackx; srihari.ec09@gmail.com)";
 const CATALOG_KEY = "public-apis:catalog";
 const PER_FEED = 8;
 const MAX_POSTS = 160;
@@ -81,14 +82,17 @@ function post(
   sourceApi: string,
   createdAt?: string,
 ): Post {
-  return {
-    platform: "public",
-    title: title.slice(0, 180),
-    url,
-    score: Math.max(1, Math.round(score)),
-    createdAt: createdAt ?? new Date().toISOString(),
-    sourceApi,
-  };
+  return stampPost(
+    {
+      platform: "public",
+      title: title.slice(0, 180),
+      url,
+      score: Math.max(1, Math.round(score)),
+      createdAt: createdAt ?? new Date().toISOString(),
+      sourceApi,
+    },
+    "collect_public_apis",
+  );
 }
 
 async function getText(url: string, ms = FEED_MS): Promise<string> {
@@ -1362,8 +1366,8 @@ const FEEDS: Feed[] = [
     run: async (_city, topic) => {
       const q = topic?.trim();
       const url = q
-        ? `https://api.reliefweb.int/v1/reports?appname=hawkai&limit=${PER_FEED}&sort[]=date:desc&query[value]=${encodeURIComponent(q)}`
-        : `https://api.reliefweb.int/v1/reports?appname=hawkai&limit=${PER_FEED}&sort[]=date:desc`;
+        ? `https://api.reliefweb.int/v1/reports?appname=hawkxai&limit=${PER_FEED}&sort[]=date:desc&query[value]=${encodeURIComponent(q)}`
+        : `https://api.reliefweb.int/v1/reports?appname=hawkxai&limit=${PER_FEED}&sort[]=date:desc`;
       const data = asRecord(await getJson(url));
       return asArray(data?.data)
         .map((row) => {

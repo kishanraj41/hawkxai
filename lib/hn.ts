@@ -1,3 +1,4 @@
+import { stampPosts } from "./lineage";
 import type { Post } from "./types";
 
 const TOP = "https://hacker-news.firebaseio.com/v0/topstories.json";
@@ -54,7 +55,7 @@ export async function fetchHn(limit = 60): Promise<Post[]> {
     }));
 
   console.log(`[hn] ${posts.length} stories`);
-  return posts;
+  return stampPosts(posts, "collect_hn");
 }
 
 export async function searchHn(query: string, limit = 20): Promise<Post[]> {
@@ -76,5 +77,5 @@ export async function searchHn(query: string, limit = 20): Promise<Post[]> {
       createdAt: h.created_at ?? new Date().toISOString(),
     }));
   console.log(`[hn] search "${q}" ${posts.length}`);
-  return posts;
+  return stampPosts(posts, "collect_hn");
 }

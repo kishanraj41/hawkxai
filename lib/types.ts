@@ -9,6 +9,10 @@ export interface Post {
   score: number;
   createdAt: string;
   sourceApi?: string;
+  /** AutoLineage: which collect step produced this receipt. */
+  tool?: string;
+  /** AutoLineage: when that collect step wrote the receipt. */
+  collectedAt?: string;
 }
 
 export interface PlatformSlice {
@@ -86,6 +90,11 @@ export type CategoryId = (typeof CATEGORIES)[number];
 
 export type DeskCategory = CategoryId | "all";
 
+/** One Postgres database per desk plug. Hub `all` is the tenth. */
+export const TREND_DATABASES = ["all", ...CATEGORIES] as const;
+
+export type TrendDatabase = (typeof TREND_DATABASES)[number];
+
 export interface CausationDriver {
   id: string;
   label: string;
@@ -159,6 +168,22 @@ export type MindNodeKind = "hub" | "topic" | "artifact" | "driver" | "source";
 
 export type MindLinkKind = "branch" | "shared";
 
+export type ForecastOutlook = "rising" | "peaking" | "fading" | "stable" | "thin";
+
+/** Measured next-window call from collected snapshots. Never a generated WHY. */
+export interface LeafForecast {
+  leafId: string;
+  topicId: string;
+  category: DeskCategory;
+  kind: MindNodeKind;
+  outlook: ForecastOutlook;
+  sentimentLean: SentimentLean;
+  confidence: number;
+  analysis: string;
+  evidence: string;
+  thin: boolean;
+}
+
 export interface MindNode {
   id: string;
   kind: MindNodeKind;
@@ -166,6 +191,7 @@ export interface MindNode {
   topicId?: string;
   weight: number;
   detail?: string;
+  forecast?: LeafForecast;
 }
 
 export interface MindLink {
@@ -224,12 +250,21 @@ export interface Improvisation {
   next: string;
 }
 
+export interface CollectionStatus {
+  backend: "memory" | "postgres";
+  databases: string[];
+  snapshots: number;
+  predicted: number;
+}
+
 export interface BoosterPayload {
   updatedAt: string;
   sourceUpdatedAt: string;
   summary: string;
   briefs: BoosterTopicBrief[];
   improvisations: Improvisation[];
+  forecasts?: LeafForecast[];
+  collection?: CollectionStatus;
 }
 
 export interface RawSignals {
@@ -260,6 +295,9 @@ export interface ResearchSource {
   snippet: string;
   score?: number;
   createdAt?: string;
+  /** AutoLineage: which collect step produced this source. */
+  tool?: string;
+  collectedAt?: string;
 }
 
 export interface ResearchFinding {
@@ -278,4 +316,45 @@ export interface ResearchPayload {
   sources: ResearchSource[];
   degraded: string[];
   thin: boolean;
+}
+
+export interface WatchlistEntity {
+  id: string;
+  label: string;
+  aliases: string[];
+  owner: string;
+  createdAt: string;
+}
+
+export type PoiTag = "official" | "occupied" | "ignore";
+
+export interface Occupier {
+  title: string;
+  url: string;
+  host: string;
+  tag?: PoiTag;
+  qrPayload?: string;
+}
+
+export interface PoiInsight {
+  entity: WatchlistEntity;
+  receiptCount: number;
+  officialCount: number;
+  occupiedCount: number;
+  organic: number;
+  occupancy: number;
+  outlook: ForecastOutlook;
+  confidence: number;
+  thin: boolean;
+  analysis: string;
+  occupiers: Occupier[];
+  snapshotCount: number;
+  /** Last snapshot overlap count minus the one before. */
+  delta: number;
+  /** Entity share of that snapshot’s public tape. */
+  baselineRatio: number;
+  /** Sort key: |delta| × occupancy so occupied names float. */
+  rankScore: number;
+  /** Last overlap counts, oldest → newest. */
+  window: number[];
 }

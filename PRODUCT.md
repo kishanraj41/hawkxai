@@ -45,12 +45,12 @@ Confirmed:
 
 - Full pipeline must remain visible in the UI: Discover → three scouts → trend graph → Consumer (What / Why / Next) vs Business (Impact / Risk / Opportunity).
 - Data sources for the MVP: Hacker News Algolia, GitHub Search, GDELT, existing DuckDuckGo Instant Answer collector. Unofficial X scraping is out of bounds. Official X API is not funded by Cursor credits.
-- Runtime LLM (Grok orchestrator / expansion / insights) is optional behind `XAI_API_KEY`; the demo must still run with heuristic/template insights if that key is absent.
+- Runtime LLM (Gemini 3.5 orchestrator / expansion / insights) is optional behind `GOOGLE_API_KEY`; the demo must still run with heuristic/template insights if that key is absent.
 - Keep the Python CLI working; the static UI is additive.
 
 Undecided:
 
-- Whether xAI `x_search` / `web_search` is added later if separate xAI credits exist.
+- X mentions come from Gemini + Google Search grounding, not xAI.
 - Hosting/deploy target beyond local demo.
 
 ## Brand Commitments

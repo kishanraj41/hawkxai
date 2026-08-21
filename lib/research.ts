@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { grokChat, grokDeepResearch } from "./grok";
+import { geminiChat, geminiDeepResearch, hasGoogleKey } from "./gemini";
 import { searchHn } from "./hn";
+import { stampSources } from "./lineage";
 import { searchReddit } from "./reddit";
 import { fetchX } from "./signals";
 import type {
@@ -10,7 +11,7 @@ import type {
   ResearchSourceKind,
 } from "./types";
 
-const UA = "HawkAI/1.0 (+https://github.com/snagaram3/grokhackx)";
+const UA = "HawkxAI/1.0 (+https://github.com/snagaram3/grokhackx)";
 
 const briefSchema = z.object({
   summary: z.string().min(1).transform((s) => s.slice(0, 1200)),
@@ -259,7 +260,7 @@ async function uspto(query: string): Promise<ResearchSource[]> {
 
 function postsToSources(
   kind: Extract<ResearchSourceKind, "hn" | "reddit" | "x">,
-  posts: { title: string; url: string; score: number; createdAt: string }[],
+  posts: { title: string; url: string; score: number; createdAt: string; tool?: string; collectedAt?: string }[],
   limit: number,
 ): ResearchSource[] {
   return posts.slice(0, limit).map((p, i) => ({
@@ -270,6 +271,8 @@ function postsToSources(
     snippet: p.title.slice(0, 400),
     score: p.score,
     createdAt: p.createdAt,
+    tool: p.tool,
+    collectedAt: p.collectedAt,
   }));
 }
 
@@ -318,7 +321,7 @@ async function synthesize(
   openQuestions: string[];
   angles: string[];
 }> {
-  if (!process.env.XAI_API_KEY || sources.length === 0) {
+  if (!hasGoogleKey() || sources.length === 0) {
     return thinBrief(query, sources);
   }
 
@@ -330,7 +333,7 @@ async function synthesize(
     snippet: s.snippet.slice(0, 280),
   }));
 
-  const prompt = `You are HawkAI Research. Topic: ${JSON.stringify(query)}
+  const prompt = `You are HawkxAI Research. Topic: ${JSON.stringify(query)}
 Use ONLY the evidence list below. Never invent a fact, URL, or citation.
 If evidence is thin, say so and set confidence to "thin".
 Every finding.claim must be grounded in at least one evidenceIds id from the list.
@@ -339,7 +342,7 @@ Return JSON only:
 Evidence: ${JSON.stringify(compact)}`;
 
   try {
-    const raw = await grokChat(prompt, 45_000);
+    const raw = await geminiChat(prompt, 45_000);
     const parsed = briefSchema.parse(parseJsonObject(raw));
     const known = new Set(sources.map((s) => s.id));
     const findings = parsed.findings
@@ -363,11 +366,11 @@ Evidence: ${JSON.stringify(compact)}`;
 async function deepCornerNotes(
   query: string,
 ): Promise<{ notes: string; degraded: string[] }> {
-  if (!process.env.XAI_API_KEY) {
-    return { notes: "", degraded: ["grok deep research offline"] };
+  if (!hasGoogleKey()) {
+    return { notes: "", degraded: ["gemini deep research offline"] };
   }
   try {
-    const raw = await grokDeepResearch(
+    const raw = await geminiDeepResearch(
       `Research topic: ${JSON.stringify(query)}
 Find lesser-known but real public sources: papers, agency reports, niche forums, archival news, primary docs.
 Return plain text notes only. Each bullet must name a real source or URL you retrieved.
@@ -377,7 +380,7 @@ If you cannot verify something, omit it. Never invent.`,
     return { notes: raw.slice(0, 6000), degraded: [] };
   } catch (err) {
     console.warn("[research] deep", err instanceof Error ? err.message : err);
-    return { notes: "", degraded: ["grok deep research offline"] };
+    return { notes: "", degraded: ["gemini deep research offline"] };
   }
 }
 
@@ -455,7 +458,7 @@ export async function researchTopic(rawQuery: string): Promise<ResearchPayload> 
     findings: brief.findings,
     openQuestions: brief.openQuestions,
     angles: brief.angles,
-    sources: deduped,
+    sources: stampSources(deduped),
     degraded: [...new Set(degraded)],
     thin,
   };

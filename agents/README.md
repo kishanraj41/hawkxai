@@ -57,7 +57,7 @@ Runs via `.github/workflows/docker-ci.yml`.
 
 ### 5. SmartSalesGuy (`smartsalesguy/`) — **VC one-pager**
 
-Checks out HawkAI and writes a one-page venture proposal in unicorn-founder voice: core problem, solution, what's live, what's next. Evidence from the git tree only — no invented traction.
+Checks out HawkxAI and writes a one-page venture proposal in unicorn-founder voice: core problem, solution, what's live, what's next. Evidence from the git tree only — no invented traction.
 
 ```bash
 python3 agents/smartsalesguy/smartsalesguy.py --self-check

@@ -17,6 +17,7 @@ import {
   researchBriefFilename,
 } from "@/lib/research-brief";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
+import LineageStrip from "@/components/desk/LineageStrip";
 import type { ResearchPayload, ResearchSource, ResearchSourceKind } from "@/lib/types";
 
 const KIND_LABEL: Record<ResearchSourceKind, string> = {
@@ -100,6 +101,7 @@ function SourceCard({
         ) : null}
       </div>
       <p className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-white/88">{source.title}</p>
+      <LineageStrip tool={source.tool} collectedAt={source.collectedAt} />
     </button>
   );
 }
@@ -403,6 +405,7 @@ export default function ResearchDesk() {
             {selected ? (
               <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
                 <p className="signal-label">{KIND_LABEL[selected.kind]}</p>
+                <LineageStrip tool={selected.tool} collectedAt={selected.collectedAt} />
                 <p className="mt-2 text-sm leading-snug text-white/92">{selected.title}</p>
                 <p className="mt-3 text-pretty text-xs leading-relaxed text-white/55">
                   {selected.snippet}

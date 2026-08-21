@@ -38,6 +38,7 @@ import {
   type TapeDelta,
   type TapeWatchStore,
 } from "@/lib/watch";
+import { notifyWatchlistChanged } from "@/lib/watchlist-sync";
 import type { AgeLens, BoosterPayload, DeskCategory, Platform, Topic, TrendsPayload } from "@/lib/types";
 
 type SortKey = "score" | Platform | "risk";
@@ -86,7 +87,7 @@ export function FootprintDesk() {
   return <LiveDesk desk="footprint" />;
 }
 
-export default function HawkAIApp() {
+export default function HawkxAIApp() {
   return <TrendDesk />;
 }
 
@@ -112,6 +113,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
   const [plugged, setPlugged] = useState("");
   const [watchIds, setWatchIds] = useState<string[]>([]);
   const [deltas, setDeltas] = useState<TapeDelta[]>([]);
+  const [watchingPoi, setWatchingPoi] = useState(false);
   const askRef = useRef<HTMLInputElement>(null);
   const pluggedRef = useRef("");
   const bootedRef = useRef(false);
@@ -125,6 +127,28 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     try {
       const topic =
         topicOverride === null ? "" : (topicOverride ?? pluggedRef.current).trim();
+      if (footprint && topic) {
+        const res = await fetch("/api/fleet", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ phrase: topic }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          throw new Error(err.error || `Fleet ingest failed (${res.status})`);
+        }
+        const data = (await res.json()) as TrendsPayload;
+        setPayload(data);
+        setBooster(boostTrends(data));
+        if (data.plugged) {
+          setPlugged(data.plugged);
+          setQueryUrl(data.plugged);
+          const first = data.topics[0] ?? null;
+          setSelected(first);
+          setHighlightedIds(data.topics.map((t) => t.id));
+        }
+        return data;
+      }
       const params = new URLSearchParams();
       if (refresh) params.set("refresh", "1");
       if (city !== "all") params.set("city", city);
@@ -134,7 +158,19 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       if (!res.ok) throw new Error(`Trends failed (${res.status})`);
       const data = (await res.json()) as TrendsPayload;
       setPayload(data);
-      setBooster(boostTrends(data));
+      const local = boostTrends(data);
+      setBooster(local);
+      void fetch("/api/booster")
+        .then((boostRes) => (boostRes.ok ? boostRes.json() : null))
+        .then((remote: BoosterPayload | null) => {
+          if (!remote?.forecasts?.length) return;
+          setBooster((prev) =>
+            prev && prev.sourceUpdatedAt === remote.sourceUpdatedAt
+              ? { ...prev, forecasts: remote.forecasts, collection: remote.collection }
+              : prev,
+          );
+        })
+        .catch(() => undefined);
       if (data.plugged) {
         setPlugged(data.plugged);
         if (footprint) setQueryUrl(data.plugged);
@@ -337,6 +373,22 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     });
   }
 
+  async function watchPlugged() {
+    const name = plugged.trim();
+    if (!name) return;
+    setWatchingPoi(true);
+    try {
+      await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ label: name }),
+      });
+      notifyWatchlistChanged();
+    } finally {
+      setWatchingPoi(false);
+    }
+  }
+
   function handleToggleWatch(topicId: string) {
     const next = toggleWatch(readWatch(), topicId);
     writeWatch(next);
@@ -489,6 +541,11 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
           ))}
         </div>
         <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
+          {footprint && plugged ? (
+            <GhostButton onClick={() => void watchPlugged()} disabled={watchingPoi}>
+              {watchingPoi ? "Watching…" : "Watch this"}
+            </GhostButton>
+          ) : null}
           <KeepBrief.Actions />
           <GhostButton
             onClick={() => void loadTrends(true)}

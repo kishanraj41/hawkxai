@@ -57,7 +57,7 @@ htmlcov/
 .npm-cache/
 .impeccable/
 
-# Next.js / HawkAI
+# Next.js / HawkxAI
 /node_modules
 /.pnp
 .pnp.js
@@ -82,6 +82,7 @@ agents/docker-ci/reports/
 # Booster Agent generated briefings
 agents/booster-agent/runs/*.json
 agents/booster-agent/runs/*.md
+agents/booster-agent/store/
 
 # SmartSalesGuy generated pitches
 agents/smartsalesguy/runs/*.json
@@ -89,3 +90,8 @@ agents/smartsalesguy/runs/*.md
 
 # Local merge-watch cursor (rebuild-on-merge skill)
 .cursor/skills/builddocker/.last-merge.json
+
+# Fleet generated snapshots / handbook output
+fleet/snapshots/
+fleet/handbook/out/
+tmp-ingest/

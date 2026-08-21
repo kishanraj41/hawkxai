@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartSalesGuy — unicorn-founder sales agent for HawkAI.
+SmartSalesGuy — unicorn-founder sales agent for HawkxAI.
 
 Checks out the repo, reads what is actually built, and writes a one-page
 venture proposal: core problem, solution, current features, future features.
@@ -483,7 +483,7 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "has already moved."
     )
     solution = (
-        "HawkAI is a live phrase desk. Plug a name the team already owns — Camry, "
+        "HawkxAI is a live phrase desk. Plug a name the team already owns — Camry, "
         "#HeatWaveFit, Just Do It — and the same modules fill from live evidence: "
         "where it printed, when, title tone counted not narrated, a mind map whose "
         "amber dashes exist only for shared artifacts, and a play that includes risk. "
@@ -514,14 +514,14 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "overnight return — or the thesis dies."
     )
     one_liner = (
-        "HawkAI is the live footprint desk for a campaign name a team already owns. "
+        "HawkxAI is the live footprint desk for a campaign name a team already owns. "
         "Paste the phrase. See where it printed since yesterday, with receipts. "
         "No invented why."
     )
     if product_para:
         sources.append(f"{(core_src.split(' @', 1)[0] or CORE_IDEA_RELS[0])}#product")
     return Dossier(
-        product="HawkAI",
+        product="HawkxAI",
         one_liner=one_liner,
         problem=problem,
         solution=solution,
@@ -562,7 +562,7 @@ def compose_one_pager(dossier: Dossier) -> str:
         "plus evidence-only correlation, not a cheaper firehose."
     )
 
-    stack = ", ".join(dossier.stack) if dossier.stack else "Next.js, TypeScript, D3, Grok"
+    stack = ", ".join(dossier.stack) if dossier.stack else "Next.js, TypeScript, D3, Gemini"
 
     agents_block = ""
     if dossier.agents:
@@ -571,7 +571,7 @@ def compose_one_pager(dossier: Dossier) -> str:
             f"{_bullets(dossier.agents, 5)}\n"
         )
 
-    return f"""# HawkAI
+    return f"""# HawkxAI
 **Confidential · one-page venture proposal**
 
 {dossier.one_liner}
@@ -625,7 +625,7 @@ We are locking a wedge: one owned phrase, overnight, receipts only. Ten people c
 
 We will not pitch fake users. The proof is the product: a live footprint desk, a live booster loop, and a checkout you can run.
 
-— Founder, HawkAI
+— Founder, HawkxAI
 """.strip() + "\n"
 
 
@@ -725,7 +725,7 @@ def run_sales(root: Path = REPO_ROOT) -> Proposal:
 def self_check(root: Path = REPO_ROOT) -> int:
     root = Path(root)
     proposal = run_sales(root)
-    assert proposal.dossier.product == "HawkAI"
+    assert proposal.dossier.product == "HawkxAI"
     assert proposal.dossier.git is not None
     assert proposal.dossier.current, "checkout found no live features"
     names = " ".join(f.name.lower() for f in proposal.dossier.current)
@@ -746,7 +746,7 @@ def self_check(root: Path = REPO_ROOT) -> int:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        description="SmartSalesGuy — checkout HawkAI and write a VC one-pager.",
+        description="SmartSalesGuy — checkout HawkxAI and write a VC one-pager.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

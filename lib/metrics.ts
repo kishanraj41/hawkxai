@@ -42,12 +42,14 @@ export function peakHourCT(posts: Post[]): string | undefined {
   if (posts.length < 10) return undefined;
   const hours = new Array(24).fill(0);
   for (const p of posts) {
+    const t = Date.parse(p.createdAt);
+    if (Number.isNaN(t)) continue;
     const h = Number(
       new Intl.DateTimeFormat("en-US", {
         hour: "numeric",
         hour12: false,
         timeZone: "America/Chicago",
-      }).format(new Date(p.createdAt)),
+      }).format(new Date(t)),
     );
     if (!Number.isNaN(h)) hours[h] += 1;
   }

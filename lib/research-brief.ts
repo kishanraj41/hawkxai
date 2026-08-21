@@ -1,4 +1,5 @@
 import type { ResearchPayload, ResearchSource } from "./types";
+import { formatLineageSection } from "./lineage";
 
 export function researchBriefFilename(label: string): string {
   const slug = label
@@ -6,14 +7,14 @@ export function researchBriefFilename(label: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 48);
-  return `hawkai-research-${slug || "topic"}.md`;
+  return `hawkxai-research-${slug || "topic"}.md`;
 }
 
 /** Markdown pack of findings + URLs. Evidence only — never invents. */
 export function formatResearchBrief(payload: ResearchPayload): string {
   const byId = new Map(payload.sources.map((s) => [s.id, s]));
   const lines = [
-    `# HawkAI research · ${payload.query}`,
+    `# HawkxAI research · ${payload.query}`,
     "",
     payload.summary,
     "",
@@ -70,6 +71,17 @@ export function formatResearchBrief(payload: ResearchPayload): string {
     });
   }
   lines.push("");
+  lines.push(
+    ...formatLineageSection(
+      payload.sources.map((s) => ({
+        title: s.title,
+        url: s.url,
+        tool: s.tool,
+        collectedAt: s.collectedAt,
+        channel: s.kind,
+      })),
+    ),
+  );
   lines.push("_Evidence only. Nothing here is an invented citation._");
   lines.push("");
   return lines.join("\n");

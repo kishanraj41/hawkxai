@@ -17,7 +17,7 @@ const plex = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HawkAI",
+  title: "HawkxAI",
   description: "Live trend desk — Footprint for campaigns, Research for deep topic lookup.",
 };
 

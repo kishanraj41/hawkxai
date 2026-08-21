@@ -1,4 +1,4 @@
-import { grokJson } from "./grok";
+import { geminiJson, hasGoogleKey } from "./gemini";
 import { clusteredListSchema } from "./schemas";
 import {
   divergenceOf,
@@ -69,7 +69,7 @@ export async function clusterTopics(
     public: signals.public ?? [],
   };
 
-  if (!process.env.XAI_API_KEY) {
+  if (!hasGoogleKey()) {
     return singletonTopics([
       ...signals.reddit,
       ...signals.hn,
@@ -79,7 +79,7 @@ export async function clusterTopics(
   }
 
   try {
-    const parsed = await grokJson(
+    const parsed = await geminiJson(
       `Group these posts into 12-20 cross-platform topics.
 Use only the provided items. Empty posts arrays are allowed.
 Return strict JSON:
@@ -119,7 +119,7 @@ HN: ${JSON.stringify(hn)}`,
       topic.velocity = velocityOf(topic.id, score, prev);
       return topic;
     });
-    console.log(`[cluster] grok grouped ${topics.length} topics`);
+    console.log(`[cluster] gemini grouped ${topics.length} topics`);
     return topics;
   } catch (err) {
     console.error("[cluster] falling back to singletons", err);
@@ -230,7 +230,7 @@ export function plugTopicFromPosts(query: string, posts: Post[], intent?: QueryI
   return topics;
 }
 
-/** Attach X topics after clustering so x_search can run in parallel with Grok. */
+/** Attach X topics after clustering so Google Search can run in parallel with Gemini. */
 export function attachXPosts(topics: Topic[], xPosts: Post[]): Topic[] {
   if (!xPosts.length) return topics;
   const used = new Set<string>();
@@ -253,7 +253,7 @@ export function attachXPosts(topics: Topic[], xPosts: Post[]): Topic[] {
   return topics;
 }
 
-/** Attach public-apis receipts after clustering so Grok is not blocked on 20+ feeds. */
+/** Attach public-apis receipts after clustering so Gemini is not blocked on 20+ feeds. */
 export function attachPublicPosts(topics: Topic[], publicPosts: Post[]): Topic[] {
   if (!publicPosts.length) return topics;
   const used = new Set<string>();
