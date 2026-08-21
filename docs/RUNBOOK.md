@@ -20,7 +20,7 @@ There is no `/health` route. Treat these as live checks:
 
 ```bash
 npm install
-cp .env.example .env.local   # set XAI_API_KEY
+cp .env.example .env.local   # set GOOGLE_API_KEY
 npm run dev
 ```
 
@@ -42,17 +42,17 @@ That creates `hawkxai_all` plus one database per category plug. Until those vars
 
 ```bash
 docker build -t hawkxai:latest .
-docker run --rm -p 3001:3000 -e XAI_API_KEY=xai-... hawkxai:latest
+docker run --rm -p 3001:3000 -e GOOGLE_API_KEY=... hawkxai:latest
 ```
 
 Host **:3000** is often Grafana. Map the container to **:3001**. Image user is `nextjs` (non-root).
 
-Without `XAI_API_KEY` the UI still boots; Grok clustering and Ask degrade.
+Without `GOOGLE_API_KEY` the UI still boots; Gemini clustering and Ask degrade.
 
 ## Vercel
 
 1. `npm run build` must pass locally.
-2. Set `XAI_API_KEY` in Vercel project env.
+2. Set `GOOGLE_API_KEY` in Vercel project env.
 3. `vercel.json` sets `maxDuration: 60` on `/api/trends` and `/api/ask`.
 
 Rollback: revert the Vercel deployment to the previous production alias.
@@ -77,7 +77,7 @@ Failure of build, smoke, or critical Bug Bot blocks merge.
 |---------|-----|
 | `Bind for 0.0.0.0:3000 failed` | Something else (often Grafana) holds 3000. Use `-p 3001:3000`. |
 | `/api/booster` or `/api/ask` 409 | Hit `GET /api/trends?topic=` first. |
-| Ask says Grok is offline | `XAI_API_KEY` missing in `.env.local`, Docker `-e`, or Vercel env. |
+| Ask says Gemini is offline | `GOOGLE_API_KEY` missing in `.env.local`, Docker `-e`, or Vercel env. |
 | Reddit pill `reddit offline` | 403 on some networks. Expected; map still renders HN/X. |
 | First lookup ~60s | Cold live search. Subsequent hits use the 5-minute cache. |
 | Docker build SWC unicode regex | Production target is ES2017 (`tsconfig`); already fixed on this line. |

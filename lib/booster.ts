@@ -302,7 +302,7 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       priority: "P0",
       title: "Stabilize X ingest",
       why: "Hashtag and QR campaigns mostly start on X. Offline X blinds the booster.",
-      next: "Keep x_search, add a Google Trends fallback so capture still runs.",
+      next: "Keep Gemini Google Search for X mentions, add a Google Trends fallback so capture still runs.",
     });
   }
   if (payload.degraded.some((d) => d.includes("reddit"))) {

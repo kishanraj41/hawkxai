@@ -1,4 +1,4 @@
-import { grokChat } from "./grok";
+import { geminiChat, hasGoogleKey } from "./gemini";
 import { PLACE_NEEDLES } from "./geo";
 import { CATEGORIES, type CategoryId, type QueryInsight, type QueryKind, type SentimentReport, type Topic } from "./types";
 
@@ -161,10 +161,10 @@ const CAT_SET = new Set<string>(CATEGORIES);
 
 /** Calculated guess for unknown words. Synonyms only — never invent a headline. */
 export async function enrichQueryIntent(local: QueryIntent): Promise<QueryIntent> {
-  if (!process.env.XAI_API_KEY) return local;
+  if (!hasGoogleKey()) return local;
   if (local.kind !== "generic" && local.aliases.length >= 2) return local;
   try {
-    const raw = await grokChat(
+    const raw = await geminiChat(
       `Classify this live-trends search. Synonyms only — no headlines, no invented news.
 Query: ${JSON.stringify(local.raw)}
 Return JSON: {"kind":"ticker|hashtag|campaign|event|product|place|generic","category":"markets|news|weather|tech|sports|health|security|campaigns|culture","aliases":["synonym"]}`,

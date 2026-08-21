@@ -45,5 +45,5 @@ Only after JSON with at least one merge:
 
 - Rebuild on an empty tick.
 - `git push` or merge PRs.
-- Print `XAI_API_KEY`.
+- Print `GOOGLE_API_KEY`.
 - Duplicate this loop (sentinel `AGENT_LOOP_TICK_rebuild_on_merge`).

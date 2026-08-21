@@ -19,7 +19,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Set `XAI_API_KEY` in `.env.local` only. Never commit it.
+Set `GOOGLE_API_KEY` in `.env.local` only. Never commit it.
 
 ```bash
 npm run dev

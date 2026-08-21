@@ -43,7 +43,7 @@ Tags: `hawkxai:latest` (run) and `hawkxai:ci` (CI agent). Same image.
 
 1. Reuse the host port already published by `hawkxai` (`docker port hawkxai 3000/tcp`). If none, pick the first free port in **3001–3005**. Host **:3000** is often Grafana; `:3001` is often `next dev` — skip taken ports.
 2. If a container named `hawkxai` exists, `docker stop hawkxai` (and `docker rm` if it is not `--rm`).
-3. Load `XAI_API_KEY` from the **repo** `.env.local` (gitignored), even when the build used a worktree. Do not print the key. If missing, still run the container; Ask/Grok will degrade.
+3. Load `GOOGLE_API_KEY` from the **repo** `.env.local` (gitignored), even when the build used a worktree. Do not print the key. If missing, still run the container; Ask/Gemini will degrade.
 4. Start (substitute `$PORT`):
 
 ```bash
@@ -63,7 +63,7 @@ If the user's terminal already has a foreground `docker run --rm`, stopping `haw
 ## Do not
 
 - Bind host `:3000` unless the user asked and Grafana is gone.
-- Pass `XAI_API_KEY=xai-your-real-key` (placeholder).
+- Pass `GOOGLE_API_KEY=your-real-key` (placeholder).
 - Echo secrets.
 - Skip the restart after a cache-hit build — the run still needs to match `latest`.
 - Rebuild on a 5-minute tick when no PR merged — that is a skip, not a build.

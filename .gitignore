@@ -90,3 +90,7 @@ agents/smartsalesguy/runs/*.md
 
 # Local merge-watch cursor (rebuild-on-merge skill)
 .cursor/skills/builddocker/.last-merge.json
+
+# Fleet generated snapshots / handbook output
+fleet/snapshots/
+fleet/handbook/out/

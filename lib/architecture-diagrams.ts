@@ -4,7 +4,7 @@ export const DEPLOY_GRAPH = `flowchart LR
   gh["GitHub<br/>snagaram3/grokhackx"]
   vercel["Vercel project<br/>hawk-ai4/grokhackx"]
   fn["Next.js 14 functions<br/>region iad1"]
-  env["Env: XAI_API_KEY<br/>YOUTUBE_API_KEY<br/>TREND_DB_*"]
+  env["Env: GOOGLE_API_KEY<br/>FLEET_URL<br/>YOUTUBE_API_KEY<br/>TREND_DB_*"]
   sql["Cloud SQL Postgres 16<br/>hawkxai-trends · us-east4<br/>35.245.139.208:5432 TLS"]
   dbs["10 databases<br/>hawkxai_all + 9 plugs"]
 

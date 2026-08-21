@@ -2,7 +2,7 @@ import { fetchHn, searchHn } from "./hn";
 import { fetchReddit, searchReddit } from "./reddit";
 import { collectPublicApis } from "./public-apis";
 import { fetchX } from "./signals";
-import { grokChat } from "./grok";
+import { geminiChat, hasGoogleKey } from "./gemini";
 import { divergenceOf } from "./metrics";
 import { geoAgent, type GeoQuery } from "./geo";
 import { whyListSchema } from "./schemas";
@@ -82,7 +82,7 @@ export function collectorAgent(
     reddit: collectSource("reddit", () => (q ? searchReddit(q) : fetchReddit(geo.redditSubs))),
     hn: collectSource("hn", () => (q ? searchHn(q) : fetchHn())),
     public: collectPublicSource(geo.city, q),
-    x: process.env.XAI_API_KEY
+    x: hasGoogleKey()
       ? collectSource("x", () => fetchX(geo.label ?? undefined, q))
       : Promise.resolve({ source: "x", ok: false, count: 0, posts: [] }),
   };
@@ -174,16 +174,16 @@ function parseJsonObject(raw: string): unknown {
   }
 }
 
-/** Advisory Grok pass. 15s cap. Failure skips silently. */
+/** Advisory Gemini pass. 15s cap. Failure skips silently. */
 export async function reviewerAgent(topics: Topic[]): Promise<{
   topics: Topic[];
   log: string;
 }> {
-  if (!process.env.XAI_API_KEY || topics.length === 0) {
+  if (!hasGoogleKey() || topics.length === 0) {
     return { topics, log: "reviewer: skipped" };
   }
   try {
-    const raw = await grokChat(
+    const raw = await geminiChat(
       `Flag any topic that looks like spam, a duplicate, or not a real trend.
 Return JSON only: {"remove":[{"id":"","reason":"one line"}]}
 If none, {"remove":[]}.
@@ -217,12 +217,12 @@ Topics: ${JSON.stringify(topics.map((t) => ({ id: t.id, label: t.label })))}`,
   }
 }
 
-/** One Grok briefing per topic. Skip silently if it fails. */
+/** One Gemini briefing per topic. Skip silently if it fails. */
 export async function whyAgent(topics: Topic[]): Promise<{
   topics: Topic[];
   log: string;
 }> {
-  if (!process.env.XAI_API_KEY || topics.length === 0) {
+  if (!hasGoogleKey() || topics.length === 0) {
     return { topics, log: "why: skipped" };
   }
   try {
@@ -233,7 +233,7 @@ export async function whyAgent(topics: Topic[]): Promise<{
         .flatMap((s) => s.posts.map((p) => p.title))
         .slice(0, 2),
     }));
-    const raw = await grokChat(
+    const raw = await geminiChat(
       `For each topic, write one sentence on why it is trending, grounded only in the post titles.
 No hype. No tickers. No advice. If you cannot tell, omit that id.
 JSON only: {"why":[{"id":"slug","why":"one sentence"}]}

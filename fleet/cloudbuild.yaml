@@ -1,0 +1,10 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/project-16647bb0-5d45-4404-956/cloud-run-source-deploy/hawkxai-fleet:latest
+      - .
+images:
+  - us-central1-docker.pkg.dev/project-16647bb0-5d45-4404-956/cloud-run-source-deploy/hawkxai-fleet:latest
+timeout: 1200s

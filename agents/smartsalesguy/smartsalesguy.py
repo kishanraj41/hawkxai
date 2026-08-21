@@ -552,7 +552,7 @@ def compose_one_pager(dossier: Dossier) -> str:
         "- Market sizing is not yet a first-party fact in this checkout. We will not invent a TAM."
     )
 
-    stack = ", ".join(dossier.stack) if dossier.stack else "Next.js, TypeScript, D3, Grok"
+    stack = ", ".join(dossier.stack) if dossier.stack else "Next.js, TypeScript, D3, Gemini"
 
     agents_block = ""
     if dossier.agents:

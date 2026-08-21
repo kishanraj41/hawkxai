@@ -79,5 +79,5 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Persist tape-watch beyond this browser is next.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
 10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens from the trend desk; trending words stay on `/`.
-11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + PubMed + arXiv + USPTO + HN + Reddit + X + optional Grok deep pass; Copy / Save .md / Print; click an open question to dig that angle.
+11. Research desk for topic digs (`/research?q=`) — **shipped:** Wikipedia + web + PubMed + arXiv + USPTO + HN + Reddit + X + optional Gemini + Google Search pass; Copy / Save .md / Print; click an open question to dig that angle.
 12. Collect trending words + sentiment into 10 category databases, then predict on each mind-map leaf — **shipped:** memory/JSON now; Postgres `hawkxai_{category}` once `TREND_DB_*` is set.

@@ -125,6 +125,28 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     try {
       const topic =
         topicOverride === null ? "" : (topicOverride ?? pluggedRef.current).trim();
+      if (footprint && topic) {
+        const res = await fetch("/api/fleet", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ phrase: topic }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          throw new Error(err.error || `Fleet ingest failed (${res.status})`);
+        }
+        const data = (await res.json()) as TrendsPayload;
+        setPayload(data);
+        setBooster(boostTrends(data));
+        if (data.plugged) {
+          setPlugged(data.plugged);
+          setQueryUrl(data.plugged);
+          const first = data.topics[0] ?? null;
+          setSelected(first);
+          setHighlightedIds(data.topics.map((t) => t.id));
+        }
+        return data;
+      }
       const params = new URLSearchParams();
       if (refresh) params.set("refresh", "1");
       if (city !== "all") params.set("city", city);

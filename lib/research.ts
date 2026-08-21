@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { grokChat, grokDeepResearch } from "./grok";
+import { geminiChat, geminiDeepResearch, hasGoogleKey } from "./gemini";
 import { searchHn } from "./hn";
 import { searchReddit } from "./reddit";
 import { fetchX } from "./signals";
@@ -318,7 +318,7 @@ async function synthesize(
   openQuestions: string[];
   angles: string[];
 }> {
-  if (!process.env.XAI_API_KEY || sources.length === 0) {
+  if (!hasGoogleKey() || sources.length === 0) {
     return thinBrief(query, sources);
   }
 
@@ -339,7 +339,7 @@ Return JSON only:
 Evidence: ${JSON.stringify(compact)}`;
 
   try {
-    const raw = await grokChat(prompt, 45_000);
+    const raw = await geminiChat(prompt, 45_000);
     const parsed = briefSchema.parse(parseJsonObject(raw));
     const known = new Set(sources.map((s) => s.id));
     const findings = parsed.findings
@@ -363,11 +363,11 @@ Evidence: ${JSON.stringify(compact)}`;
 async function deepCornerNotes(
   query: string,
 ): Promise<{ notes: string; degraded: string[] }> {
-  if (!process.env.XAI_API_KEY) {
-    return { notes: "", degraded: ["grok deep research offline"] };
+  if (!hasGoogleKey()) {
+    return { notes: "", degraded: ["gemini deep research offline"] };
   }
   try {
-    const raw = await grokDeepResearch(
+    const raw = await geminiDeepResearch(
       `Research topic: ${JSON.stringify(query)}
 Find lesser-known but real public sources: papers, agency reports, niche forums, archival news, primary docs.
 Return plain text notes only. Each bullet must name a real source or URL you retrieved.
@@ -377,7 +377,7 @@ If you cannot verify something, omit it. Never invent.`,
     return { notes: raw.slice(0, 6000), degraded: [] };
   } catch (err) {
     console.warn("[research] deep", err instanceof Error ? err.message : err);
-    return { notes: "", degraded: ["grok deep research offline"] };
+    return { notes: "", degraded: ["gemini deep research offline"] };
   }
 }
 

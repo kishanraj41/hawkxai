@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet } from "@/lib/cache";
-import { grokChat } from "@/lib/grok";
+import { geminiChat, hasGoogleKey } from "@/lib/gemini";
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
 import type { TrendsPayload } from "@/lib/types";
 import { z } from "zod";
@@ -45,15 +45,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!process.env.XAI_API_KEY) {
+  if (!hasGoogleKey()) {
     return NextResponse.json({
-      answer: "Grok is offline. Showing current map only.",
+      answer: "Gemini is offline. Showing current map only.",
       topicIds: trends.topics.slice(0, 3).map((t) => t.id),
     });
   }
 
   try {
-    const raw = await grokChat(
+    const raw = await geminiChat(
       `User question: ${q}
 Answer from these cached topics only. 2-4 sentences. Cite topic labels, not URLs.
 Return JSON: {"answer":"","topicIds":["id"]}
@@ -67,7 +67,7 @@ Topics: ${JSON.stringify(trends.topics.map((t) => ({ id: t.id, label: t.label, d
   } catch (err) {
     console.error("[ask]", err);
     return NextResponse.json({
-      answer: "Could not parse a Grok answer. Map is unchanged.",
+      answer: "Could not parse a Gemini answer. Map is unchanged.",
       topicIds: [],
     });
   }
