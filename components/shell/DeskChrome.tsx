@@ -2,12 +2,13 @@
 
 import type { ReactNode } from "react";
 
-export type DeskId = "trends" | "footprint" | "research" | "watchlist";
+export type DeskId = "trends" | "footprint" | "research" | "watchlist" | "insights";
 
 const DESKS: { id: DeskId; href: string; label: string; blurb: string }[] = [
   { id: "trends", href: "/", label: "Trends", blurb: "What's printing now" },
   { id: "watchlist", href: "/watchlist", label: "Watch", blurb: "Companies you track" },
   { id: "footprint", href: "/footprint", label: "Footprint", blurb: "Look up a phrase" },
+  { id: "insights", href: "/insights", label: "Insights", blurb: "Deep analysis" },
   { id: "research", href: "/research", label: "Research", blurb: "Dig a topic" },
 ];
 

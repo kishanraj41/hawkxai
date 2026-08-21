@@ -74,3 +74,33 @@ export function formatLineageSection(rows: LineageRow[]): string[] {
   lines.push("");
   return lines;
 }
+
+export function buildDataLineage(params: {
+  publicSources: any[];
+  poiData: any;
+  analysisResults: any;
+}): any {
+  const { publicSources, poiData, analysisResults } = params;
+  
+  const steps = publicSources.map((source, index) => ({
+    id: `step-${index}`,
+    source: source.name,
+    platform: source.platform,
+    collectedAt: source.lastUpdated,
+    tool: `collect_${source.platform}`,
+    method: "api" as const,
+    confidence: source.reliability,
+    verified: source.reliability > 0.8,
+  }));
+  
+  const organicSteps = steps.filter(s => s.verified);
+  const organicScore = organicSteps.length / Math.max(1, steps.length);
+  
+  return {
+    originId: `origin-${poiData.id}`,
+    steps,
+    isOrganic: organicScore > 0.6,
+    organicScore,
+    traceDepth: steps.length,
+  };
+}
