@@ -1,3 +1,4 @@
+import type { DataLineage, POIData, PublicDataSource } from "./insights-types";
 import type { Post, ResearchSource } from "./types";
 
 export interface LineageRow {
@@ -76,11 +77,11 @@ export function formatLineageSection(rows: LineageRow[]): string[] {
 }
 
 export function buildDataLineage(params: {
-  publicSources: any[];
-  poiData: any;
-  analysisResults: any;
-}): any {
-  const { publicSources, poiData, analysisResults } = params;
+  publicSources: PublicDataSource[];
+  poiData: POIData;
+  analysisResults?: unknown;
+}): DataLineage {
+  const { publicSources, poiData } = params;
   
   const steps = publicSources.map((source, index) => ({
     id: `step-${index}`,

@@ -8,16 +8,15 @@ interface TimeSeriesChartProps {
 }
 
 export default function TimeSeriesChart({ data }: TimeSeriesChartProps) {
-  const { maxValue, points } = useMemo(() => {
-    const max = Math.max(...data.map(d => d.value));
-    const pts = data.map((d, i) => ({
+  const points = useMemo(() => {
+    const max = Math.max(...data.map((d) => d.value), 1);
+    return data.map((d, i) => ({
       ...d,
       x: (i / (data.length - 1)) * 100,
-      yTotal: ((d.value / max) * 100),
-      yOrganic: ((d.organic / max) * 100),
-      ySynthetic: ((d.synthetic / max) * 100),
+      yTotal: (d.value / max) * 100,
+      yOrganic: (d.organic / max) * 100,
+      ySynthetic: (d.synthetic / max) * 100,
     }));
-    return { maxValue: max, points: pts };
   }, [data]);
 
   if (data.length === 0) {

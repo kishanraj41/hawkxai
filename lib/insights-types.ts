@@ -1,4 +1,4 @@
-import type { Platform, Post } from "./types";
+import type { Platform } from "./types";
 
 export type IndustryCategory = 
   | "technology"
@@ -15,7 +15,7 @@ export type IndustryCategory =
 export interface DataLineageStep {
   id: string;
   source: string;
-  platform: Platform | "aggregated";
+  platform: Platform | "aggregated" | "micro" | "tech" | "b2b" | "etech" | "silicon";
   collectedAt: string;
   tool?: string;
   method: "api" | "scrape" | "manual" | "derived";

@@ -109,12 +109,12 @@ const INDUSTRY_VARIABLES: Record<IndustryCategory, string[]> = {
 
 export async function analyzeIndustry(
   category: IndustryCategory,
-  poiData: POIData,
+  _poiData: POIData,
   publicSources: PublicDataSource[]
 ): Promise<IndustryAnalysis> {
   const factors = generateFactors(category, publicSources);
-  const constraints = generateConstraints(category, poiData);
-  const variables = generateVariables(category, poiData);
+  const constraints = generateConstraints(category);
+  const variables = generateVariables(category);
   
   const score = calculateIndustryScore(factors, constraints, variables);
   const insights = generateIndustryInsights(category, factors, constraints, variables);
@@ -152,10 +152,7 @@ function generateFactors(
   });
 }
 
-function generateConstraints(
-  category: IndustryCategory,
-  poiData: POIData
-): IndustryConstraint[] {
+function generateConstraints(category: IndustryCategory): IndustryConstraint[] {
   const constraintNames = INDUSTRY_CONSTRAINTS[category];
   
   return constraintNames.map((name, index) => {
@@ -175,10 +172,7 @@ function generateConstraints(
   });
 }
 
-function generateVariables(
-  category: IndustryCategory,
-  poiData: POIData
-): IndustryVariable[] {
+function generateVariables(category: IndustryCategory): IndustryVariable[] {
   const variableNames = INDUSTRY_VARIABLES[category];
   
   return variableNames.map((name, index) => {

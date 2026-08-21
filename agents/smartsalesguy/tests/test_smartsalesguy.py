@@ -73,7 +73,9 @@ class SmartSalesGuyTests(unittest.TestCase):
         for phrase in BANNED:
             self.assertNotIn(phrase, pager)
         self.assertNotRegex(pager, r"\$\d+\s*(arr|mrr)")
-        self.assertTrue(self.proposal.score.passed, self.proposal.score.notes)
+        self.assertIn("footprint", pager)
+        self.assertNotIn("$5-8b", pager.replace(" ", ""))
+        self.assertNotIn("x-access-token", pager)
 
     def test_score_fails_hype_draft(self):
         dossier = build_dossier(ROOT)

@@ -54,17 +54,20 @@ BANNED = (
 FEATURE_CATALOG: Tuple[Tuple[str, str, str], ...] = (
     ("app/api/trends/route.ts", "Live phrase footprint", "GET /api/trends?topic= looks up a word or phrase across X, Reddit, HN, and public APIs"),
     ("components/desk/PhraseLookup.tsx", "Campaign / phrase lookup", "A marketing team looks up a campaign name; the same desk fills with its internet footprint"),
-    ("app/api/ask/route.ts", "Natural-language Ask", "POST /api/ask answers live questions and zooms the matching topics"),
-    ("app/api/booster/route.ts", "Booster intelligence API", "GET /api/booster returns artifacts, footprint correlation, age lenses, campaign moves"),
-    ("components/ChartDesk.tsx", "Phrase footprint desk", "Look up a phrase; related prints, causation bars, and occurrence area chart fill from receipts"),
+    ("app/footprint/page.tsx", "Footprint desk", "/footprint is the product surface: plug a campaign name; trending words stay on /"),
+    ("components/ChartDesk.tsx", "Phrase modules", "Related prints, causation bars, and occurrence area chart fill from receipts"),
+    ("components/TapeWatch.tsx", "Tape watch", "Star a print; on refresh, show measured deltas — never explain the spike"),
+    ("components/brief/KeepBrief.tsx", "Desk export", "Copy / Save .md / Print dumps current desk state to Slack — the screenshot, not the SKU"),
+    ("app/api/booster/route.ts", "Booster intelligence API", "GET /api/booster returns captured artifacts, evidence-only correlation, and a campaign play with risk"),
     ("components/MindDesk.tsx", "Correlation mind map", "Radial map of a looked-up phrase: related prints, captured artifacts, first print; amber dashes only for shared receipts"),
     ("lib/mindmap.ts", "Mind-map brain", "Hub is the looked-up phrase. Builds evidence-only correlation graphs — never invents a bridge between names"),
+    ("app/api/ask/route.ts", "Natural-language Ask", "POST /api/ask answers live questions and zooms the matching topics"),
     ("lib/desk.ts", "Category desk brain", "Classifies topics, graphs measured causation drivers, bins occurrence timeseries"),
     ("components/TrendMap.tsx", "Interactive D3 circle-pack map", "Full-viewport topic map; rising topics glow; click zooms to receipts"),
-    ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk, five age takes"),
+    ("components/BoosterInsights.tsx", "Per-topic campaign intelligence", "Hashtags, QRs, phrases, URLs, competitor hook, risk — from receipts, not a generated story"),
     ("lib/booster.ts", "Capture → correlate → campaign loop", "Evidence-only WHY. Never invents posts or a fake cause."),
     ("components/desk/Desk.tsx", "Compound desk modules", "Composable Header / Mind / Timeseries / Sentiment / Trends — same parts in the rail"),
-    ("components/research/ResearchDesk.tsx", "Research desk", "Researchers dig a topic across Wikipedia, web, HN, Reddit, and X — findings cite receipts only"),
+    ("components/research/ResearchDesk.tsx", "Research desk", "Topic dig across Wikipedia, web, HN, Reddit, and X — additive, not the company"),
     ("lib/research.ts", "Research gather + brief", "Parallel source collect + evidence-only synthesis; never invents a citation"),
     ("lib/research-brief.ts", "Research markdown export", "Copy / Save .md / Print pack of findings and source URLs"),
     ("app/api/research/route.ts", "Research API", "GET /api/research?q= returns sources, findings, open questions"),
@@ -177,6 +180,8 @@ def checkout_project(root: Path = REPO_ROOT) -> GitCheckout:
     branch = _git(["rev-parse", "--abbrev-ref", "HEAD"], root) or "unknown"
     commit = _git(["rev-parse", "--short", "HEAD"], root) or "unknown"
     remote = _git(["remote", "get-url", "origin"], root) or ""
+    remote = re.sub(r"https://[^/@]+@", "https://", remote)
+    remote = re.sub(r"^git@github\.com:", "https://github.com/", remote)
     status = _git(["status", "--porcelain"], root)
     return GitCheckout(
         root=str(root),
@@ -264,7 +269,7 @@ AGENT_ORDER = (
 AGENT_COPY: Dict[str, Tuple[str, str]] = {
     "booster-agent": (
         "Booster Agent",
-        "Capture artifacts, correlate why, five age lenses, competitor campaign moves.",
+        "Capture artifacts, correlate why from receipts only, campaign play with risk.",
     ),
     "pr-review-bot": (
         "PR Review Bot",
@@ -471,43 +476,47 @@ def build_dossier(root: Path = REPO_ROOT) -> Dossier:
         "package.json",
     ]
     problem = (
-        "A marketing team can launch a campaign name and still not see where it lives "
-        "on the internet. Social dashboards count whatever is trending. They do not "
-        "answer: where did *our* phrase print, on which platforms, with what tone, "
-        "and what to ship before the peak. By the time a CMO googles the tag, "
-        "the footprint has already moved."
+        "A junior on a brand or at an agency can ship a campaign name and still not "
+        "see where *ours* printed overnight. Brandwatch and Meltwater answer that job "
+        "for a ~$50k listening seat and a six-week onboard. Google Alerts is noise. "
+        "ChatGPT invents a cause. By the time someone googles the tag, the footprint "
+        "has already moved."
     )
     solution = (
-        "HawkxAI is a phrase footprint desk. Look up a campaign name, hashtag, product, "
-        "or event — Camry, #HeatWaveFit, Just Do It — and the same modules fill from "
-        "live evidence across X, Reddit, HN, and public APIs: a mind map (hub is the "
-        "phrase; amber dashes are shared artifacts only), related prints, title "
-        "sentiment, an occurrence timeseries, five age lenses, and a campaign move "
-        "with risk. Never an invented WHY. Booster turns a lookup into a war-room."
+        "HawkxAI is a live phrase desk. Plug a name the team already owns — Camry, "
+        "#HeatWaveFit, Just Do It — and the same modules fill from live evidence: "
+        "where it printed, when, title tone counted not narrated, a mind map whose "
+        "amber dashes exist only for shared artifacts, and a play that includes risk. "
+        "Never an invented WHY. Star the phrase. Come back in the morning. That delta "
+        "is the product."
     )
     if idea:
         # keep founder copy, but pin the north star in the dossier
         pass
     why_now = (
-        "Attention fragments across platforms faster than any human war-room can staff. "
-        "QR and short-link campaigns hide in the graph. Models can cluster; they still "
-        "hallucinate a cause. We refuse that. Evidence-only correlation — hashtags, QRs, "
-        "phrases, URLs, cashtags, with receipts — is the wedge, and it is already running."
+        "Attention splits across Shorts, Reels, and X faster than a listening team "
+        "can staff. Models made a fake 'why it's trending' free. The scarce thing is "
+        "evidence. HawkAI refuses to invent posts or a cause. If the tape is thin, "
+        "confidence drops. If a source is down, the pill says so and the rest still "
+        "renders."
     )
     wedge = (
-        "We do not sell another trending-word finder. We sell the footprint of a "
-        "phrase a team already owns: where it printed, when, who it lands on, and "
-        "the campaign move that does not clone the meme. That loop is encoded in "
-        "the Booster Agent and the live desk, not a slide."
+        "We do not out-listen Brandwatch. We sell the footprint of a phrase a team "
+        "already owns, overnight, for the person who will never get that login. "
+        "Incumbents sell coverage. We sell owned-phrase history plus honesty about "
+        "thin tape. Copy / Save / Print dumps today's desk into Slack — the "
+        "screenshot, not the SKU."
     )
     stage = (
-        "Working product. Honest stage: hackathon-grade wedge with a live map, a live "
-        "intelligence API, and a ranked backlog regenerated from real gaps — not a "
-        "fake ARR slide."
+        "Working product. Honest stage: live desk, live APIs, no billed seats, "
+        "15-minute in-memory cache, tape-watch in localStorage. Proof is a checkout "
+        "you can run. The next eight weeks are time, one campaign channel, and "
+        "overnight return — or the thesis dies."
     )
     one_liner = (
-        "HawkxAI is the live footprint desk for a word or phrase a marketing team "
-        "already owns — and the campaign move that follows."
+        "HawkxAI is the live footprint desk for a campaign name a team already owns. "
+        "Paste the phrase. See where it printed since yesterday, with receipts. "
+        "No invented why."
     )
     if product_para:
         sources.append(f"{(core_src.split(' @', 1)[0] or CORE_IDEA_RELS[0])}#product")
@@ -545,11 +554,12 @@ def compose_one_pager(dossier: Dossier) -> str:
     elif git:
         git_line = f"`{git.branch}` @ `{git.commit}`"
 
-    market_lines = []
-    for slice_ in dossier.market:
-        market_lines.append(f"- **{slice_.label}:** {slice_.value} _(source: {slice_.source})_")
-    market_block = "\n".join(market_lines) if market_lines else (
-        "- Market sizing is not yet a first-party fact in this checkout. We will not invent a TAM."
+    market_block = (
+        "Social listening is occupied (Brandwatch, Meltwater, Talkwalker, Sprinklr). "
+        "We do not raise on TAM/SAM/SOM in the research file — that page is not "
+        "diligence. Brandwatch's ~$50k median seat is the comparable. The buyer is "
+        "the junior who cannot get that login. The job is owned-phrase footprint "
+        "plus evidence-only correlation, not a cheaper firehose."
     )
 
     stack = ", ".join(dossier.stack) if dossier.stack else "Next.js, TypeScript, D3, Gemini"
@@ -558,7 +568,7 @@ def compose_one_pager(dossier: Dossier) -> str:
     if dossier.agents:
         agents_block = (
             "\n## Agents\n\n"
-            f"{_bullets(dossier.agents, 12)}\n"
+            f"{_bullets(dossier.agents, 5)}\n"
         )
 
     return f"""# HawkxAI
@@ -584,13 +594,13 @@ def compose_one_pager(dossier: Dossier) -> str:
 
 ## What's live
 
-{_bullets(dossier.current, 7)}
+{_bullets(dossier.current, 6)}
 
 Stack in the checkout: {stack}.
 {agents_block}
 ## What's next
 
-{_bullets(dossier.future, 7)}
+{_bullets(dossier.future, 5)}
 
 The backlog is not a brainstorm. Booster re-ranks it from real capture gaps after every run.
 
@@ -598,20 +608,22 @@ The backlog is not a brainstorm. Booster re-ranks it from real capture gaps afte
 
 {market_block}
 
-Comparables in the research file: Dataminr, PredictHQ, Brandwatch. The gap they leave is the one we occupy: social artifacts + evidence-backed why + age translation + competitor campaign moves.
+## What it is not
+
+Not Brandwatch — they win on coverage and archive. Not a campaign PDF — ChatGPT writes those. Not Research-as-Perplexity, age Mad Libs, or disaster + stock mashup. `/` attracts. `/footprint` is the product.
 
 ## The proposal
 
 {dossier.stage}
 
-We are raising to turn this wedge into the default war-room for cultural attention.
+We are locking a wedge: one owned phrase, overnight, receipts only. Ten people come back the next morning, or the company thesis is dead and the repo stays a hackathon.
 
 **Use of funds**
-1. Ingest the platforms CMOs actually buy (TikTok / Reels / Shorts) so Gen Z campaigns stop being invisible.
-2. Decode real QR campaigns from images, not just QR-shaped URLs.
-3. Ship the one-page competitor brief — hook, risk, age takes, three receipts — the artifact a CMO will pay for.
+1. Persist hourly snapshots so occurrence is a time series, not a 15-minute screenshot.
+2. Ingest a channel campaigns actually live on (YouTube Data API; TikTok only with an official grant).
+3. Persist tape-watch off localStorage so the morning delta survives a cold start.
 
-We will not pitch fake users. The proof is the product: a live map, a live booster loop, and a checkout you can run.
+We will not pitch fake users. The proof is the product: a live footprint desk, a live booster loop, and a checkout you can run.
 
 — Founder, HawkxAI
 """.strip() + "\n"

@@ -6,6 +6,7 @@ import type {
   DataLineage,
   FootprintAnalysis,
   IndustryAnalysis,
+  PublicDataSource,
 } from "@/lib/insights-types";
 import { analyzeIndustry } from "@/lib/insights-analysis";
 import { buildDataLineage } from "@/lib/lineage";
@@ -100,8 +101,8 @@ export async function POST(req: NextRequest) {
       analysis
     );
 
-    const timeSeries = generateTimeSeries(publicSources, poiData);
-    const heatmap = generateHeatmap(publicSources, analysis);
+    const timeSeries = generateTimeSeries(publicSources);
+    const heatmap = generateHeatmap();
     const comparisons = generateComparisons(analysis, footprint);
 
     const dashboard: InsightsDashboard = {
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
       poiData: {
         ...poiData,
         dataPoints: publicSources.reduce((sum, s) => sum + s.dataPoints, 0),
-        relevanceScore: calculateRelevance(publicSources, poiData),
+        relevanceScore: calculateRelevance(publicSources),
       },
       analysis,
       lineage,
@@ -204,7 +205,7 @@ async function getTopPOIs(category: IndustryCategory | null) {
 async function generateDashboard(
   poiId: string,
   category: IndustryCategory | null,
-  publicSources: any[]
+  publicSources: PublicDataSource[]
 ): Promise<InsightsDashboard | null> {
   const poiData = {
     id: poiId,
@@ -229,8 +230,8 @@ async function generateDashboard(
 
   const footprint = await calculateFootprint(poiData, publicSources, analysis);
 
-  const timeSeries = generateTimeSeries(publicSources, poiData);
-  const heatmap = generateHeatmap(publicSources, analysis);
+  const timeSeries = generateTimeSeries(publicSources);
+  const heatmap = generateHeatmap();
   const comparisons = generateComparisons(analysis, footprint);
 
   return {
@@ -242,7 +243,7 @@ async function generateDashboard(
     poiData: {
       ...poiData,
       dataPoints: publicSources.reduce((sum, s) => sum + s.dataPoints, 0),
-      relevanceScore: calculateRelevance(publicSources, poiData),
+      relevanceScore: calculateRelevance(publicSources),
     },
     analysis,
     lineage,
@@ -254,7 +255,7 @@ async function generateDashboard(
   };
 }
 
-function calculateRelevance(publicSources: any[], poiData: any): number {
+function calculateRelevance(publicSources: PublicDataSource[]): number {
   const totalDataPoints = publicSources.reduce(
     (sum, s) => sum + s.dataPoints,
     0
@@ -265,7 +266,7 @@ function calculateRelevance(publicSources: any[], poiData: any): number {
   return Math.min(1, (totalDataPoints / 10000) * avgReliability);
 }
 
-function generateTimeSeries(publicSources: any[], poiData: any) {
+function generateTimeSeries(publicSources: PublicDataSource[]) {
   const points = [];
   const now = Date.now();
   for (let i = 30; i >= 0; i--) {
@@ -283,7 +284,7 @@ function generateTimeSeries(publicSources: any[], poiData: any) {
   return points;
 }
 
-function generateHeatmap(publicSources: any[], analysis: IndustryAnalysis) {
+function generateHeatmap() {
   const cells = [];
   const platforms = ["micro", "tech", "b2b", "etech", "silicon"];
   const metrics = ["reach", "engagement", "sentiment", "velocity"];
