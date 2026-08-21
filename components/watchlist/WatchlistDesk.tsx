@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
 import EmptyStage from "@/components/shell/EmptyStage";
 import {
@@ -11,7 +11,17 @@ import {
   PrimaryButton,
   StatusChip,
 } from "@/components/shell/DeskChrome";
+import DeskWorkspace from "@/components/shell/DeskWorkspace";
+import {
+  WatchlistInspect,
+  WatchlistMetrics,
+  WatchlistNames,
+  WatchlistTable,
+  WatchlistViz,
+} from "@/components/watchlist/WatchlistDashboard";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
+import { rollupWatchlist, sortInsights, type WatchSort } from "@/lib/watchlist-metrics";
+import { notifyWatchlistChanged, onWatchlistChanged } from "@/lib/watchlist-sync";
 import type { PoiInsight } from "@/lib/types";
 
 const SUGGESTIONS = [
@@ -20,57 +30,6 @@ const SUGGESTIONS = [
   { id: "wwdc", label: "WWDC" },
   { id: "heatwave", label: "#HeatWaveFit" },
 ] as const;
-
-function pct(n: number): string {
-  return `${Math.round(n * 100)}%`;
-}
-
-function deltaLabel(n: number): string {
-  if (n > 0) return `+${n}`;
-  return String(n);
-}
-
-function Row({
-  insight,
-  onOpen,
-  onRemove,
-}: {
-  insight: PoiInsight;
-  onOpen: () => void;
-  onRemove: () => void;
-}) {
-  const e = insight.entity;
-  return (
-    <li className="border-b border-white/8 last:border-b-0">
-      <div className="flex flex-wrap items-start gap-3 px-4 py-3.5">
-        <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
-          <p className="text-[14px] font-medium tracking-tight text-white/92">{e.label}</p>
-          <p className="mt-0.5 font-mono text-[10px] text-white/40">
-            {e.aliases.join(" · ") || e.label}
-          </p>
-          <p className="mt-2 text-[12px] leading-relaxed text-white/70">{insight.analysis}</p>
-          {insight.occupiers.length > 0 ? (
-            <p className="mt-1.5 line-clamp-1 font-mono text-[10px] text-white/40">
-              Occupied by {insight.occupiers.map((o) => o.host).join(" · ")}
-            </p>
-          ) : null}
-        </button>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <div className="flex flex-wrap justify-end gap-1.5">
-            <StatusChip>
-              {insight.thin ? "thin" : insight.outlook}
-            </StatusChip>
-            <StatusChip>Δ {deltaLabel(insight.delta)}</StatusChip>
-            <StatusChip>organic {pct(insight.organic)}</StatusChip>
-            <StatusChip>occupied {pct(insight.occupancy)}</StatusChip>
-            <StatusChip>{insight.receiptCount} receipts</StatusChip>
-          </div>
-          <GhostButton onClick={onRemove}>Remove</GhostButton>
-        </div>
-      </div>
-    </li>
-  );
-}
 
 export default function WatchlistDesk() {
   const [insights, setInsights] = useState<PoiInsight[]>([]);
@@ -81,11 +40,16 @@ export default function WatchlistDesk() {
   const [aliases, setAliases] = useState("");
   const [saving, setSaving] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const [sort, setSort] = useState<WatchSort>("rank");
+  const [dir, setDir] = useState<"asc" | "desc">("desc");
   const inputRef = useRef<HTMLInputElement>(null);
+  const rows = useMemo(() => sortInsights(insights, sort, dir), [insights, sort, dir]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError(null);
     try {
       const res = await fetch("/api/watchlist");
       if (!res.ok) throw new Error(`Watchlist failed (${res.status})`);
@@ -97,10 +61,15 @@ export default function WatchlistDesk() {
       setBackend(data.backend);
       setUpdatedAt(data.updatedAt);
       setInsights(data.insights);
+      setSelectedId((prev) => {
+        if (prev && data.insights.some((row) => row.entity.id === prev)) return prev;
+        return data.insights[0]?.entity.id ?? null;
+      });
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load watchlist");
+      if (!silent) setError(err instanceof Error ? err.message : "Could not load watchlist");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -109,15 +78,50 @@ export default function WatchlistDesk() {
   }, [load]);
 
   useEffect(() => {
+    const tick = () => void load(true);
+    const stop = onWatchlistChanged(tick);
+    const poll = window.setInterval(tick, 12_000);
+    return () => {
+      stop();
+      window.clearInterval(poll);
+    };
+  }, [load]);
+
+  const openFootprint = useCallback((id: string) => {
+    const row = insights.find((r) => r.entity.id === id);
+    const q = row?.entity.label ?? id;
+    window.location.assign(`/footprint?q=${encodeURIComponent(q)}`);
+  }, [insights]);
+
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT");
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         inputRef.current?.focus();
+        return;
+      }
+      if (typing) return;
+      if (e.key === "j" || e.key === "k") {
+        e.preventDefault();
+        if (!rows.length) return;
+        const idx = rows.findIndex((row) => row.entity.id === selectedId);
+        const at = idx < 0 ? 0 : idx;
+        const next = e.key === "j" ? Math.min(rows.length - 1, at + 1) : Math.max(0, at - 1);
+        setSelectedId(rows[next].entity.id);
+      }
+      if (e.key === "Enter" && selectedId) {
+        if (target?.tagName === "A" || target?.tagName === "BUTTON") return;
+        e.preventDefault();
+        openFootprint(selectedId);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [rows, selectedId, openFootprint]);
 
   async function addLabel(raw: string, extra = "") {
     const name = raw.trim();
@@ -130,11 +134,22 @@ export default function WatchlistDesk() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label: name, aliases: extra }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        insight?: PoiInsight;
+      };
       if (!res.ok) throw new Error(data.error || `Add failed (${res.status})`);
       setLabel("");
       setAliases("");
-      await load();
+      if (data.insight) {
+        setInsights((prev) => {
+          const rest = prev.filter((row) => row.entity.id !== data.insight!.entity.id);
+          return [data.insight!, ...rest];
+        });
+        setSelectedId(data.insight.entity.id);
+      }
+      notifyWatchlistChanged();
+      await load(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add that name");
     } finally {
@@ -148,11 +163,24 @@ export default function WatchlistDesk() {
   }
 
   async function handleRemove(id: string) {
+    setInsights((prev) => prev.filter((row) => row.entity.id !== id));
+    setSelectedId((prev) => (prev === id ? null : prev));
     await fetch(`/api/watchlist?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    await load();
+    notifyWatchlistChanged();
+    await load(true);
   }
 
   const empty = !loading && insights.length === 0;
+  const rollup = rollupWatchlist(rows);
+  const selected = rows.find((row) => row.entity.id === selectedId) ?? null;
+
+  function handleSort(next: WatchSort) {
+    if (next === sort) setDir((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setSort(next);
+      setDir("desc");
+    }
+  }
 
   return (
     <main className="desk-shell">
@@ -185,7 +213,7 @@ export default function WatchlistDesk() {
         context={
           <span className="signal-label">
             Public tape vs names you own. Organic vs occupied. Never an invented WHY.
-            <span className="desk-shortcut"> · ⌘K</span>
+            <span className="desk-shortcut"> · ⌘K add · J/K rows</span>
           </span>
         }
       >
@@ -202,7 +230,7 @@ export default function WatchlistDesk() {
           {backend ? <StatusChip>{backend}</StatusChip> : null}
         </div>
         <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
-          <GhostButton onClick={() => void load()} disabled={loading}>
+          <GhostButton onClick={() => void load(true)} disabled={loading}>
             Refresh
           </GhostButton>
         </div>
@@ -214,45 +242,81 @@ export default function WatchlistDesk() {
         </div>
       ) : null}
 
-      <div className="relative z-10 min-h-0 flex-1 overflow-hidden p-3 max-md:p-2">
-        {empty ? (
+      {empty ? (
+        <div className="relative z-10 min-h-0 flex-1 overflow-hidden p-3 max-md:p-2">
           <EmptyStage
             eyebrow="Watch"
             title="Track companies and campaigns"
-            copy="Add a name you own or follow. We join it to public receipts and score organic vs occupied. Open Footprint for the full desk."
+            copy="Add a name you own or follow. The board fills with overlap receipts, organic vs occupied, and who else printed it. Open Footprint for the full desk."
             primaryLabel="Focus watch"
             onPrimary={() => inputRef.current?.focus()}
             suggestions={[...SUGGESTIONS]}
             onSuggest={(name) => void addLabel(name)}
           />
-        ) : (
-          <section className="signal-glass flex h-full min-h-0 flex-col overflow-hidden">
-            <div className="flex shrink-0 items-baseline justify-between gap-3 border-b border-white/8 px-4 py-3">
-              <div>
-                <h1 className="text-sm font-medium tracking-tight">Watchlist</h1>
-                <p className="mt-0.5 text-xs text-white/45">
-                  Click a name to open Footprint. Occupancy is other printers of that phrase.
-                </p>
-              </div>
-              {loading ? (
-                <span className="font-mono text-[11px] tabular-nums text-white/45">updating…</span>
-              ) : null}
-            </div>
-            <ul className="min-h-0 flex-1 overflow-y-auto">
-              {insights.map((row) => (
-                <Row
-                  key={row.entity.id}
-                  insight={row}
-                  onOpen={() => {
-                    window.location.assign(`/footprint?q=${encodeURIComponent(row.entity.label)}`);
-                  }}
-                  onRemove={() => void handleRemove(row.entity.id)}
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <WatchlistMetrics rollup={rollup} loading={loading} />
+          <DeskWorkspace
+            listLabel="Names"
+            listBlurb="Ranked POIs"
+            stageLabel="Board"
+            stageBlurb="Charts and overlap"
+            detailLabel="Inspect"
+            detailBlurb="Occupiers"
+            jumpToDetailKey={selectedId}
+            list={
+              <WatchlistNames
+                insights={rows}
+                selectedId={selectedId}
+                compareId={compareId}
+                onSelect={setSelectedId}
+                onCompare={(id) => setCompareId((prev) => (prev === id ? null : id))}
+              />
+            }
+            stage={
+              <div className="flex min-h-0 flex-1 flex-col gap-3">
+                <WatchlistViz
+                  insights={rows}
+                  selectedId={selectedId}
+                  compareId={compareId}
+                  sort={sort}
+                  onSelect={setSelectedId}
+                  onSort={handleSort}
                 />
-              ))}
-            </ul>
-          </section>
-        )}
-      </div>
+                <WatchlistTable
+                  insights={rows}
+                  selectedId={selectedId}
+                  loading={loading}
+                  sort={sort}
+                  onSelect={setSelectedId}
+                  onSort={handleSort}
+                />
+              </div>
+            }
+            detail={
+              <WatchlistInspect
+                insight={selected}
+                compareActive={Boolean(selectedId && compareId && compareId !== selectedId)}
+                onOpen={() => selectedId && openFootprint(selectedId)}
+                onRemove={() => selectedId && void handleRemove(selectedId)}
+                onCompare={() => {
+                  if (!selectedId) return;
+                  setCompareId((prev) => (prev && prev !== selectedId ? null : rows.find((r) => r.entity.id !== selectedId)?.entity.id ?? null));
+                }}
+                onTag={(url, tag) => {
+                  if (!selectedId) return;
+                  void fetch("/api/watchlist", {
+                    method: "PATCH",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ entityId: selectedId, url, tag }),
+                  }).then(() => load(true));
+                }}
+              />
+            }
+          />
+        </div>
+      )}
     </main>
   );
 }

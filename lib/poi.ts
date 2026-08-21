@@ -1,6 +1,6 @@
 import { slug } from "./metrics";
 import { confidenceOf, outlookFromScores } from "./predict";
-import type { ForecastOutlook, Occupier, PoiInsight, WatchlistEntity } from "./types";
+import type { ForecastOutlook, Occupier, PoiInsight, PoiTag, WatchlistEntity } from "./types";
 
 export interface PoiReceipt {
   snapshotId: string;
@@ -126,10 +126,24 @@ export function overlapRows(entity: WatchlistEntity, receipts: PoiReceipt[]): Po
 }
 
 /** L1 organic vs occupancy from official vs other hosts. Abstain when n < 4. */
-export function scorePoi(entity: WatchlistEntity, receipts: PoiReceipt[]): PoiInsight {
-  const hits = receipts.filter((r) => receiptHitsAlias(r, entity.aliases));
-  const official = hits.filter((r) => isOfficial(r.url, entity.label));
-  const occupied = hits.filter((r) => !isOfficial(r.url, entity.label));
+export function scorePoi(
+  entity: WatchlistEntity,
+  receipts: PoiReceipt[],
+  opts?: { labels?: Map<string, PoiTag>; qr?: Map<string, string> },
+): PoiInsight {
+  const labels = opts?.labels ?? new Map<string, PoiTag>();
+  const qr = opts?.qr ?? new Map<string, string>();
+  const hits = receipts.filter((r) => {
+    if (!receiptHitsAlias(r, entity.aliases)) return false;
+    return labels.get(r.url) !== "ignore";
+  });
+  const official = hits.filter((r) => {
+    const tag = labels.get(r.url);
+    if (tag === "official") return true;
+    if (tag === "occupied") return false;
+    return isOfficial(r.url, entity.label);
+  });
+  const occupied = hits.filter((r) => !official.includes(r));
   const n = hits.length;
   const thin = n < 4;
   const organic = n === 0 ? 0 : official.length / n;
@@ -156,10 +170,12 @@ export function scorePoi(entity: WatchlistEntity, receipts: PoiReceipt[]): PoiIn
   const confidence = confidenceOf(Math.max(series.length, n > 0 ? 1 : 0), thin);
   const rankScore = Math.round(Math.abs(delta) * (thin ? 0.1 : 0.25 + occupancy) * 100) / 100;
 
-  const occupiers: Occupier[] = occupied.slice(0, 5).map((r) => ({
+  const occupiers: Occupier[] = occupied.slice(0, 12).map((r) => ({
     title: r.title,
     url: r.url,
     host: hostOf(r.url) || r.platform,
+    tag: labels.get(r.url),
+    qrPayload: qr.get(r.url),
   }));
 
   const analysis = thin
@@ -184,5 +200,6 @@ export function scorePoi(entity: WatchlistEntity, receipts: PoiReceipt[]): PoiIn
     delta,
     baselineRatio: Math.round(baselineRatio * 1000) / 1000,
     rankScore,
+    window: series.map((s) => s.count).slice(-4),
   };
 }

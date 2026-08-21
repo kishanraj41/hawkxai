@@ -36,5 +36,14 @@ CREATE TABLE IF NOT EXISTS poi_scores (
   delta INT NOT NULL DEFAULT 0,
   baseline_ratio REAL NOT NULL DEFAULT 0,
   snapshot_count INT NOT NULL DEFAULT 0,
-  rank_score REAL NOT NULL DEFAULT 0
+  rank_score REAL NOT NULL DEFAULT 0,
+  window_counts INT[] NOT NULL DEFAULT '{}'
+);
+ALTER TABLE poi_scores ADD COLUMN IF NOT EXISTS window_counts INT[] NOT NULL DEFAULT '{}';
+ALTER TABLE poi_overlap ADD COLUMN IF NOT EXISTS qr_payload TEXT;
+CREATE TABLE IF NOT EXISTS poi_labels (
+  entity_id TEXT NOT NULL,
+  url TEXT NOT NULL,
+  tag TEXT NOT NULL CHECK (tag IN ('official','occupied','ignore')),
+  PRIMARY KEY (entity_id, url)
 );

@@ -1,0 +1,226 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  isOfficial,
+  nextWindowFromSeries,
+  normalizeAliases,
+  receiptHitsAlias,
+  scorePoi,
+  type PoiReceipt,
+} from "./poi";
+import { deltaLabel, pct, rollupWatchlist, sortInsights } from "./watchlist-metrics";
+import { payloadFromQrImageUrl } from "./qr";
+import type { PoiInsight, WatchlistEntity } from "./types";
+
+function entity(label: string, extra: string[] = []): WatchlistEntity {
+  return {
+    id: label.toLowerCase(),
+    label,
+    aliases: normalizeAliases(label, extra),
+    owner: "demo",
+    createdAt: "2026-08-21T00:00:00.000Z",
+  };
+}
+
+function receipt(partial: Partial<PoiReceipt> & Pick<PoiReceipt, "url" | "title">): PoiReceipt {
+  return {
+    snapshotId: "s1",
+    platform: "public",
+    score: 50,
+    createdAt: "2026-08-21T00:00:00.000Z",
+    ...partial,
+  };
+}
+
+test("normalizeAliases keeps label and extra, drops dupes", () => {
+  const aliases = normalizeAliases("Camry", ["Toyota Camry", "camry", "TM"]);
+  assert.deepEqual(aliases, ["Camry", "Toyota Camry", "TM"]);
+});
+
+test("receiptHitsAlias uses word boundaries", () => {
+  assert.equal(receiptHitsAlias({ title: "New Camry hybrid", url: "https://x.test/a" }, ["Camry"]), true);
+  assert.equal(receiptHitsAlias({ title: "camera sensor", url: "https://x.test/a" }, ["Camry"]), false);
+  assert.equal(receiptHitsAlias({ title: "heat", url: "https://x.test/#HeatWaveFit" }, ["#HeatWaveFit"]), true);
+});
+
+test("isOfficial marks wiki, nhtsa, and brand-like hosts", () => {
+  assert.equal(isOfficial("https://en.wikipedia.org/wiki/Camry", "Camry"), true);
+  assert.equal(isOfficial("https://www.nhtsa.gov/recalls", "Camry"), true);
+  assert.equal(isOfficial("https://www.reuters.com/camry", "Camry"), false);
+});
+
+test("scorePoi is thin under 4 receipts and abstains", () => {
+  const camry = entity("Camry");
+  const scored = scorePoi(camry, [
+    receipt({ url: "https://en.wikipedia.org/wiki/Camry", title: "Camry" }),
+    receipt({ url: "https://news.test/camry", title: "Camry sales" }),
+  ]);
+  assert.equal(scored.thin, true);
+  assert.equal(scored.receiptCount, 2);
+  assert.equal(scored.outlook, "thin");
+});
+
+test("scorePoi splits official vs occupied and builds a window", () => {
+  const camry = entity("Camry", ["Toyota Camry"]);
+  const receipts: PoiReceipt[] = [
+    receipt({ snapshotId: "a", url: "https://en.wikipedia.org/wiki/Toyota_Camry", title: "Toyota Camry" }),
+    receipt({ snapshotId: "a", url: "https://www.nhtsa.gov/camry", title: "Camry recall" }),
+    receipt({ snapshotId: "b", url: "https://www.reuters.com/world/camry-surge", title: "Camry surge" }),
+    receipt({ snapshotId: "b", url: "https://hn.test/item/1", title: "Camry hybrid thread" }),
+    receipt({ snapshotId: "b", url: "https://cars.test/camry", title: "Camry vs Accord" }),
+  ];
+  const scored = scorePoi(camry, receipts);
+  assert.equal(scored.thin, false);
+  assert.equal(scored.officialCount, 2);
+  assert.equal(scored.occupiedCount, 3);
+  assert.equal(scored.occupancy, 0.6);
+  assert.equal(scored.organic, 0.4);
+  assert.deepEqual(scored.window, [2, 3]);
+  assert.equal(scored.delta, 1);
+  assert.equal(scored.outlook, "rising");
+  assert.ok(scored.occupiers.some((o) => o.host === "reuters.com"));
+});
+
+test("nextWindowFromSeries abstains, rises, and uses baseline to peak", () => {
+  assert.equal(nextWindowFromSeries([4], 0.1, 0.1), "thin");
+  assert.equal(nextWindowFromSeries([10, 20], 0.1, 0.1), "rising");
+  assert.equal(nextWindowFromSeries([20, 10], 0.2, 0.1), "peaking");
+});
+
+test("rollupWatchlist and sortInsights follow occupancy vs organic", () => {
+  const camry = scorePoi(entity("Camry"), [
+    receipt({ url: "https://en.wikipedia.org/wiki/Camry", title: "Camry" }),
+    receipt({ url: "https://www.nhtsa.gov/camry", title: "Camry" }),
+    receipt({ url: "https://news.test/camry", title: "Camry" }),
+    receipt({ url: "https://press.test/camry", title: "Camry" }),
+  ]);
+  const tesla = scorePoi(entity("Tesla"), [
+    receipt({ url: "https://en.wikipedia.org/wiki/Tesla,_Inc.", title: "Tesla" }),
+    receipt({ url: "https://tesla.com/news", title: "Tesla" }),
+    receipt({ url: "https://arxiv.org/abs/tesla", title: "Tesla" }),
+    receipt({ url: "https://uspto.gov/tesla", title: "Tesla" }),
+    receipt({ url: "https://news.test/tesla", title: "Tesla" }),
+  ]);
+  const rollup = rollupWatchlist([camry, tesla]);
+  assert.equal(rollup.watched, 2);
+  assert.equal(rollup.receipts, 9);
+  assert.equal(rollup.thin, 0);
+  assert.ok((rollup.occupancyMean ?? 0) > 0);
+  const byOcc = sortInsights([camry, tesla], "occupancy", "desc");
+  assert.equal(byOcc[0].entity.label, "Camry");
+  const byOrg = sortInsights([camry, tesla], "organic", "desc");
+  assert.equal(byOrg[0].entity.label, "Tesla");
+});
+
+test("pct and deltaLabel stay operator-readable", () => {
+  assert.equal(pct(0.62), "62%");
+  assert.equal(deltaLabel(12), "+12");
+  assert.equal(deltaLabel(-3), "-3");
+});
+
+test("unrelated names do not steal Camry receipts", () => {
+  const tesla = entity("Tesla");
+  const scored = scorePoi(tesla, [
+    receipt({ url: "https://en.wikipedia.org/wiki/Camry", title: "Toyota Camry" }),
+  ]);
+  assert.equal(scored.receiptCount, 0);
+});
+
+function fakeInsight(label: string, occupancy: number, organic: number): PoiInsight {
+  return {
+    entity: entity(label),
+    receiptCount: 10,
+    officialCount: Math.round(organic * 10),
+    occupiedCount: Math.round(occupancy * 10),
+    organic,
+    occupancy,
+    outlook: "rising",
+    confidence: 0.5,
+    thin: false,
+    analysis: "test",
+    occupiers: [],
+    snapshotCount: 2,
+    delta: 1,
+    baselineRatio: 0.1,
+    rankScore: occupancy,
+    window: [4, 6],
+  };
+}
+
+test("sortInsights rank keeps higher rankScore first", () => {
+  const rows = sortInsights(
+    [fakeInsight("Low", 0.2, 0.8), fakeInsight("High", 0.9, 0.1)],
+    "rank",
+    "desc",
+  );
+  assert.equal(rows[0].entity.label, "High");
+});
+
+test("watchlist store add, join tape, remove", async () => {
+  const { addWatchlist, insightsFor, listWatchlist, removeWatchlist } = await import("./watchlist-store");
+  const label = "WatchlistTestPhraseZz";
+  const added = await addWatchlist(label, normalizeAliases(label));
+  try {
+    const listed = await listWatchlist();
+    assert.ok(listed.entities.some((row) => row.id === added.id));
+    const [hit] = await insightsFor([added], {
+      updatedAt: "2026-08-21T00:00:00.000Z",
+      degraded: [],
+      sources: { x: false, reddit: false, hn: false, public: true },
+      topics: [
+        {
+          id: "t1",
+          label,
+          velocity: "rising",
+          divergence: 0,
+          tickers: [],
+          platforms: {
+            x: { score: 0, posts: [] },
+            reddit: { score: 0, posts: [] },
+            hn: { score: 0, posts: [] },
+            public: {
+              score: 10,
+              posts: [
+                {
+                  id: "p1",
+                  platform: "public",
+                  title: `${label} on Wikipedia`,
+                  url: `https://en.wikipedia.org/wiki/${label}`,
+                  score: 10,
+                  createdAt: "2026-08-21T00:00:00.000Z",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    } );
+    assert.ok(hit.receiptCount >= 1);
+    assert.ok(Array.isArray(hit.window));
+  } finally {
+    await removeWatchlist(added.id);
+  }
+});
+
+test("payloadFromQrImageUrl reads chart-API data params", () => {
+  assert.equal(
+    payloadFromQrImageUrl("https://api.qrserver.com/v1/create-qr-code/?data=https://camry.example/fit"),
+    "https://camry.example/fit",
+  );
+  assert.equal(payloadFromQrImageUrl("https://en.wikipedia.org/wiki/Camry"), null);
+});
+
+test("scorePoi honors human labels over host class", () => {
+  const camry = entity("Camry");
+  const receipts: PoiReceipt[] = [
+    receipt({ url: "https://en.wikipedia.org/wiki/Camry", title: "Camry" }),
+    receipt({ url: "https://news.test/camry", title: "Camry" }),
+    receipt({ url: "https://press.test/camry", title: "Camry" }),
+    receipt({ url: "https://blog.test/camry", title: "Camry" }),
+  ];
+  const labeled = scorePoi(camry, receipts, {
+    labels: new Map([["https://news.test/camry", "official"]]),
+  });
+  const unlabeled = scorePoi(camry, receipts);
+  assert.ok(labeled.officialCount > unlabeled.officialCount);
+});

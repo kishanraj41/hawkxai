@@ -1,7 +1,8 @@
 import { slug } from "./metrics";
 import { overlapRows, scorePoi, type PoiReceipt } from "./poi";
+import { decodeQrFromImageUrl, isQrImageUrl, payloadFromQrImageUrl } from "./qr";
 import { databaseName, readTrendDbConfig } from "./trend-db";
-import type { PoiInsight, Post, TrendsPayload, WatchlistEntity } from "./types";
+import type { PoiInsight, PoiTag, Post, TrendsPayload, WatchlistEntity } from "./types";
 
 const OWNER = "demo";
 
@@ -39,7 +40,16 @@ CREATE TABLE IF NOT EXISTS poi_scores (
   delta INT NOT NULL DEFAULT 0,
   baseline_ratio REAL NOT NULL DEFAULT 0,
   snapshot_count INT NOT NULL DEFAULT 0,
-  rank_score REAL NOT NULL DEFAULT 0
+  rank_score REAL NOT NULL DEFAULT 0,
+  window_counts INT[] NOT NULL DEFAULT '{}'
+);
+ALTER TABLE poi_scores ADD COLUMN IF NOT EXISTS window_counts INT[] NOT NULL DEFAULT '{}';
+ALTER TABLE poi_overlap ADD COLUMN IF NOT EXISTS qr_payload TEXT;
+CREATE TABLE IF NOT EXISTS poi_labels (
+  entity_id TEXT NOT NULL,
+  url TEXT NOT NULL,
+  tag TEXT NOT NULL CHECK (tag IN ('official','occupied','ignore')),
+  PRIMARY KEY (entity_id, url)
 );
 `;
 
@@ -51,6 +61,8 @@ type PgPool = {
 };
 
 const memory: WatchlistEntity[] = [];
+const memoryLabels = new Map<string, Map<string, PoiTag>>();
+const memoryQr = new Map<string, string>();
 let schemaReady = false;
 let pool: PgPool | null | undefined;
 
@@ -209,6 +221,7 @@ export async function insightsFor(
   tape?: TrendsPayload | null,
 ): Promise<PoiInsight[]> {
   const db = await allPool();
+  if (db) await ensureSchema(db);
   const fromSql = await loadReceipts(db);
   const fromTape = postsToReceipts(tape ?? null);
   const seen = new Set<string>();
@@ -219,15 +232,38 @@ export async function insightsFor(
     seen.add(key);
     receipts.push(r);
   }
-  const insights = entities
-    .map((e) => scorePoi(e, receipts))
-    .toSorted((a, b) => b.rankScore - a.rankScore || b.receiptCount - a.receiptCount);
+  const labels = await loadLabels(db, entities.map((e) => e.id));
+  const qr = await collectQr(db, receipts);
+  const insights = entities.map((e) =>
+    scorePoi(e, receipts, { labels: labels.get(e.id), qr }),
+  );
   if (db) {
+    const stored = await loadStoredWindows(db, entities.map((e) => e.id));
+    for (const row of insights) {
+      const prior = stored.get(row.entity.id) ?? [];
+      if (prior.length > row.window.length) row.window = prior;
+    }
     await persistInsights(db, insights, receipts).catch((err) => {
       console.warn("[watchlist] persist overlap", err instanceof Error ? err.message : err);
     });
   }
-  return insights;
+  return insights.toSorted((a, b) => b.rankScore - a.rankScore || b.receiptCount - a.receiptCount);
+}
+
+async function loadStoredWindows(db: PgPool, ids: string[]): Promise<Map<string, number[]>> {
+  const map = new Map<string, number[]>();
+  if (!ids.length) return map;
+  try {
+    const res = await db.query(`SELECT entity_id, window_counts FROM poi_scores WHERE entity_id = ANY($1)`, [ids]);
+    for (const row of res.rows) {
+      const id = asString(row.entity_id);
+      const win = Array.isArray(row.window_counts) ? row.window_counts.map((n) => Number(n) || 0) : [];
+      if (id && win.length) map.set(id, win);
+    }
+  } catch {
+    /* column missing until ensureSchema */
+  }
+  return map;
 }
 
 async function persistInsights(
@@ -248,13 +284,20 @@ async function persistInsights(
            official = EXCLUDED.official`,
         [row.entityId, row.snapshotId, row.url, row.title, row.host, row.official, row.collectedAt],
       );
+      const payload = memoryQr.get(row.url) ?? payloadFromQrImageUrl(row.url);
+      if (payload) {
+        await db.query(
+          `UPDATE poi_overlap SET qr_payload = $1 WHERE entity_id = $2 AND snapshot_id = $3 AND url = $4 AND (qr_payload IS NULL OR qr_payload = '')`,
+          [payload, row.entityId, row.snapshotId, row.url],
+        );
+      }
     }
     await db.query(
       `INSERT INTO poi_scores (
          entity_id, scored_at, receipt_count, official_count, occupied_count,
          organic, occupancy, outlook, confidence, thin, delta, baseline_ratio,
-         snapshot_count, rank_score
-       ) VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         snapshot_count, rank_score, window_counts
+       ) VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        ON CONFLICT (entity_id) DO UPDATE SET
          scored_at = EXCLUDED.scored_at,
          receipt_count = EXCLUDED.receipt_count,
@@ -268,7 +311,8 @@ async function persistInsights(
          delta = EXCLUDED.delta,
          baseline_ratio = EXCLUDED.baseline_ratio,
          snapshot_count = EXCLUDED.snapshot_count,
-         rank_score = EXCLUDED.rank_score`,
+         rank_score = EXCLUDED.rank_score,
+         window_counts = EXCLUDED.window_counts`,
       [
         insight.entity.id,
         insight.receiptCount,
@@ -283,7 +327,83 @@ async function persistInsights(
         insight.baselineRatio,
         insight.snapshotCount,
         insight.rankScore,
+        insight.window,
       ],
     );
   }
+}
+
+async function loadLabels(
+  db: PgPool | null,
+  ids: string[],
+): Promise<Map<string, Map<string, PoiTag>>> {
+  const out = new Map<string, Map<string, PoiTag>>();
+  for (const id of ids) {
+    const mem = memoryLabels.get(id);
+    if (mem) out.set(id, new Map(mem));
+  }
+  if (!db || !ids.length) return out;
+  try {
+    const res = await db.query(`SELECT entity_id, url, tag FROM poi_labels WHERE entity_id = ANY($1)`, [ids]);
+    for (const row of res.rows) {
+      const id = asString(row.entity_id);
+      const url = asString(row.url);
+      const tag = asString(row.tag) as PoiTag;
+      if (!id || !url || (tag !== "official" && tag !== "occupied" && tag !== "ignore")) continue;
+      const map = out.get(id) ?? new Map<string, PoiTag>();
+      map.set(url, tag);
+      out.set(id, map);
+    }
+  } catch {
+    /* schema not ready */
+  }
+  return out;
+}
+
+async function collectQr(db: PgPool | null, receipts: PoiReceipt[]): Promise<Map<string, string>> {
+  const qr = new Map<string, string>(memoryQr);
+  if (db) {
+    try {
+      const res = await db.query(`SELECT url, qr_payload FROM poi_overlap WHERE qr_payload IS NOT NULL AND qr_payload <> ''`);
+      for (const row of res.rows) {
+        const url = asString(row.url);
+        const payload = asString(row.qr_payload);
+        if (url && payload) qr.set(url, payload);
+      }
+    } catch {
+      /* column missing */
+    }
+  }
+  let fetches = 0;
+  for (const r of receipts) {
+    if (qr.has(r.url)) continue;
+    const encoded = payloadFromQrImageUrl(r.url);
+    if (encoded) {
+      qr.set(r.url, encoded);
+      memoryQr.set(r.url, encoded);
+      continue;
+    }
+    if (!isQrImageUrl(r.url) || fetches >= 3) continue;
+    fetches += 1;
+    const decoded = await decodeQrFromImageUrl(r.url);
+    if (decoded) {
+      qr.set(r.url, decoded);
+      memoryQr.set(r.url, decoded);
+    }
+  }
+  return qr;
+}
+
+export async function tagReceipt(entityId: string, url: string, tag: PoiTag): Promise<void> {
+  const map = memoryLabels.get(entityId) ?? new Map<string, PoiTag>();
+  map.set(url, tag);
+  memoryLabels.set(entityId, map);
+  const db = await allPool();
+  if (!db) return;
+  await ensureSchema(db);
+  await db.query(
+    `INSERT INTO poi_labels (entity_id, url, tag) VALUES ($1, $2, $3)
+     ON CONFLICT (entity_id, url) DO UPDATE SET tag = EXCLUDED.tag`,
+    [entityId, url, tag],
+  );
 }

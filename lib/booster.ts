@@ -1,6 +1,7 @@
 import { divergenceLabel } from "./ui-helpers";
 import { totalScore } from "./metrics";
 import { buildCausation, classifyTopic } from "./desk";
+import { payloadFromQrImageUrl } from "./qr";
 import { buildSentiment } from "./sentiment";
 import {
   PLATFORMS,
@@ -138,7 +139,10 @@ export function captureArtifacts(topic: Topic): CapturedArtifact[] {
   for (const raw of urls) {
     const url = raw.replace(/[).,]+$/, "");
     const plats = platformsFor(topic, (t) => t.includes(url));
-    if (QR_HINT_RE.test(url) || SHORT_LINK_RE.test(url) || /utm_medium=qr/i.test(url)) {
+    const qrPayload = payloadFromQrImageUrl(url);
+    if (qrPayload) {
+      bump("qr", qrPayload, plats);
+    } else if (QR_HINT_RE.test(url) || SHORT_LINK_RE.test(url) || /utm_medium=qr/i.test(url)) {
       bump("qr", url, plats);
     } else {
       bump("url", url, plats);

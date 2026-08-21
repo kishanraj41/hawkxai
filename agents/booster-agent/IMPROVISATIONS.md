@@ -6,8 +6,8 @@ Last run: 2026-08-18T22:40:00+00:00
 
 ## P0 — Watchlist desk (Public × POI)
 
-- **Why:** Shipped phase 1. `/watchlist` persists companies/campaigns, writes Public × POI overlap + scores to Cloud SQL, ranks by |Δ| × occupancy, and opens Footprint. Footprint has Watch this.
-- **Next:** Hand-tag 200 Camry rows and swap the L1/L2 stumps for HistGB without changing the desk.
+- **Why:** Shipped. Occupied/Organic sorts. Overlay two names (shift-click). Inspect tags official/occupied/ignore for HistGB. QR payloads from chart-API image URLs and decoded PNG/JPEG (capped).
+- **Next:** Tag Camry occupiers on the Watch inspect rail until ~200 gold rows, then train HistGB.
 
 ## P0 — Wire Footprint plug → Cloud Run fleet
 
@@ -31,13 +31,13 @@ Last run: 2026-08-18T22:40:00+00:00
 
 ## P0 — QR image decode, not just QR-shaped URLs
 
-- **Why:** Campaigns hide the payload in images. Text regex cannot see a poster QR.
-- **Next:** Accept image URLs → decode with a QR library → treat payload as a first-class artifact.
+- **Why:** Shipped thin. Chart-API image URLs (`data`/`chl`) become QR artifacts. PNG/JPEG URLs decode with jsQR (3 per ingest, 2.5s cap). Payload stored on `poi_overlap.qr_payload`.
+- **Next:** Raise the decode cap once Camry posters actually land as image receipts.
 
 ## P1 — Compare two campaign phrases on one desk
 
-- **Why:** A CMO looking up this year's tag also needs last year's phrase on the same timeseries.
-- **Next:** Second lookup slot; overlay occurrence without inventing a shared WHY.
+- **Why:** Shipped on Watch. Shift-click a second name (or Overlay window) to draw both last-4 series on one chart. No invented shared WHY.
+- **Next:** Same overlay on Footprint occurrence when two phrases are plugged.
 
 ## P1 — Shared-artifact bridges on the mind map
 

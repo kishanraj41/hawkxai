@@ -38,6 +38,7 @@ import {
   type TapeDelta,
   type TapeWatchStore,
 } from "@/lib/watch";
+import { notifyWatchlistChanged } from "@/lib/watchlist-sync";
 import type { AgeLens, BoosterPayload, DeskCategory, Platform, Topic, TrendsPayload } from "@/lib/types";
 
 type SortKey = "score" | Platform | "risk";
@@ -382,6 +383,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label: name }),
       });
+      notifyWatchlistChanged();
     } finally {
       setWatchingPoi(false);
     }

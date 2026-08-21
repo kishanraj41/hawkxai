@@ -326,10 +326,14 @@ export interface WatchlistEntity {
   createdAt: string;
 }
 
+export type PoiTag = "official" | "occupied" | "ignore";
+
 export interface Occupier {
   title: string;
   url: string;
   host: string;
+  tag?: PoiTag;
+  qrPayload?: string;
 }
 
 export interface PoiInsight {
@@ -351,4 +355,6 @@ export interface PoiInsight {
   baselineRatio: number;
   /** Sort key: |delta| × occupancy so occupied names float. */
   rankScore: number;
+  /** Last overlap counts, oldest → newest. */
+  window: number[];
 }
