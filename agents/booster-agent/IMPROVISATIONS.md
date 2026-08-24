@@ -71,6 +71,6 @@ Last run: 2026-08-18T22:40:00+00:00
 
 ## Shipped this pass (desk glyphs)
 
-- Ticker tiles show a one-line hover chip (`TrendMark.Caption`) using the same print name as the button `title`. Tape pauses on hover.
-- Watchlist icon rows sit above Score/Risk heat bars so names stay visible on a short viewport.
-- Mind-map artifact leaves (hashtag / QR / URL / phrase / ticker) use the same 2D pictogram catalog as the tape.
+- Ticker caption is pinned to the tape frame (outside the scrolling overflow). Tape pauses on hover.
+- Watchlist icon rows come first. Score/Risk sit with the X/Reddit/HN/APIs heat bars at the bottom.
+- Mind-map artifact leaves stay glyph-only until you inspect a node. Receipt stays on the native tooltip.

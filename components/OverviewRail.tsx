@@ -116,24 +116,7 @@ export default function OverviewRail({
         </p>
       ) : null}
 
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={() => onSort("score")}
-          className={`signal-label ${sortKey === "score" ? "text-white" : ""}`}
-        >
-          Score
-        </button>
-        <button
-          type="button"
-          onClick={() => onSort("risk")}
-          className={`signal-label ${sortKey === "risk" ? "text-white" : ""}`}
-        >
-          Risk
-        </button>
-      </div>
-
-      <ul className="mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+      <ul className="mt-3 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
         {ranked.map((t) => {
           const active = selectedId === t.id || hoverId === t.id;
           const risk = topicRisk(t);
@@ -199,6 +182,22 @@ export default function OverviewRail({
       </ul>
 
       <div className="mt-3 shrink-0 space-y-2.5 border-t border-white/8 pt-3">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onSort("score")}
+            className={`signal-label ${sortKey === "score" ? "text-white" : ""}`}
+          >
+            Score
+          </button>
+          <button
+            type="button"
+            onClick={() => onSort("risk")}
+            className={`signal-label ${sortKey === "risk" ? "text-white" : ""}`}
+          >
+            Risk
+          </button>
+        </div>
         <HeatBar label="X" value={xAvg} active={sortKey === "x"} onClick={() => onSort("x")} />
         <HeatBar
           label="Reddit"

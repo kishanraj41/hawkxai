@@ -235,6 +235,15 @@ export default function MindMapChart({
       nodes
         .append("title")
         .text((d) => {
+          if (
+            d.data.node.kind === "artifact" ||
+            d.data.node.kind === "source" ||
+            d.data.node.kind === "driver"
+          ) {
+            return d.data.node.detail
+              ? `${d.data.node.label} · ${d.data.node.detail}`
+              : d.data.node.label;
+          }
           const tid = topicIdOf(d.data.node);
           const topic = tid ? topicById.get(tid) : undefined;
           if (topic) return trendAria(topic, classifyTopic(topic));
@@ -265,8 +274,7 @@ export default function MindMapChart({
         .attr("opacity", (d) => {
           if (d.data.node.kind === "topic") return 0;
           if (d.data.node.kind === "hub") return 1;
-          if (!activeTopic) return 0;
-          return lit.has(d.data.id) ? 1 : 0;
+          return inspectId && d.data.id === inspectId ? 1 : 0;
         })
         .text((d) => (d.data.node.kind === "topic" ? "" : d.data.node.label));
 

@@ -161,13 +161,17 @@ function Tile({
   );
 }
 
-/** One-line print name. Parent must be `group` and already set `title` to the same string. */
-function Caption({ children }: { children: ReactNode }) {
+/** One-line print name, pinned to the tape frame (not the scrolling tile). */
+function Caption({ children }: { children?: ReactNode }) {
   return (
-    <span className="min-w-0 max-w-0 overflow-hidden opacity-0 transition-[max-width,opacity] duration-150 group-hover:max-w-[220px] group-hover:opacity-100 group-focus:max-w-[220px] group-focus:opacity-100 group-focus-visible:max-w-[220px] group-focus-visible:opacity-100">
-      <span className="inline-block max-w-[220px] truncate whitespace-nowrap rounded-full border border-white/12 bg-black/75 px-2 py-0.5 text-[11px] leading-none text-white/90">
-        {children}
-      </span>
+    <span
+      className={`block max-w-full truncate whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] leading-none ${
+        children
+          ? "border border-white/12 bg-black/75 text-white/90"
+          : "border border-transparent text-transparent"
+      }`}
+    >
+      {children ?? "\u00a0"}
     </span>
   );
 }
