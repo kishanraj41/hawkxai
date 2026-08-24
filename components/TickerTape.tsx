@@ -1,13 +1,15 @@
+import { TrendMark, trendAria } from "@/components/desk/TrendMarks";
 import { topicRisk } from "@/lib/booster";
 import { totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { Topic } from "@/lib/types";
+import type { CapturedArtifact, Topic } from "@/lib/types";
 
 interface TickerTapeProps {
   topics: Topic[];
+  artifactsById?: Map<string, CapturedArtifact[]>;
   onSelect: (topic: Topic) => void;
 }
 
-export default function TickerTape({ topics, onSelect }: TickerTapeProps) {
+export default function TickerTape({ topics, artifactsById, onSelect }: TickerTapeProps) {
   const ranked = [...topics].toSorted((a, b) => totalScore(b) - totalScore(a));
   const items = ranked.length ? [...ranked, ...ranked] : [];
 
@@ -18,14 +20,19 @@ export default function TickerTape({ topics, onSelect }: TickerTapeProps) {
       <div className="tape-track flex w-max gap-7 px-4 py-2">
         {items.map((t, i) => {
           const risk = topicRisk(t);
+          const category = TrendMark.category(t, artifactsById?.get(t.id) ?? []);
+          const name = trendAria(t, category);
           return (
             <button
               key={`${t.id}-${i}`}
               type="button"
               onClick={() => onSelect(t)}
-              className="flex shrink-0 items-center gap-2 font-mono text-[11px] tabular-nums text-white/80 transition-colors duration-150 hover:text-white"
+              title={name}
+              aria-label={name}
+              className="group flex shrink-0 items-center gap-2 font-mono text-[11px] tabular-nums text-white/80 transition-colors duration-150 hover:text-white"
             >
-              <span className="max-w-[220px] truncate">{t.label}</span>
+              <TrendMark.Tile topic={t} category={category} size={22} />
+              <TrendMark.Caption>{name}</TrendMark.Caption>
               <span className="text-white">{Math.round(totalScore(t))}</span>
               <span
                 className={
@@ -39,16 +46,10 @@ export default function TickerTape({ topics, onSelect }: TickerTapeProps) {
                 {VELOCITY_MARK[t.velocity]}
               </span>
               <span
-                className={
-                  risk === "high"
-                    ? "text-red-400"
-                    : risk === "medium"
-                      ? "text-amber-400"
-                      : "text-white/35"
-                }
-              >
-                {risk}
-              </span>
+                className={`h-1.5 w-1.5 rounded-full ${
+                  risk === "high" ? "bg-red-400" : risk === "medium" ? "bg-amber-400" : "bg-emerald-400"
+                }`}
+              />
             </button>
           );
         })}

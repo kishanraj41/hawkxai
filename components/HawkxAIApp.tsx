@@ -556,7 +556,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
         </div>
       </DeskFrame>
 
-      <TickerTape topics={payload?.topics ?? []} onSelect={pickTopic} />
+      <TickerTape topics={payload?.topics ?? []} artifactsById={artifactsById} onSelect={pickTopic} />
 
       {askAnswer ? (
         <div className="no-print relative z-20 mx-3 mt-2 rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)] px-4 py-2.5">
@@ -591,6 +591,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
             hoverId={hoverId}
             sortKey={sortKey}
             watchedIds={watchIds}
+            artifactsById={artifactsById}
             onSort={setSortKey}
             onSelect={pickTopic}
             onHover={setHoverId}

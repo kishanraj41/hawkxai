@@ -71,6 +71,7 @@ export function buildMindMap(
         topicId: topic.id,
         weight: art.mentions,
         detail: `${art.kind} · ${art.mentions} mention${art.mentions === 1 ? "" : "s"}`,
+        artifactKind: art.kind,
       });
     }
 
