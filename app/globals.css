@@ -1063,6 +1063,11 @@ body {
   animation: tape-scroll 72s linear infinite;
 }
 
+.tape-track:hover,
+.tape-track:focus-within {
+  animation-play-state: paused;
+}
+
 .signal-live {
   display: inline-block;
   width: 6px;

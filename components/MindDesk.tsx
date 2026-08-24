@@ -63,9 +63,7 @@ export default function MindDesk({
             {phrase ? `“${phrase}” mind` : `${CATEGORY_LABEL[category]} mind`}
           </h1>
           <p className="mt-0.5 text-xs text-white/45">
-            {caption
-              ? caption
-              : "Tap a print or leaf. Analysis and next-window call come from collected snapshots — never an invented WHY."}
+            {caption ? caption : "Tap a print. Stick is the plug. Never an invented WHY."}
           </p>
         </div>
         <div className="flex shrink-0 gap-4 font-mono text-[11px] tabular-nums">

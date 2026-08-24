@@ -5,6 +5,7 @@ import MindInspect from "@/components/desk/MindInspect";
 import MindMapChart from "@/components/desk/MindMap";
 import { SentimentChart } from "@/components/desk/SentimentChart";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
+import { TrendMark, trendAria } from "@/components/desk/TrendMarks";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import { topicRisk } from "@/lib/booster";
 import { topPosts, totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
@@ -399,10 +400,14 @@ function Trends() {
           {state.topics.map((topic) => {
             const active = topic.id === state.selectedId || topic.id === state.hoverId;
             const risk = topicRisk(topic);
+            const category = TrendMark.category(topic, state.brief?.topicId === topic.id ? state.brief.artifacts : []);
+            const name = trendAria(topic, category);
             return (
               <tr
                 key={topic.id}
                 tabIndex={0}
+                title={name}
+                aria-label={name}
                 onClick={() => actions.select(topic)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -421,7 +426,12 @@ function Trends() {
                   <span className="mr-2 text-white/40">{VELOCITY_MARK[topic.velocity]}</span>
                   {Math.round(totalScore(topic))}
                 </td>
-                <td className="max-w-[160px] truncate px-2 py-2 text-[12px]">{topic.label}</td>
+                <td className="px-2 py-2">
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <TrendMark.Tile topic={topic} category={category} size={24} />
+                    <span className="max-w-[140px] truncate text-[12px]">{topic.label}</span>
+                  </span>
+                </td>
                 <td className="px-2 py-2 font-mono text-[11px] tabular-nums text-white/55">
                   {topic.peakHourCT ?? "—"}
                 </td>

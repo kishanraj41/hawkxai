@@ -192,6 +192,8 @@ export interface MindNode {
   weight: number;
   detail?: string;
   forecast?: LeafForecast;
+  /** Receipt kind for artifact leaves. Hub / topic / source / driver omit this. */
+  artifactKind?: ArtifactKind;
 }
 
 export interface MindLink {

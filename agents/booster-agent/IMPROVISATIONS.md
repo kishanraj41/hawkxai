@@ -68,3 +68,9 @@ Last run: 2026-08-18T22:40:00+00:00
 - YouTube Data v3 only when `YOUTUBE_API_KEY` is set.
 - Core tape is pinned (Wikipedia, world news RSS, NWS, GDACS, CoinGecko, Bluesky, Federal Register); bandit fills the rest.
 - Default geo is **world**, not Austin / SF / NYC. Place filter still zooms a metro.
+
+## Shipped this pass (desk glyphs)
+
+- Ticker tiles show a one-line hover chip (`TrendMark.Caption`) using the same print name as the button `title`. Tape pauses on hover.
+- Watchlist icon rows sit above Score/Risk heat bars so names stay visible on a short viewport.
+- Mind-map artifact leaves (hashtag / QR / URL / phrase / ticker) use the same 2D pictogram catalog as the tape.

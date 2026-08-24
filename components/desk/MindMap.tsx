@@ -2,7 +2,9 @@
 
 import * as d3 from "d3";
 import { useEffect, useMemo, useRef } from "react";
-import type { MindGraph, MindNode, Topic } from "@/lib/types";
+import { drawArtifactLeaf, drawTrendTile, trendAria } from "@/components/desk/TrendMarks";
+import { classifyTopic } from "@/lib/desk";
+import type { ArtifactKind, MindGraph, MindNode, Topic } from "@/lib/types";
 
 interface TreeDatum {
   id: string;
@@ -55,6 +57,14 @@ function toTree(graph: MindGraph): TreeDatum | null {
 
 function topicIdOf(node: MindNode): string | null {
   return node.kind === "hub" ? null : node.topicId ?? null;
+}
+
+const ARTIFACT_KINDS = new Set<ArtifactKind>(["hashtag", "phrase", "url", "qr", "ticker"]);
+
+function artifactKindOf(node: MindNode): ArtifactKind | null {
+  if (node.artifactKind && ARTIFACT_KINDS.has(node.artifactKind)) return node.artifactKind;
+  const head = node.detail?.split(" · ")[0];
+  return head && ARTIFACT_KINDS.has(head as ArtifactKind) ? (head as ArtifactKind) : null;
 }
 
 export default function MindMapChart({
@@ -176,12 +186,9 @@ export default function MindMapChart({
         .style("cursor", (d) => (d.data.node.kind === "hub" ? "default" : "pointer"));
 
       nodes
+        .filter((d) => d.data.node.kind !== "topic" && d.data.node.kind !== "artifact")
         .append("circle")
-        .attr("r", (d) => {
-          if (d.data.node.kind === "hub") return 14;
-          if (d.data.node.kind === "topic") return 7 + Math.min(6, d.data.node.weight / 40);
-          return 4.5;
-        })
+        .attr("r", (d) => (d.data.node.kind === "hub" ? 14 : 4.5))
         .attr("fill", (d) => FILL[d.data.node.kind])
         .attr("fill-opacity", (d) => {
           if (!activeTopic) return d.data.node.kind === "hub" ? 1 : 0.9;
@@ -195,12 +202,53 @@ export default function MindMapChart({
         .attr("stroke-width", (d) => (topicIdOf(d.data.node) === selectedId ? 2 : 0.6));
 
       nodes
+        .filter((d) => d.data.node.kind === "topic")
+        .each(function (d) {
+          const host = this as SVGGElement | null;
+          const tid = topicIdOf(d.data.node);
+          const topic = tid ? topicById.get(tid) : undefined;
+          if (!host || !topic) return;
+          const faded = Boolean(activeTopic) && !lit.has(d.data.id);
+          host.setAttribute("opacity", faded ? "0.28" : "1");
+          drawTrendTile(host, topic, classifyTopic(topic), 22);
+        });
+
+      nodes
+        .filter((d) => d.data.node.kind === "artifact")
+        .each(function (d) {
+          const host = this as SVGGElement | null;
+          if (!host) return;
+          const kind = artifactKindOf(d.data.node);
+          const faded = Boolean(activeTopic) && !lit.has(d.data.id);
+          host.setAttribute("opacity", faded ? "0.22" : "1");
+          if (kind) {
+            drawArtifactLeaf(host, kind, 16);
+            return;
+          }
+          const ns = "http://www.w3.org/2000/svg";
+          const circle = document.createElementNS(ns, "circle");
+          circle.setAttribute("r", "4.5");
+          circle.setAttribute("fill", FILL.artifact);
+          host.appendChild(circle);
+        });
+
+      nodes
+        .append("title")
+        .text((d) => {
+          const tid = topicIdOf(d.data.node);
+          const topic = tid ? topicById.get(tid) : undefined;
+          if (topic) return trendAria(topic, classifyTopic(topic));
+          return d.data.node.label;
+        });
+
+      nodes
         .append("text")
         .attr("dy", "0.32em")
         .attr("x", (d) => {
           if (d.data.node.kind === "hub") return 0;
           const left = d.x > Math.PI / 2 && d.x < (3 * Math.PI) / 2;
-          return left ? -10 : 10;
+          const offset = d.data.node.kind === "topic" ? 16 : d.data.node.kind === "artifact" ? 14 : 10;
+          return left ? -offset : offset;
         })
         .attr("text-anchor", (d) => {
           if (d.data.node.kind === "hub") return "middle";
@@ -208,17 +256,19 @@ export default function MindMapChart({
           return left ? "end" : "start";
         })
         .attr("fill", (d) => (d.data.node.kind === "hub" ? "#e8a23a" : "rgba(244,244,245,0.88)"))
-        .attr("font-size", (d) => (d.data.node.kind === "hub" ? 12 : d.data.node.kind === "topic" ? 11 : 9))
+        .attr("font-size", (d) => (d.data.node.kind === "hub" ? 12 : 9))
         .attr("font-family", (d) =>
           d.data.node.kind === "artifact" || d.data.node.kind === "source"
             ? "var(--font-plex), ui-monospace, monospace"
             : "var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif",
         )
         .attr("opacity", (d) => {
-          if (!activeTopic) return 1;
-          return lit.has(d.data.id) ? 1 : 0.28;
+          if (d.data.node.kind === "topic") return 0;
+          if (d.data.node.kind === "hub") return 1;
+          if (!activeTopic) return 0;
+          return lit.has(d.data.id) ? 1 : 0;
         })
-        .text((d) => d.data.node.label);
+        .text((d) => (d.data.node.kind === "topic" ? "" : d.data.node.label));
 
       nodes
         .on("mouseenter", (_event, d) => {
