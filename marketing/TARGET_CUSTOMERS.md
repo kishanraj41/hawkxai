@@ -7,7 +7,11 @@
 
 ## Executive Summary
 
-HawkxAI solves a $50k problem for $200/month: tracking owned campaign phrases across platforms with evidence-only insights. The primary buyer is the marketing professional who needs campaign visibility but can't access expensive enterprise listening tools.
+HawkxAI makes world-class predictions from public trend data and presents them through easy-to-understand dashboards. We turn "what's happening" into "what will happen next and what to do about it."
+
+**Core Value**: Predictive campaign intelligence — know when topics will peak, where they'll spread, and how to respond  
+**Target Buyer**: Marketing professionals who need fast, confident decisions backed by predictions, not just historical data  
+**Pricing**: $200/month for intelligence that pays for itself when you catch a trend early or avoid a crisis
 
 ---
 
@@ -19,7 +23,7 @@ HawkxAI solves a $50k problem for $200/month: tracking owned campaign phrases ac
 Need to track campaign performance across platforms but can't afford $50k/year Brandwatch seats for every team member.
 
 **Value Proposition**  
-Track owned campaign phrases (hashtags, product names, campaign codes) overnight with evidence-only insights. See where your campaign printed, with receipts, by tomorrow morning.
+Predictive campaign intelligence that tells you when your campaign will peak, where it will spread, and what competitor moves are coming. Make confident decisions based on predictions, not just past data.
 
 **Willingness to Pay**  
 $200-500/month per seat (10x cheaper than Brandwatch)
@@ -31,10 +35,11 @@ $200-500/month per seat (10x cheaper than Brandwatch)
 - Consumer tech (Samsung, Apple tracking product launches)
 
 **Key Features They Need**  
-- Overnight phrase deltas
-- Multi-platform footprint (X, Reddit, HN, YouTube)
-- Export to Slack/PDF for morning standups
-- Risk flagging before crisis escalation
+- **Peak time prediction**: Know when to post for maximum engagement
+- **Divergence detection**: See if it's a real trend (everywhere) or echo chamber (X-only)
+- **Risk Radar**: Early warning when sentiment shifts negative
+- **Simple dashboards**: Understand complex patterns in <30 seconds
+- Export predictions to Slack/PDF for morning standups
 
 ---
 

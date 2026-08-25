@@ -7,11 +7,16 @@
 
 ## Executive Summary
 
-HawkxAI operates in the **social listening & campaign intelligence** market, but positions itself as a **middle-market disruptor** rather than a direct enterprise competitor. We're not out-listening Brandwatch — we're serving the 95% of marketing professionals who will never get an enterprise seat.
+HawkxAI is a **predictive campaign intelligence platform** that makes world-class predictions from public trend data. We're not just tracking mentions — we're predicting when topics will peak, where they'll spread, and what campaigns will do next.
 
-**Market Position**: Self-serve campaign footprint tracking with evidence-only insights  
-**Wedge**: Owned-phrase monitoring for $200/month vs. $50k/year enterprise firehose  
-**Moat**: Receipts-only policy (never invents posts or WHY)
+**Market Position**: Predictive intelligence with simple dashboards, not descriptive analytics  
+**Core Value**: Turn complex public data into actionable insights in <30 seconds  
+**Wedge**: World-class predictions for $200/month vs. $50k/year descriptive enterprise tools  
+**Moat**: 
+- Predictive models (peak time, platform spread, campaign arc)
+- Divergence metric (X-only bubble vs. everywhere)
+- Evidence-only correlation (never invents WHY)
+- Simple dashboards (circle-pack + one-liners)
 
 ---
 
