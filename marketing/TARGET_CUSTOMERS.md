@@ -231,10 +231,11 @@ $99-299/month
 ┌─────────────────────────────────────────────────────────────┐
 │ STARTER — $49/month                                         │
 ├─────────────────────────────────────────────────────────────┤
-│ • 3 watched phrases (star for overnight delta)              │
-│ • 50 phrase lookups/month                                   │
+│ • 3 POIs (Points of Interest — tracked phrases/campaigns)   │
+│ • Unlimited public trending view                            │
 │ • Export to Markdown                                        │
-│ • 7-day footprint history                                   │
+│ • 7-day history per POI                                     │
+│ • Hourly snapshots with overnight deltas                    │
 │                                                             │
 │ TARGET: Social media managers, freelancers                  │
 └─────────────────────────────────────────────────────────────┘
@@ -242,10 +243,11 @@ $99-299/month
 ┌─────────────────────────────────────────────────────────────┐
 │ PRO — $199/month                                            │
 ├─────────────────────────────────────────────────────────────┤
-│ • 15 watched phrases                                        │
-│ • Unlimited phrase lookups                                  │
+│ • 15 POIs (tracked campaigns/phrases/hashtags)              │
+│ • Unlimited public trending view                            │
 │ • Export to Markdown, CSV, PDF                              │
-│ • 30-day footprint history                                  │
+│ • 30-day history per POI                                    │
+│ • Hourly snapshots + overnight deltas                       │
 │ • Sentiment alerts (email/Slack)                            │
 │ • Age lens selection (Kids, Gen Z, Millennial, Gen X, Boomer)│
 │                                                             │
@@ -255,12 +257,12 @@ $99-299/month
 ┌─────────────────────────────────────────────────────────────┐
 │ AGENCY — $999/month                                         │
 ├─────────────────────────────────────────────────────────────┤
-│ • 50+ watched phrases                                       │
-│ • Unlimited lookups                                         │
+│ • 50+ POIs (perfect for multi-client agencies)              │
+│ • Unlimited public trending view                            │
 │ • Multi-seat (5 users included, +$99 per additional)        │
 │ • White-label reports                                       │
 │ • API access (1000 calls/day)                               │
-│ • 90-day history                                            │
+│ • 90-day history per POI                                    │
 │ • Priority support                                          │
 │ • Custom integrations (Slack, Teams, webhooks)              │
 │                                                             │
@@ -285,13 +287,15 @@ $99-299/month
 
 ## The Killer Use Case (Gets Paid Fast)
 
-### "Campaign Name War Room"
+### "Campaign Name War Room" (POI Tracking)
 
 **Scenario**:  
 A mid-size athletic apparel brand launches **#HeatWaveFit** campaign on Monday morning across Instagram, TikTok, X, and YouTube.
 
+**Monday 9am**: Marketing manager adds `#HeatWaveFit` as a tracked POI (Point of Interest) in HawkxAI Pro.
+
 **Tuesday 8am** (24 hours later):  
-Marketing manager opens HawkxAI footprint desk:
+Marketing manager opens HawkxAI and sees their POI's overnight delta:
 
 ```
 ✓ WHERE IT PRINTED
@@ -323,6 +327,8 @@ Marketing manager opens HawkxAI footprint desk:
 **Value**: This report took 30 seconds to generate. Brandwatch would take 2 hours and cost $4,000/month. Manual search would miss Reddit entirely.
 
 **Conversion Trigger**: The marketing manager sees the risk cluster 24 hours before it becomes a crisis. They adjust messaging by Tuesday afternoon. Crisis averted. They upgrade to Pro that day.
+
+**Why POI Model Wins**: Traditional tools track everything and charge $50k/year. HawkxAI tracks only what the client cares about (`#HeatWaveFit`) and charges $199/month. No noise, just signal.
 
 ---
 

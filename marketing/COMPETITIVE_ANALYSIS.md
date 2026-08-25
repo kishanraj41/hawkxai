@@ -565,28 +565,31 @@ Limited = Partial support
 
 ### What HawkxAI Does Better Than Anyone
 
-1. **Evidence-Only Correlation**  
+1. **Client-Directed POI Model**  
+   You tell us what to track (your campaign hashtags, product names, competitor phrases). We track only those "Points of Interest" — no firehose, no noise, just your campaign footprint. This keeps costs low ($199/mo vs. $50k/year) while delivering 100% relevant insights.
+
+2. **Evidence-Only Correlation**  
    Never invents posts, never hallucinates WHY. Every insight traces to a real receipt with URL and timestamp.
 
-2. **Campaign-Specific Intelligence**  
+3. **Campaign-Specific Intelligence**  
    Purpose-built for tracking owned phrases (campaign names, hashtags, product launches), not generic brand monitoring.
 
-3. **Tech Platform Coverage**  
+4. **Tech Platform Coverage**  
    Only tool that covers Hacker News + Reddit + X + YouTube in one place. Critical for B2B/tech campaigns.
 
-4. **Age Lens Translation**  
+5. **Age Lens Translation**  
    Same campaign footprint, 5 different takeaways (Kids, Gen Z, Millennials, Gen X, Boomers). No one else does this.
 
-5. **Competitor Campaign Playbooks**  
+6. **Competitor Campaign Playbooks**  
    Not just "competitor mentioned you" — actionable intelligence on how to ride the same need without cloning the meme.
 
-6. **Shared Artifact Mind Maps**  
+7. **Shared Artifact Mind Maps**  
    Visual correlation showing which campaigns share hashtags, QR codes, URLs. Makes campaign overlap visible.
 
-7. **Overnight Delta Tracking**  
-   Star a phrase Monday, see measured changes Tuesday morning. No interpretation, just measured deltas.
+8. **Overnight Delta Tracking**  
+   Star a phrase Monday (add it as a POI), see measured changes Tuesday morning. No interpretation, just measured deltas.
 
-8. **Self-Serve at Scale**  
+9. **Self-Serve at Scale**  
    From signup to first insight in 5 minutes. No sales calls, no onboarding, no training required.
 
 ---
@@ -609,11 +612,17 @@ Limited = Partial support
 #### Objection: "We already have Brandwatch"
 
 **Response**:  
-"That's great — Brandwatch is the gold standard for enterprise listening. But how many people on your team actually have a login? HawkxAI isn't replacing Brandwatch, it's democratizing campaign tracking. Think of it as the self-serve layer that sits below your enterprise tool. Your 3 people with Brandwatch seats keep them. Your other 12 marketers get HawkxAI for quick campaign lookups."
+"That's great — Brandwatch is the gold standard for enterprise listening. But how many people on your team actually have a login? HawkxAI isn't replacing Brandwatch, it's democratizing campaign tracking.
+
+Here's the key difference: Brandwatch tracks **everything** (10 billion mentions per day, 10+ years of history). You're paying $50k/year for that firehose whether you need it or not.
+
+HawkxAI tracks **only what you tell us to track** — your campaign hashtags, product names, phrases you own. You add them as POIs (Points of Interest), we track those hourly. No noise, just your campaigns.
+
+Think of it this way: Brandwatch is the enterprise data warehouse. HawkxAI is the campaign war room. Your 3 people with Brandwatch seats keep them for brand health monitoring. Your other 12 marketers get HawkxAI for $199/month each to track their active campaigns."
 
 **Follow-up**:  
 "How much does it cost to add 10 more Brandwatch seats?" (Answer: $50k-100k/year)  
-"HawkxAI gives those 10 people campaign tracking for $2,000/year total."
+"HawkxAI gives those 10 people campaign tracking for $2,000/year total — and they each get 15 POIs to track whatever campaigns they're running."
 
 ---
 
@@ -667,13 +676,19 @@ HawkxAI is $199/month and takes 30 seconds. You save 20 hours per month. That's 
 
 **Response**:  
 "You can, but here's what free tools can't do:
-- **Google Alerts**: Email firehose, no social coverage, no sentiment
-- **ChatGPT**: Invents posts and sources
-- **Platform search**: Siloed, no correlation, no tracking over time
+- **Google Alerts**: Email firehose, no social coverage, no sentiment, no overnight deltas
+- **ChatGPT**: Invents posts and sources (no real receipts)
+- **Platform search**: Siloed (search X, then Reddit, then HN manually), no historical tracking, no correlation
 
-If you're tracking one campaign for one week, free works. If you're tracking 5+ campaigns ongoing, free costs you hours per day and you still miss insights.
+Free tools are one-time snapshots. HawkxAI is ongoing POI tracking:
+- Add `#HeatWaveFit` as a POI on Monday
+- We track it hourly across X, Reddit, HN, YouTube
+- Tuesday morning, you see overnight deltas with receipts
+- Keep tracking for 30 days to see campaign arc (launch → peak → fade)
 
-HawkxAI pays for itself the first time it catches something you would have missed manually."
+If you're doing a one-time check, free works. If you're tracking 3-15 campaigns ongoing, HawkxAI saves you 10 hours/week and gives you insights manual search can't (overnight deltas, correlation, risk flags).
+
+Time ROI: 10 hours/week × $50/hour = $500/week saved. HawkxAI is $199/month = $46/week. **10x ROI on time alone.**"
 
 ---
 
