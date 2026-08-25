@@ -7,7 +7,7 @@ interface PredictionPanelProps {
   brief: BoosterTopicBrief;
 }
 
-export function PredictionPanel({ topic, brief }: PredictionPanelProps) {
+export function PredictionPanel({ brief }: PredictionPanelProps) {
   const predictions = brief.predictions;
 
   if (!predictions) {

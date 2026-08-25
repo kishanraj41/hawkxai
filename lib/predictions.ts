@@ -14,7 +14,6 @@ import { totalScore } from "./metrics";
 
 // Peak time prediction constants
 const PEAK_WINDOW_HOURS = 24;
-const MIN_DATA_POINTS = 3;
 
 // Platform spread probabilities
 const SPREAD_THRESHOLDS = {
@@ -22,13 +21,6 @@ const SPREAD_THRESHOLDS = {
   minScore: 30, // Minimum score to consider spreading
   lagHours: 8, // Typical spread window
 };
-
-// Campaign arc phases
-const ARC_PHASES = {
-  rise: { multiplier: 1.5, durationHours: 48 },
-  peak: { multiplier: 1.0, durationHours: 72 },
-  fade: { multiplier: 0.5, durationHours: 120 },
-} as const;
 
 // Risk clustering thresholds
 const RISK_CLUSTERING = {
@@ -81,10 +73,7 @@ export interface RiskAlert {
 /**
  * Predict when a topic will hit peak velocity
  */
-export function predictPeakTime(
-  topic: Topic,
-  brief?: BoosterTopicBrief,
-): PeakTimePrediction {
+export function predictPeakTime(topic: Topic): PeakTimePrediction {
   const velocity = topic.velocity;
   const score = totalScore(topic);
   const now = new Date();
@@ -118,9 +107,6 @@ export function predictPeakTime(
     const hoursUntilPeak = Math.round(
       PEAK_WINDOW_HOURS * (1 - scoreRatio * 0.7),
     );
-
-    // Estimate peak time
-    const predictedPeak = new Date(now.getTime() + hoursUntilPeak * 3600000);
 
     // Adjust for divergence - single-platform bubbles peak faster
     const div = topic.divergence ?? 0.5;
@@ -157,7 +143,7 @@ export function predictPlatformSpread(
   brief?: BoosterTopicBrief,
 ): PlatformSpreadPrediction {
   const activePlatforms = Object.entries(topic.platforms)
-    .filter(([_, slice]) => slice.score > 0)
+    .filter(([, slice]) => slice.score > 0)
     .map(([name]) => name as Platform);
 
   const inactivePlatforms = (
@@ -220,7 +206,7 @@ export function predictPlatformSpread(
   return {
     willSpreadTo: predictions,
     reasoning,
-    confidence: score > 50 && velocity !== "unknown" ? 0.7 : 0.5,
+    confidence: score > 50 ? 0.7 : 0.5,
   };
 }
 
@@ -233,7 +219,6 @@ export function predictCampaignArc(
 ): CampaignArcPrediction {
   const velocity = topic.velocity;
   const div = topic.divergence ?? 0.5;
-  const score = totalScore(topic);
 
   // Determine current phase
   let currentPhase: "rise" | "peak" | "fade" = "peak";
@@ -276,7 +261,7 @@ export function predictCampaignArc(
     estimatedPhaseEnd: estimatedPhaseEnd.toISOString(),
     totalLifecycleHours,
     arcCurve,
-    confidence: velocity !== "unknown" ? 0.7 : 0.4,
+    confidence: 0.7,
     reasoning,
   };
 }
@@ -354,7 +339,7 @@ export function generatePredictionSummary(
   topic: Topic,
   brief?: BoosterTopicBrief,
 ): PredictionSummary {
-  const peakPrediction = predictPeakTime(topic, brief);
+  const peakPrediction = predictPeakTime(topic);
   const spreadPrediction = predictPlatformSpread(topic, brief);
   const arcPrediction = predictCampaignArc(topic, brief);
 
