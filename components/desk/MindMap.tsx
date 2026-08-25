@@ -1,8 +1,8 @@
 "use client";
 
 import * as d3 from "d3";
-import { useEffect, useMemo, useRef } from "react";
-import { drawArtifactLeaf, drawTrendTile, trendAria } from "@/components/desk/TrendMarks";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { drawArtifactLeaf, drawTrendTile, TrendMark, trendAria } from "@/components/desk/TrendMarks";
 import { classifyTopic } from "@/lib/desk";
 import type { ArtifactKind, MindGraph, MindNode, Topic } from "@/lib/types";
 
@@ -67,6 +67,10 @@ function artifactKindOf(node: MindNode): ArtifactKind | null {
   return head && ARTIFACT_KINDS.has(head as ArtifactKind) ? (head as ArtifactKind) : null;
 }
 
+function nodePeek(node: MindNode): string {
+  return node.detail ? `${node.label} · ${node.detail}` : node.label;
+}
+
 export default function MindMapChart({
   graph,
   topics,
@@ -79,8 +83,11 @@ export default function MindMapChart({
 }: MindMapChartProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const peekRef = useRef<MindNode | null>(null);
+  const [peek, setPeek] = useState<MindNode | null>(null);
   const topicById = useMemo(() => new Map(topics.map((t) => [t.id, t])), [topics]);
   const tree = useMemo(() => toTree(graph), [graph]);
+  peekRef.current = peek;
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -186,6 +193,11 @@ export default function MindMapChart({
         .style("cursor", (d) => (d.data.node.kind === "hub" ? "default" : "pointer"));
 
       nodes
+        .append("circle")
+        .attr("r", (d) => (d.data.node.kind === "hub" ? 18 : d.data.node.kind === "topic" ? 16 : 12))
+        .attr("fill", "transparent");
+
+      nodes
         .filter((d) => d.data.node.kind !== "topic" && d.data.node.kind !== "artifact")
         .append("circle")
         .attr("r", (d) => (d.data.node.kind === "hub" ? 14 : 4.5))
@@ -271,19 +283,29 @@ export default function MindMapChart({
             ? "var(--font-plex), ui-monospace, monospace"
             : "var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif",
         )
+        .style("pointer-events", "none")
         .attr("opacity", (d) => {
-          if (d.data.node.kind === "topic") return 0;
           if (d.data.node.kind === "hub") return 1;
-          return inspectId && d.data.id === inspectId ? 1 : 0;
+          if (inspectId && d.data.id === inspectId) return 1;
+          if (peekRef.current && d.data.id === peekRef.current.id) return 1;
+          return 0;
         })
-        .text((d) => (d.data.node.kind === "topic" ? "" : d.data.node.label));
+        .text((d) => d.data.node.label);
 
       nodes
-        .on("mouseenter", (_event, d) => {
+        .on("mouseenter", function (_event, d) {
+          d3.select(this).select("text").attr("opacity", 1);
+          setPeek(d.data.node);
           const tid = topicIdOf(d.data.node);
           if (tid) onHover(tid);
         })
-        .on("mouseleave", () => onHover(null))
+        .on("mouseleave", function (_event, d) {
+          const keep =
+            d.data.node.kind === "hub" || Boolean(inspectId && d.data.id === inspectId);
+          d3.select(this).select("text").attr("opacity", keep ? 1 : 0);
+          setPeek(null);
+          onHover(null);
+        })
         .on("click", (event, d) => {
           event.stopPropagation();
           onInspect?.(d.data.node);
@@ -320,6 +342,9 @@ export default function MindMapChart({
 
   return (
     <div ref={wrapRef} className="absolute inset-0">
+      <div className="pointer-events-none absolute inset-x-2 top-2 z-10">
+        <TrendMark.Caption>{peek ? nodePeek(peek) : undefined}</TrendMark.Caption>
+      </div>
       <svg ref={svgRef} className="h-full w-full" role="img" aria-label="Trend correlation mind map" />
     </div>
   );
