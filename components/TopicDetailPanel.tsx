@@ -202,7 +202,7 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
           )}
         </div>
 
-        {brief ? <BoosterInsights brief={brief} lens={lens} /> : null}
+        {brief ? <BoosterInsights brief={brief} topic={topic} lens={lens} /> : null}
       </div>
 
       {topic.tickers.length > 0 ? (

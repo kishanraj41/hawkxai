@@ -301,7 +301,7 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
   };
 
   // Generate world-class predictions
-  const peakTime = predictPeakTime(topic, brief);
+  const peakTime = predictPeakTime(topic);
   const platformSpread = predictPlatformSpread(topic, brief);
   const campaignArc = predictCampaignArc(topic, brief);
   const riskAlert = detectRiskClustering(topic, sentiment);

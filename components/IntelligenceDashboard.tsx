@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { BoosterPayload, BoosterTopicBrief, Topic, TrendsPayload } from "@/lib/types";
+import type { BoosterPayload, TrendsPayload } from "@/lib/types";
 
 interface IntelligenceDashboardProps {
   payload: TrendsPayload;
@@ -37,12 +37,10 @@ export function IntelligenceDashboard({ payload, booster }: IntelligenceDashboar
     const mediumRisk = riskAlerts.filter((b) => b.predictions?.riskAlert?.level === "medium").length;
 
     // Peak predictions
-    const peaking​Soon = briefs.filter(
-      (b) =>
-        b.predictions?.peakTime?.hoursUntilPeak !== null &&
-        b.predictions?.peakTime?.hoursUntilPeak > 0 &&
-        b.predictions?.peakTime?.hoursUntilPeak <= 8
-    );
+    const peakingSoon = briefs.filter((b) => {
+      const hours = b.predictions?.peakTime?.hoursUntilPeak;
+      return hours != null && hours > 0 && hours <= 8;
+    });
 
     // Platform spread predictions
     const spreadingTopics = briefs.filter(
@@ -54,7 +52,7 @@ export function IntelligenceDashboard({ payload, booster }: IntelligenceDashboar
       divergence: { bubbles, spreading, everywhere },
       risk: { high: highRisk, medium: mediumRisk, total: riskAlerts.length },
       predictions: {
-        peakingSoon: peaking​Soon.length,
+        peakingSoon: peakingSoon.length,
         spreading: spreadingTopics.length,
       },
     };
@@ -239,12 +237,10 @@ export function IntelligenceDashboard({ payload, booster }: IntelligenceDashboar
             ⏰ Peaking Soon (Next 8 Hours)
           </h3>
           {booster.briefs
-            .filter(
-              (b) =>
-                b.predictions?.peakTime?.hoursUntilPeak !== null &&
-                b.predictions?.peakTime?.hoursUntilPeak > 0 &&
-                b.predictions?.peakTime?.hoursUntilPeak <= 8
-            )
+            .filter((b) => {
+              const hours = b.predictions?.peakTime?.hoursUntilPeak;
+              return hours != null && hours > 0 && hours <= 8;
+            })
             .sort(
               (a, b) =>
                 (a.predictions?.peakTime?.hoursUntilPeak ?? 999) -
