@@ -233,6 +233,54 @@ export interface AgeTranslation {
   takeaway: string;
 }
 
+export interface PeakTimePrediction {
+  predictedPeakTime: string | null;
+  confidence: number;
+  reasoning: string;
+  currentPhase: "pre-peak" | "at-peak" | "post-peak" | "unknown";
+  hoursUntilPeak: number | null;
+}
+
+export interface PlatformSpreadPrediction {
+  willSpreadTo: {
+    platform: Platform;
+    probability: number;
+    estimatedHours: number | null;
+  }[];
+  reasoning: string;
+  confidence: number;
+}
+
+export interface CampaignArcPrediction {
+  currentPhase: "rise" | "peak" | "fade";
+  estimatedPhaseEnd: string | null;
+  totalLifecycleHours: number | null;
+  arcCurve: {
+    phase: "rise" | "peak" | "fade";
+    durationHours: number;
+    peakMultiplier: number;
+  }[];
+  confidence: number;
+  reasoning: string;
+}
+
+export interface RiskAlert {
+  level: "low" | "medium" | "high";
+  clustering: boolean;
+  recentPosts: number;
+  riskRatio: number;
+  timeWindow: string;
+  reasoning: string;
+  recommendations: string[];
+}
+
+export interface PredictionSummary {
+  headline: string;
+  nextAction: string;
+  confidence: number;
+  timeframe: string;
+}
+
 export interface BoosterTopicBrief {
   topicId: string;
   whyTrending: string;
@@ -243,6 +291,13 @@ export interface BoosterTopicBrief {
   campaign: CampaignMove;
   causation: CausationReport;
   sentiment: SentimentReport;
+  predictions?: {
+    peakTime: PeakTimePrediction;
+    platformSpread: PlatformSpreadPrediction;
+    campaignArc: CampaignArcPrediction;
+    riskAlert: RiskAlert;
+    summary: PredictionSummary;
+  };
 }
 
 export interface Improvisation {

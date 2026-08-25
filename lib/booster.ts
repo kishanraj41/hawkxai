@@ -4,6 +4,13 @@ import { buildCausation, classifyTopic } from "./desk";
 import { payloadFromQrImageUrl } from "./qr";
 import { buildSentiment } from "./sentiment";
 import {
+  detectRiskClustering,
+  generatePredictionSummary,
+  predictCampaignArc,
+  predictPeakTime,
+  predictPlatformSpread,
+} from "./predictions";
+import {
   PLATFORMS,
   type AgeLens,
   type AgeTranslation,
@@ -280,7 +287,8 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
         : sentiment.thin
           ? ""
           : ` Titles are split (${sentiment.overall.pos} pos / ${sentiment.overall.neg} neg).`;
-  return {
+
+  const brief: BoosterTopicBrief = {
     topicId: topic.id,
     whyTrending: why + tone,
     confidence,
@@ -291,6 +299,23 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
     causation: buildCausation(topic, artifacts),
     sentiment,
   };
+
+  // Generate world-class predictions
+  const peakTime = predictPeakTime(topic, brief);
+  const platformSpread = predictPlatformSpread(topic, brief);
+  const campaignArc = predictCampaignArc(topic, brief);
+  const riskAlert = detectRiskClustering(topic, sentiment);
+  const summary = generatePredictionSummary(topic, brief);
+
+  brief.predictions = {
+    peakTime,
+    platformSpread,
+    campaignArc,
+    riskAlert,
+    summary,
+  };
+
+  return brief;
 }
 
 export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBrief[]): Improvisation[] {
