@@ -160,7 +160,7 @@ function Mind() {
       <div className="flex items-center justify-between border-b border-white/8 px-3 py-2">
         <div>
           <p className="text-[13px] font-medium">Mind</p>
-          <p className="signal-label">click a node to open · shared dashes only</p>
+          <p className="signal-label">hover a blob to read it · click to open · shared dashes only</p>
         </div>
         <button
           type="button"
