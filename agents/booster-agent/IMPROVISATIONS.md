@@ -11,6 +11,18 @@ Last run: 2026-08-25T07:15:00+00:00
 - **Files:** `lib/predictions.ts` (500+ lines), `components/PredictionPanel.tsx`, integrated into `lib/booster.ts`
 - **Value:** "Will peak in 6h → Post at 2:30pm" (actionable) vs "847 mentions" (descriptive)
 
+## ✅ SHIPPED — Research pack: drop / split / fill angles
+
+- **What:** Research Copy drops receipts that fail `tokenHits` (worldnews without “apple”). Wikipedia titles become senses; Copy defaults to the denser sense. Angles and open questions are filled from dated titles, official hosts, and opposing dispute titles — templates stay empty when thin.
+- **Files:** `lib/research-pack.ts`, `lib/research.ts`, `lib/research-brief.ts`, `components/research/ResearchDesk.tsx`
+- **Next:** Persist dropped/sense choice on the share URL (`?sense=`).
+
+## ✅ SHIPPED — Tape-watch off localStorage
+
+- **What:** Stars + measured snapshots hydrate from `GET /api/tape-watch` (Cloud SQL `tape_watch` when `TREND_DB_*` is set; memory otherwise) and write-through on toggle/ingest. localStorage remains the offline cache.
+- **Files:** `lib/watch.ts` `mergeWatchStores`, `lib/watchlist-store.ts`, `app/api/tape-watch/route.ts`, `components/HawkxAIApp.tsx`
+- **Next:** Per-user owner once auth exists. Demo owner is still `demo`.
+
 ## P0 — Watchlist desk (Public × POI)
 
 - **Why:** Shipped. Occupied/Organic sorts. Overlay two names (shift-click). Inspect tags official/occupied/ignore for HistGB. QR payloads from chart-API image URLs and decoded PNG/JPEG (capped).

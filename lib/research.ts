@@ -2,6 +2,7 @@ import { z } from "zod";
 import { geminiChat, geminiDeepResearch, hasGoogleKey } from "./gemini";
 import { searchHn } from "./hn";
 import { stampSources } from "./lineage";
+import { packResearch } from "./research-pack";
 import { searchReddit } from "./reddit";
 import { fetchX } from "./signals";
 import type {
@@ -298,17 +299,12 @@ function thinBrief(query: string, sources: ResearchSource[]): {
     evidenceIds: [s.id],
     confidence: sources.length >= 6 ? ("medium" as const) : ("thin" as const),
   }));
+  const pack = packResearch(query, sources);
   return {
-    summary:
-      sources.length === 0
-        ? `No live receipts yet for “${query}”. Sources were thin or offline — nothing invented.`
-        : `Collected ${sources.length} live receipts for “${query}”. Summary is evidence-only; thin corners stay marked thin.`,
+    summary: pack.summary,
     findings,
-    openQuestions: [
-      "Which primary sources contradict each other?",
-      "What changed in the last 30 days vs older references?",
-    ],
-    angles: ["Timeline", "Primary sources", "Open disputes"],
+    openQuestions: pack.openQuestions,
+    angles: pack.angles,
   };
 }
 
@@ -398,6 +394,10 @@ export async function researchTopic(rawQuery: string): Promise<ResearchPayload> 
       sources: [],
       degraded: [],
       thin: true,
+      droppedCount: 0,
+      dropped: [],
+      senses: [],
+      defaultSenseId: null,
     };
   }
 
@@ -445,21 +445,28 @@ export async function researchTopic(rawQuery: string): Promise<ResearchPayload> 
     return Boolean(s.title);
   });
 
-  const brief = await synthesize(query, deduped);
+  const pack = packResearch(query, deduped);
+  const brief = await synthesize(query, pack.defaultSources);
+  const known = new Set(pack.defaultSources.map((s) => s.id));
+  const findings = brief.findings.filter((f) => f.evidenceIds.some((id) => known.has(id)));
   const thin =
-    deduped.length < 4 ||
-    brief.findings.every((f) => f.confidence === "thin") ||
-    Boolean(deep.degraded.length && deduped.length < 6);
+    pack.kept.length < 4 ||
+    findings.every((f) => f.confidence === "thin") ||
+    Boolean(deep.degraded.length && pack.kept.length < 6);
 
   return {
     query,
     updatedAt: new Date().toISOString(),
-    summary: brief.summary,
-    findings: brief.findings,
-    openQuestions: brief.openQuestions,
-    angles: brief.angles,
-    sources: stampSources(deduped),
+    summary: pack.summary,
+    findings: findings.length ? findings : brief.findings,
+    openQuestions: pack.openQuestions,
+    angles: pack.angles,
+    sources: stampSources(pack.kept),
     degraded: [...new Set(degraded)],
     thin,
+    droppedCount: pack.droppedCount,
+    dropped: pack.dropped,
+    senses: pack.senses,
+    defaultSenseId: pack.defaultSense?.id ?? null,
   };
 }

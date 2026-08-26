@@ -92,6 +92,19 @@ export function parseWatchStore(raw: string | null): TapeWatchStore {
   }
 }
 
+/** Union ids; keep the later snapshot by `at`. Survives local + Cloud SQL hydrate. */
+export function mergeWatchStores(a: TapeWatchStore, b: TapeWatchStore): TapeWatchStore {
+  const ids = [...new Set([...a.ids, ...b.ids])];
+  const snaps: Record<string, TapeSnapshot> = { ...a.snaps };
+  for (const [id, snap] of Object.entries(b.snaps)) {
+    const prev = snaps[id];
+    if (!prev || (snap.at && (!prev.at || snap.at > prev.at))) {
+      snaps[id] = snap;
+    }
+  }
+  return { ids, snaps };
+}
+
 export function toggleWatch(store: TapeWatchStore, topicId: string): TapeWatchStore {
   const has = store.ids.includes(topicId);
   return {

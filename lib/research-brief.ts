@@ -27,6 +27,27 @@ export function formatResearchBrief(payload: ResearchPayload): string {
     lines.push("");
   }
 
+  const droppedCount = payload.droppedCount ?? 0;
+  if (droppedCount) {
+    lines.push(`Dropped: ${droppedCount} unrelated (no token hit).`);
+    lines.push("");
+    for (const d of payload.dropped ?? []) {
+      lines.push(`- ${d.title}`);
+      lines.push(`  ${d.url}`);
+    }
+    lines.push("");
+  }
+
+  if ((payload.senses?.length ?? 0) > 1) {
+    lines.push("## Senses");
+    lines.push("");
+    for (const s of payload.senses ?? []) {
+      const mark = s.id === payload.defaultSenseId ? " · this copy" : "";
+      lines.push(`- ${s.label} · ${s.count} receipts${mark}`);
+    }
+    lines.push("");
+  }
+
   lines.push("## Findings");
   lines.push("");
   if (!payload.findings.length) {

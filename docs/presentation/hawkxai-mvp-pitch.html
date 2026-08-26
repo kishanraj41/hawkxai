@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HawkxAI · Founder MVP pitch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===========================================
+         THEME — HawkxAI desk tokens + Bold Signal
+         Change :root to restyle the whole deck
+         =========================================== */
+      :root {
+        --void: #07080b;
+        --panel: rgba(255, 255, 255, 0.035);
+        --line: rgba(255, 255, 255, 0.1);
+        --ink: #f4f4f5;
+        --mute: rgba(244, 244, 245, 0.55);
+        --amber: #e8a23a;
+        --amber-soft: rgba(232, 162, 58, 0.14);
+        --up: #34d399;
+        --down: #f87171;
+        --font-display: "Instrument Serif", Georgia, serif;
+        --font-body: "IBM Plex Sans", system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --title-size: clamp(1.5rem, 5vw, 4rem);
+        --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+        --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+        --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+        --small-size: clamp(0.65rem, 1vw, 0.875rem);
+        --slide-padding: clamp(1rem, 4vw, 4rem);
+        --content-gap: clamp(0.5rem, 2vw, 2rem);
+        --element-gap: clamp(0.25rem, 1vw, 1rem);
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --duration-normal: 0.55s;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* ===========================================
+         VIEWPORT FITTING: MANDATORY BASE STYLES
+         =========================================== */
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--void);
+        color: var(--ink);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        background:
+          radial-gradient(ellipse at 12% 0%, rgba(232, 162, 58, 0.08), transparent 42%),
+          linear-gradient(180deg, #0c0e13 0%, var(--void) 55%);
+      }
+
+      .slide::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(ellipse at 50% 40%, black 20%, transparent 75%);
+        pointer-events: none;
+        opacity: 0.35;
+      }
+
+      .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding);
+        position: relative;
+        z-index: 1;
+        max-width: min(92vw, 1180px);
+        margin: 0 auto;
+        width: 100%;
+        gap: var(--content-gap);
+      }
+
+      .card,
+      .container,
+      .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+      }
+
+      .feature-list,
+      .bullet-list {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.4rem, 1vh, 1rem);
+        list-style: none;
+      }
+
+      .feature-list li,
+      .bullet-list li {
+        font-size: var(--body-size);
+        line-height: 1.4;
+        color: var(--mute);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+      }
+
+      @media (max-height: 700px) {
+        :root {
+          --slide-padding: clamp(0.75rem, 3vw, 2rem);
+          --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+          --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+          --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+      }
+
+      @media (max-height: 600px) {
+        :root {
+          --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+          --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+          --title-size: clamp(1.1rem, 4vw, 2rem);
+          --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+        .nav-dots,
+        .keyboard-hint,
+        .decorative {
+          display: none;
+        }
+      }
+
+      @media (max-height: 500px) {
+        :root {
+          --slide-padding: clamp(0.4rem, 2vw, 1rem);
+          --title-size: clamp(1rem, 3.5vw, 1.5rem);
+          --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+          --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+      }
+
+      @media (max-width: 600px) {
+        :root {
+          --title-size: clamp(1.25rem, 7vw, 2.5rem);
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .split {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* ===========================================
+         TYPE + CHROME
+         =========================================== */
+      h1,
+      h2,
+      .display {
+        font-family: var(--font-display);
+        font-weight: 400;
+        letter-spacing: -0.03em;
+        line-height: 0.95;
+      }
+
+      h1 {
+        font-size: var(--title-size);
+      }
+
+      h2 {
+        font-size: var(--h2-size);
+      }
+
+      h3 {
+        font-size: var(--h3-size);
+        font-weight: 500;
+      }
+
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--amber);
+      }
+
+      .lede {
+        font-size: clamp(1rem, 2vw, 1.35rem);
+        color: var(--mute);
+        max-width: 38rem;
+        line-height: 1.45;
+      }
+
+      .mono {
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+      }
+
+      .num {
+        font-family: var(--font-display);
+        font-size: clamp(2.5rem, 8vw, 6rem);
+        color: var(--amber);
+        line-height: 0.8;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        border: 1px solid var(--line);
+        background: var(--amber-soft);
+        color: var(--amber);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        letter-spacing: 0.04em;
+        padding: 0.28em 0.7em;
+        width: fit-content;
+      }
+
+      .tile {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        padding: clamp(0.7rem, 1.4vw, 1.15rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .tile strong {
+        font-size: var(--body-size);
+        font-weight: 500;
+      }
+
+      .tile span {
+        color: var(--mute);
+        font-size: var(--small-size);
+        line-height: 1.35;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+        align-items: start;
+      }
+
+      .rule {
+        height: 1px;
+        background: var(--line);
+        width: 100%;
+      }
+
+      a {
+        color: var(--amber);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 2px;
+        width: 0;
+        background: var(--amber);
+        z-index: 40;
+      }
+
+      .nav-dots {
+        position: fixed;
+        right: clamp(0.6rem, 1.5vw, 1.25rem);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        z-index: 30;
+      }
+
+      .nav-dots button {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1px solid var(--mute);
+        background: transparent;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .nav-dots button[aria-current="true"] {
+        background: var(--amber);
+        border-color: var(--amber);
+      }
+
+      .keyboard-hint {
+        position: fixed;
+        bottom: clamp(0.6rem, 1.5vw, 1.2rem);
+        left: var(--slide-padding);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--mute);
+        z-index: 30;
+      }
+
+      .slide-index {
+        position: fixed;
+        bottom: clamp(0.6rem, 1.5vw, 1.2rem);
+        right: var(--slide-padding);
+        font-family: var(--font-mono);
+        font-size: var(--small-size);
+        color: var(--mute);
+        z-index: 30;
+      }
+
+      /* Fallback: copy stays readable if JS never runs */
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+
+      html.js .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity var(--duration-normal) var(--ease-out-expo),
+          transform var(--duration-normal) var(--ease-out-expo);
+      }
+
+      html.js .slide.visible .reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .slide.visible .reveal:nth-child(1) {
+        transition-delay: 0.05s;
+      }
+      .slide.visible .reveal:nth-child(2) {
+        transition-delay: 0.12s;
+      }
+      .slide.visible .reveal:nth-child(3) {
+        transition-delay: 0.18s;
+      }
+      .slide.visible .reveal:nth-child(4) {
+        transition-delay: 0.24s;
+      }
+      .slide.visible .reveal:nth-child(5) {
+        transition-delay: 0.3s;
+      }
+
+      .yes {
+        color: var(--up);
+      }
+
+      .thin {
+        color: var(--down);
+      }
+
+      .quote {
+        font-family: var(--font-display);
+        font-size: clamp(1.35rem, 3vw, 2.15rem);
+        line-height: 1.2;
+        max-width: 22ch;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(0.4rem, 1vw, 0.9rem);
+      }
+
+      @media (max-width: 800px) {
+        .steps {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .step-n {
+        font-family: var(--font-mono);
+        color: var(--amber);
+        font-size: var(--small-size);
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar" aria-hidden="true"></div>
+    <nav class="nav-dots" aria-label="Slides"></nav>
+    <div class="keyboard-hint">← → · space</div>
+    <div class="slide-index" aria-live="polite">01 / 13</div>
+
+    <main>
+      <!-- 1. Title -->
+      <section class="slide visible" data-label="HawkxAI">
+        <div class="slide-content">
+          <p class="kicker reveal">Founder MVP · confidential</p>
+          <h1 class="reveal">Plug a phrase.<br />See the receipts.</h1>
+          <p class="lede reveal">
+            HawkxAI is the live footprint desk for a campaign name a team already owns.
+            No invented why.
+          </p>
+          <p class="mono reveal">hawkxai.com · evidence only</p>
+        </div>
+      </section>
+
+      <!-- 2. Verdict -->
+      <section class="slide" data-label="Verdict">
+        <div class="slide-content">
+          <p class="kicker reveal">01 · The call</p>
+          <h2 class="reveal">Ready as a founder MVP.</h2>
+          <p class="lede reveal">
+            A buyer can open the desk, plug a name, and get live receipts.
+            Ten people coming back the next morning is the company test — not billed seats we do not have.
+          </p>
+          <div class="grid reveal" style="grid-template-columns: 1fr 1fr">
+            <div class="tile">
+              <strong class="yes">Ship this</strong>
+              <span>Live desks, live APIs, Copy / Save / Print, degraded pills when a source is down.</span>
+            </div>
+            <div class="tile">
+              <strong class="thin">Do not claim this</strong>
+              <span>Users, ARR, or a Brandwatch replacement. Stage is product, not traction.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Problem -->
+      <section class="slide" data-label="Problem">
+        <div class="slide-content">
+          <p class="kicker reveal">02 · Problem</p>
+          <h2 class="reveal">Overnight, where did ours print?</h2>
+          <ul class="bullet-list reveal">
+            <li>A junior ships a campaign name and still cannot see the footprint by morning.</li>
+            <li>Brandwatch and Meltwater answer that job for a ~$50k listening seat and a six-week onboard.</li>
+            <li>Google Alerts is noise. ChatGPT invents a cause.</li>
+            <li>By the time someone googles the tag, the footprint has already moved.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 4. Solution -->
+      <section class="slide" data-label="Solution">
+        <div class="slide-content">
+          <p class="kicker reveal">03 · Solution</p>
+          <h2 class="reveal">One owned phrase. Overnight. Receipts only.</h2>
+          <p class="lede reveal">
+            We do not out-listen Brandwatch. We sell the footprint of a phrase a team already owns
+            for the person who will never get that login.
+          </p>
+          <div class="steps reveal">
+            <div class="tile"><span class="step-n">01</span><strong>Look up</strong><span>Campaign, product, hashtag, ticker.</span></div>
+            <div class="tile"><span class="step-n">02</span><strong>Capture</strong><span>Hashtags, QR/short links, URLs, cashtags.</span></div>
+            <div class="tile"><span class="step-n">03</span><strong>Correlate</strong><span>Where it printed, when, title tone counted — never narrated.</span></div>
+            <div class="tile"><span class="step-n">04</span><strong>Keep</strong><span>Copy / Save .md / Print. Star it. Come back for the delta.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Product -->
+      <section class="slide" data-label="Desks">
+        <div class="slide-content">
+          <p class="kicker reveal">04 · Product</p>
+          <h2 class="reveal">Five desks. Same plug.</h2>
+          <div class="grid reveal">
+            <div class="tile"><strong>Trends /</strong><span>Live circle-pack of what is printing worldwide.</span></div>
+            <div class="tile"><strong>Footprint /footprint</strong><span>The product surface. Plug Camry. Mind, occurrence, receipts.</span></div>
+            <div class="tile"><strong>Watch /watchlist</strong><span>Star names. Public × POI overlap. Morning delta.</span></div>
+            <div class="tile"><strong>Insights /insights</strong><span>Live tape + TermStage. No invented dollar impact.</span></div>
+            <div class="tile"><strong>Research /research</strong><span>Cited brief from Wikipedia, PubMed, HN, Reddit, X. Lineage stamped.</span></div>
+            <div class="tile"><strong>Export</strong><span>Copy / Save / Print dumps today’s desk into Slack — the screenshot, not the SKU.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Demo -->
+      <section class="slide" data-label="Demo">
+        <div class="slide-content">
+          <p class="kicker reveal">05 · Live path</p>
+          <h2 class="reveal">Ninety seconds on Camry.</h2>
+          <ol class="bullet-list reveal" style="list-style: decimal; padding-left: 1.1em">
+            <li>Open <a href="https://hawkxai.com/footprint?q=Camry">hawkxai.com/footprint?q=Camry</a></li>
+            <li>Desk fills from live tape. If fleet is 503, chip says so and `/api/trends?topic=` still renders.</li>
+            <li>Click occurrence. Overlay Tesla. Two lines. Not a shared WHY.</li>
+            <li>Copy the brief. Receipts and lineage only. Thin corners stay marked thin.</li>
+          </ol>
+          <p class="mono reveal">Demo on Camry / WWDC. Never wait on X.</p>
+        </div>
+      </section>
+
+      <!-- 7. Contract -->
+      <section class="slide" data-label="Contract">
+        <div class="slide-content split">
+          <div>
+            <p class="kicker reveal">06 · Contract</p>
+            <p class="quote reveal">If the tape is thin, confidence drops. We do not fill the hole.</p>
+          </div>
+          <ul class="bullet-list reveal">
+            <li>Never invent posts or a fake WHY.</li>
+            <li>Amber mind-map dashes exist only for shared artifacts.</li>
+            <li>A down source gets a pill. The rest still renders.</li>
+            <li>Kids lens = safety + plain language. Competitors ride the need, not the meme.</li>
+            <li>Predictions on the desk are heuristics until snapshot history exists. We say so.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 8. Why now -->
+      <section class="slide" data-label="Why now">
+        <div class="slide-content">
+          <p class="kicker reveal">07 · Why now</p>
+          <h2 class="reveal">Fake cause is free. Evidence is scarce.</h2>
+          <ul class="bullet-list reveal">
+            <li>Attention splits across Shorts, Reels, and X faster than a listening team can staff.</li>
+            <li>Models made a fake “why it’s trending” cheap.</li>
+            <li>The junior who cannot get the Brandwatch login still has to brief Slack by 9am.</li>
+            <li>Honesty about thin tape is the wedge incumbents will not ship.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 9. Buyer -->
+      <section class="slide" data-label="Buyer">
+        <div class="slide-content">
+          <p class="kicker reveal">08 · Buyer</p>
+          <h2 class="reveal">The person who will never get that login.</h2>
+          <div class="grid reveal" style="grid-template-columns: 1.2fr 1fr 1fr">
+            <div class="tile">
+              <strong>Job</strong>
+              <span>Owned-phrase footprint plus evidence-only correlation. Overnight return, not a cheaper firehose.</span>
+            </div>
+            <div class="tile">
+              <strong>Comparable</strong>
+              <span>Brandwatch ~$50k median seat. We do not raise on TAM/SAM from the research file — that page is not diligence.</span>
+            </div>
+            <div class="tile">
+              <strong>Price later</strong>
+              <span>Screenshot export is free proof. The SKU is persisted overnight history for a phrase they already own.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. Competition -->
+      <section class="slide" data-label="Competition">
+        <div class="slide-content">
+          <p class="kicker reveal">09 · Not them</p>
+          <h2 class="reveal">Different job. Different proof.</h2>
+          <div class="grid reveal">
+            <div class="tile"><strong>Brandwatch / Meltwater</strong><span>Win on coverage and archive. We do not out-listen them.</span></div>
+            <div class="tile"><strong>Google Alerts</strong><span>Noise. No artifact capture, no occurrence, no honesty about thin tape.</span></div>
+            <div class="tile"><strong>ChatGPT / Perplexity</strong><span>Write a campaign PDF. Invent a cause. We refuse both.</span></div>
+            <div class="tile"><strong>HawkxAI</strong><span>`/` attracts. `/footprint` is the product. Receipts or silence.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. Stage -->
+      <section class="slide" data-label="Stage">
+        <div class="slide-content">
+          <p class="kicker reveal">10 · Honest stage</p>
+          <h2 class="reveal">Working product. No billed seats.</h2>
+          <div class="split reveal">
+            <div class="tile">
+              <strong class="yes">Live in the checkout</strong>
+              <span>Phrase lookup. Word-boundary matching. Fleet fallback. Two-phrase overlay. GDELT/NWS ticks. Daily snapshots on Hobby. Lineage on Copy. 3-step walkthrough.</span>
+            </div>
+            <div class="tile">
+              <strong class="thin">Still thin</strong>
+              <span>15-minute in-memory cache. Tape-watch in localStorage. X often degraded. Short-form captions mostly invisible. Research still ships off-query Reddit. Predictions wait on labeled history.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. Ask -->
+      <section class="slide" data-label="Ask">
+        <div class="slide-content">
+          <p class="kicker reveal">11 · The next eight weeks</p>
+          <h2 class="reveal">Time, one channel, overnight return.</h2>
+          <p class="lede reveal">We will not pitch fake users. Use of funds is the thesis test.</p>
+          <ol class="bullet-list reveal" style="list-style: decimal; padding-left: 1.1em">
+            <li>Persist hourly snapshots so occurrence is a time series, not a 15-minute screenshot.</li>
+            <li>Ingest a channel campaigns actually live on (YouTube Data API; TikTok only with an official grant).</li>
+            <li>Persist tape-watch off localStorage so the morning delta survives a cold start.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 13. Close -->
+      <section class="slide" data-label="Close">
+        <div class="slide-content">
+          <p class="kicker reveal">12 · Proof</p>
+          <h1 class="reveal">Ten people come back<br />in the morning.</h1>
+          <p class="lede reveal">
+            Or the company thesis is dead and the repo stays a hackathon.
+          </p>
+          <p class="reveal">
+            <a href="https://hawkxai.com/footprint?q=Camry">hawkxai.com/footprint?q=Camry</a>
+            <span class="mono" style="color: var(--mute)"> · github.com/snagaram3/grokhackx</span>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      class SlidePresentation {
+        constructor() {
+          document.documentElement.classList.add("js");
+          this.slides = Array.from(document.querySelectorAll(".slide"));
+          this.currentSlide = 0;
+          this.progress = document.querySelector(".progress-bar");
+          this.navDotsContainer = document.querySelector(".nav-dots");
+          this.indexEl = document.querySelector(".slide-index");
+          this.wheelLock = false;
+          this.setupIntersectionObserver();
+          this.setupNavDots();
+          this.setupKeyboardNav();
+          this.setupTouchNav();
+          this.setupWheelNav();
+          this.setupProgressBar();
+          this.goTo(0, false);
+        }
+
+        pad(n) {
+          return String(n + 1).padStart(2, "0");
+        }
+
+        goTo(index, smooth = true) {
+          const next = Math.max(0, Math.min(index, this.slides.length - 1));
+          this.currentSlide = next;
+          this.slides[next].classList.add("visible");
+          this.slides[next].scrollIntoView({
+            behavior: "instant",
+            block: "start",
+          });
+          this.syncChrome();
+        }
+
+        syncChrome() {
+          const i = this.currentSlide;
+          if (this.progress) {
+            this.progress.style.width =
+              ((i + 1) / this.slides.length) * 100 + "%";
+          }
+          if (this.indexEl) {
+            this.indexEl.textContent =
+              this.pad(i) + " / " + this.pad(this.slides.length - 1);
+          }
+          this.navDotsContainer.querySelectorAll("button").forEach((btn, n) => {
+            if (n === i) btn.setAttribute("aria-current", "true");
+            else btn.removeAttribute("aria-current");
+          });
+        }
+
+        setupIntersectionObserver() {
+          const io = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("visible");
+                  this.currentSlide = this.slides.indexOf(entry.target);
+                  this.syncChrome();
+                }
+              });
+            },
+            { threshold: 0.35 }
+          );
+          this.slides.forEach((s) => io.observe(s));
+        }
+
+        setupNavDots() {
+          this.navDotsContainer.innerHTML = "";
+          this.slides.forEach((slide, i) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.setAttribute("aria-label", slide.dataset.label || "Slide " + (i + 1));
+            btn.addEventListener("click", () => this.goTo(i));
+            this.navDotsContainer.appendChild(btn);
+          });
+        }
+
+        setupKeyboardNav() {
+          document.addEventListener("keydown", (e) => {
+            if (e.target instanceof HTMLInputElement) return;
+            if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) {
+              e.preventDefault();
+              this.goTo(this.currentSlide + 1);
+            }
+            if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) {
+              e.preventDefault();
+              this.goTo(this.currentSlide - 1);
+            }
+            if (e.key === "Home") {
+              e.preventDefault();
+              this.goTo(0);
+            }
+            if (e.key === "End") {
+              e.preventDefault();
+              this.goTo(this.slides.length - 1);
+            }
+          });
+        }
+
+        setupTouchNav() {
+          let x0 = 0;
+          document.addEventListener(
+            "touchstart",
+            (e) => {
+              x0 = e.changedTouches[0].screenY;
+            },
+            { passive: true }
+          );
+          document.addEventListener(
+            "touchend",
+            (e) => {
+              const dy = e.changedTouches[0].screenY - x0;
+              if (Math.abs(dy) < 48) return;
+              this.goTo(this.currentSlide + (dy < 0 ? 1 : -1));
+            },
+            { passive: true }
+          );
+        }
+
+        setupWheelNav() {
+          window.addEventListener(
+            "wheel",
+            (e) => {
+              if (this.wheelLock || Math.abs(e.deltaY) < 20) return;
+              this.wheelLock = true;
+              this.goTo(this.currentSlide + (e.deltaY > 0 ? 1 : -1));
+              setTimeout(() => {
+                this.wheelLock = false;
+              }, 700);
+            },
+            { passive: true }
+          );
+        }
+
+        setupProgressBar() {
+          window.addEventListener(
+            "scroll",
+            () => {
+              const max = document.documentElement.scrollHeight - window.innerHeight;
+              if (max <= 0) return;
+              this.progress.style.width = (window.scrollY / max) * 100 + "%";
+            },
+            { passive: true }
+          );
+        }
+      }
+
+      new SlidePresentation();
+    </script>
+  </body>
+</html>
