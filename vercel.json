@@ -4,7 +4,7 @@
   "crons": [
     {
       "path": "/api/collect?hourly=1",
-      "schedule": "0 * * * *"
+      "schedule": "0 12 * * *"
     }
   ],
   "functions": {

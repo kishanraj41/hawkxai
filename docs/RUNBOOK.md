@@ -13,7 +13,7 @@ There is no `/health` route. Treat these as live checks:
 | `GET /api/booster` | 200 after a phrase is cached; **409** if lookup never ran |
 | `GET /api/collect?category=markets` | 200 `{ backend, databases, snapshots, forecasts }` after a tape exists |
 | `GET /api/fleet` | 200 `{ configured, ok, ms }` — warms Cloud Run `/health` |
-| `GET /api/collect?hourly=1` | 200 `{ snapped, skipped, snapshots }` after a tape or watchlist exists |
+| `GET /api/collect?hourly=1` | 200 `{ snapped, skipped, snapshots }` after a tape or watchlist exists. Vercel Hobby cron hits this daily at 12:00 UTC. |
 | `POST /api/ask` `{"q":"..."}` | 200 `{ answer, topicIds }`; **400** if `q` missing; **409** if no lookup |
 
 `degraded` on trends (e.g. `reddit offline`) is expected on some networks — still render other sources.

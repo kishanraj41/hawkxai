@@ -62,8 +62,8 @@ Last run: 2026-08-25T07:15:00+00:00
 
 ## P1 — Hourly snapshots on occurrence
 
-- **Why:** Shipped. `GET /api/collect?hourly=1` (Vercel cron `0 * * * *`) writes topic-score snapshots for watchlist phrases. History draws as a violet line when two snaps exist.
-- **Next:** Set `TREND_DB_*` so hourly snaps survive across serverless instances. Hobby cron is daily — Pro for true hourly.
+- **Why:** Shipped. `GET /api/collect?hourly=1` (Vercel cron `0 12 * * *` daily on Hobby) writes topic-score snapshots for watchlist phrases. History draws as a violet line when two snaps exist.
+- **Next:** Set `TREND_DB_*` so snaps survive across serverless instances. Pro can change the cron to hourly.
 
 ## P0 — Wire Postgres for Historical Predictions
 

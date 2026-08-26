@@ -78,7 +78,7 @@ npx vercel --prod
 
 ## 4. What this repo already configures
 
-- `vercel.json` — framework, function time limits, hourly cron `GET /api/collect?hourly=1` (Pro; Hobby only allows daily)
+- `vercel.json` — framework, function time limits, daily cron `GET /api/collect?hourly=1` at `0 12 * * *` (Hobby). Pro can run that path hourly.
 - Cloud SQL `hawkxai-trends` in `us-east4` — see [ARCHITECTURE.md](./ARCHITECTURE.md). Hobby currently allowlists `0.0.0.0/0` so functions can reach Postgres; replace with Static IPs later.
 - `next.config.mjs` — `output: "standalone"` only **off** Vercel (Docker still works)
 - `package.json` — `next build` / `next start`
