@@ -5,23 +5,23 @@ import EmptyStage from "@/components/shell/EmptyStage";
 
 const SUGGESTIONS = [
   { id: "camry", label: "Camry" },
-  { id: "heatwave", label: "#HeatWaveFit" },
   { id: "tesla", label: "Tesla" },
   { id: "wwdc", label: "WWDC" },
+  { id: "heatwave", label: "#HeatWaveFit" },
   { id: "justdoit", label: "Just Do It" },
 ] as const;
 
-interface PhraseLookupProps {
+interface InsightsLookupProps {
   onLookup: (phrase: string) => void;
   onFocusLookup: () => void;
 }
 
-export default function PhraseLookup({ onLookup, onFocusLookup }: PhraseLookupProps) {
+export default function InsightsLookup({ onLookup, onFocusLookup }: InsightsLookupProps) {
   return (
     <EmptyStage
-      eyebrow="Footprint"
-      title="Look up a campaign or phrase"
-      copy="Plug the name your team already owns. Occurrence, receipts, and a keepable brief fill from live tape — never an invented WHY. Overlay a second phrase after lookup: two lines, not a shared story."
+      eyebrow="Insights"
+      title="Look up a campaign or product"
+      copy="Plug a name. Live occurrence, source mix, and receipts fill the board — never invented spend, never an invented WHY."
       primaryLabel="Focus lookup"
       onPrimary={onFocusLookup}
       suggestions={[...SUGGESTIONS]}

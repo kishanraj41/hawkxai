@@ -2,6 +2,9 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
+import BoosterInsights from "@/components/BoosterInsights";
+import { KeepBrief } from "@/components/brief/KeepBrief";
+import { TermStage } from "@/components/desk/TermStage";
 import ResearchLookup from "@/components/research/ResearchLookup";
 import {
   DeskFrame,
@@ -12,13 +15,15 @@ import {
   StatusChip,
 } from "@/components/shell/DeskChrome";
 import DeskWorkspace from "@/components/shell/DeskWorkspace";
+import { boostTrends } from "@/lib/booster";
 import {
   formatResearchBrief,
   researchBriefFilename,
 } from "@/lib/research-brief";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import LineageStrip from "@/components/desk/LineageStrip";
-import type { ResearchPayload, ResearchSource, ResearchSourceKind } from "@/lib/types";
+import { leadTopic } from "@/lib/watchlist-lookup";
+import type { ResearchPayload, ResearchSource, ResearchSourceKind, TrendsPayload } from "@/lib/types";
 
 const KIND_LABEL: Record<ResearchSourceKind, string> = {
   wikipedia: "Wiki",
@@ -108,10 +113,12 @@ function SourceCard({
 
 export default function ResearchDesk() {
   const [payload, setPayload] = useState<ResearchPayload | null>(null);
+  const [lookup, setLookup] = useState<TrendsPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [bucketT, setBucketT] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const booted = useRef(false);
 
@@ -119,6 +126,10 @@ export default function ResearchDesk() {
     () => payload?.sources.find((s) => s.id === selectedId) ?? null,
     [payload, selectedId],
   );
+
+  const booster = useMemo(() => (lookup ? boostTrends(lookup) : null), [lookup]);
+  const lead = leadTopic(lookup);
+  const brief = lead ? booster?.briefs.find((b) => b.topicId === lead.id) : undefined;
 
   const byKind = useMemo(() => {
     const counts: Partial<Record<ResearchSourceKind, number>> = {};
@@ -135,8 +146,17 @@ export default function ResearchDesk() {
     setError(null);
     setQuery(q);
     setQueryUrl(q);
+    setBucketT(null);
     try {
-      const res = await fetch(`/api/research?q=${encodeURIComponent(q)}`);
+      const [res, trendsRes] = await Promise.all([
+        fetch(`/api/research?q=${encodeURIComponent(q)}`),
+        fetch(`/api/trends?topic=${encodeURIComponent(q)}`),
+      ]);
+      if (trendsRes.ok) {
+        setLookup((await trendsRes.json()) as TrendsPayload);
+      } else {
+        setLookup(null);
+      }
       if (!res.ok) throw new Error(`Research failed (${res.status})`);
       const data = (await res.json()) as ResearchPayload;
       setPayload(data);
@@ -177,14 +197,16 @@ export default function ResearchDesk() {
 
   function handleClear() {
     setPayload(null);
+    setLookup(null);
     setQuery("");
     setSelectedId(null);
+    setBucketT(null);
     setError(null);
     setQueryUrl("");
     inputRef.current?.focus();
   }
 
-  const empty = !payload && !loading;
+  const empty = !payload && !lookup && !loading;
 
   return (
     <main className="desk-shell">
@@ -196,12 +218,17 @@ export default function ResearchDesk() {
             onSubmit={handleSubmit}
             className="desk-chrome__toolbar-form flex min-w-0 flex-1 items-center gap-2"
           >
+            <label htmlFor="research-lookup" className="sr-only">
+              Research a topic
+            </label>
             <input
+              id="research-lookup"
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Topic, paper, policy, patent…"
               enterKeyHint="search"
+              autoComplete="off"
               className="field-input max-w-xl"
             />
             <PrimaryButton type="submit" disabled={loading || !query.trim()}>
@@ -276,8 +303,9 @@ export default function ResearchDesk() {
         stageBlurb="What they say"
         detailLabel="Inspect"
         detailBlurb="One source"
-        jumpToDetailKey={selectedId}
+        jumpToDetailKey={loading || lookup ? null : selectedId}
         preferStage={empty}
+        stageKey={query && (payload || loading) ? query : null}
         list={
           <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-3.5">
             <p className="text-sm font-medium tracking-tight">Sources</p>
@@ -320,13 +348,28 @@ export default function ResearchDesk() {
                 ) : null}
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+                <TermStage
+                  payload={lookup}
+                  loading={loading && !lookup}
+                  bucketT={bucketT}
+                  queryLabel={payload?.query ?? query}
+                  emptyTitle="No live print yet"
+                  emptyCopy="Occurrence fills from live tape while the brief below cites sources — never an invented WHY."
+                  onSelectBucket={setBucketT}
+                  onSelectRelated={(name) => void runResearch(name)}
+                />
+                {lead && brief ? (
+                  <KeepBrief.Provider topic={lead} brief={brief} query={lookup?.query}>
+                    <BoosterInsights brief={brief} topic={lead} />
+                  </KeepBrief.Provider>
+                ) : null}
                 {loading && !payload ? (
-                  <p className="text-sm text-white/45">
+                  <p className="mt-6 text-sm text-white/45">
                     Digging Wikipedia, web, PubMed, arXiv, USPTO, HN, Reddit, X…
                   </p>
                 ) : (
                   <>
-                    <p className="text-pretty text-[15px] leading-relaxed text-white/88">
+                    <p className="mt-6 text-pretty text-[15px] leading-relaxed text-white/88">
                       {payload?.summary}
                     </p>
 
@@ -427,6 +470,9 @@ export default function ResearchDesk() {
           </aside>
         }
       />
+      <p className="sr-only" aria-live="polite">
+        {loading ? `Researching ${query}` : payload ? `${payload.query}: ${payload.sources.length} sources` : ""}
+      </p>
     </main>
   );
 }

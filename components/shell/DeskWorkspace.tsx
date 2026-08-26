@@ -18,6 +18,8 @@ interface DeskWorkspaceProps {
   jumpToDetailKey?: string | null;
   /** Prefer stage on first paint / when key clears (e.g. empty lookup). */
   preferStage?: boolean;
+  /** When this changes to a non-null value, jump to the stage pane (e.g. a new lookup). */
+  stageKey?: string | null;
 }
 
 export default function DeskWorkspace({
@@ -32,12 +34,17 @@ export default function DeskWorkspace({
   detailBlurb,
   jumpToDetailKey = null,
   preferStage = false,
+  stageKey = null,
 }: DeskWorkspaceProps) {
-  const [pane, setPane] = useState<DeskPane>(preferStage ? "stage" : "stage");
+  const [pane, setPane] = useState<DeskPane>("stage");
 
   useEffect(() => {
     if (preferStage) setPane("stage");
   }, [preferStage]);
+
+  useEffect(() => {
+    if (stageKey) setPane("stage");
+  }, [stageKey]);
 
   useEffect(() => {
     if (jumpToDetailKey) setPane("detail");

@@ -25,7 +25,8 @@ Do **not** put `GOOGLE_API_KEY` in git. Local only: `.env.local`.
    |---|---|
    | `GOOGLE_API_KEY` | Gemini API key from Google AI Studio |
    | `GEMINI_MODEL` | `gemini-3.5-flash` |
-   | `FLEET_URL` | Cloud Run fleet URL (required for `/footprint`) |
+   | `FLEET_URL` | Cloud Run fleet URL (required for `/footprint` ingest; `GET /api/fleet` warms it) |
+   | `CRON_SECRET` | optional — Vercel Cron bearer for `/api/collect?hourly=1` |
    | `YOUTUBE_API_KEY` | optional — official YouTube / Shorts titles. Skip the feed if unset. |
    | `TREND_DB_HOST` | Cloud SQL primary (`35.245.139.208`). Skip to collect in memory. |
    | `TREND_DB_USER` | `postgres` |
@@ -77,7 +78,7 @@ npx vercel --prod
 
 ## 4. What this repo already configures
 
-- `vercel.json` — framework, `iad1` region, function time limits
+- `vercel.json` — framework, function time limits, hourly cron `GET /api/collect?hourly=1` (Pro; Hobby only allows daily)
 - Cloud SQL `hawkxai-trends` in `us-east4` — see [ARCHITECTURE.md](./ARCHITECTURE.md). Hobby currently allowlists `0.0.0.0/0` so functions can reach Postgres; replace with Static IPs later.
 - `next.config.mjs` — `output: "standalone"` only **off** Vercel (Docker still works)
 - `package.json` — `next build` / `next start`

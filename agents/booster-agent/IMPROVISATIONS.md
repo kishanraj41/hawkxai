@@ -14,12 +14,16 @@ Last run: 2026-08-25T07:15:00+00:00
 ## P0 — Watchlist desk (Public × POI)
 
 - **Why:** Shipped. Occupied/Organic sorts. Overlay two names (shift-click). Inspect tags official/occupied/ignore for HistGB. QR payloads from chart-API image URLs and decoded PNG/JPEG (capped).
+- **Shipped:** Watch search is a live lookup (`GET /api/trends?topic=`). Occurrence chart is clickable; receipts filter to that window. Name still persists on Watch. Shift-click overlay stays on Watch; Footprint uses the Overlay field.
+- **Shipped:** The same live TermStage (occurrence, source heat, receipts) now fills Insights and Research on lookup. Trends/Footprint occurrence is click-to-filter. Insights no longer seeds Sample Product/Campaign with random charts.
+- **Shipped (MVP demo):** Word-boundary matching so Camry ≠ camryn occupiers. Footprint falls back to live `/api/trends?topic=` when fleet is 503. Insights is live tape only — no invented dollar impact. Empty desks show a 3-step funder walkthrough.
+- **Shipped (funder overlay):** Footprint overlays a second phrase on occurrence (`?vs=`). Hourly `GET /api/collect?hourly=1` writes topic-score snapshots. GDELT/NWS land as ticks with 0–24h lag vs first social print — receipts only, never a WHY. `GET /api/fleet` warms Cloud Run and chips fleet health.
 - **Next:** Tag Camry occupiers on the Watch inspect rail until ~200 gold rows, then train HistGB.
 
 ## P0 — Wire Footprint plug → Cloud Run fleet
 
 - **Why:** Shipped. `/footprint` POSTs the phrase to `/api/fleet`, which runs the Cloud Run ADK agent (HN + public APIs), writes a snapshot, and merges receipts. `GET /api/trends` is untouched. Demo on Camry / WWDC, never X.
-- **Next:** Keep `FLEET_URL` set on Vercel to the `.run.app` service so production is not split-brain.
+- **Next:** Keep `FLEET_URL` set on Vercel to the `.run.app` service so production is not split-brain. `GET /api/fleet` warms `/health`. Footprint already falls back to live tape when fleet is down so a demo never blanks.
 
 ## P0 — RudriQ / AutoLineage on receipts
 
@@ -43,8 +47,8 @@ Last run: 2026-08-25T07:15:00+00:00
 
 ## P1 — Compare two campaign phrases on one desk
 
-- **Why:** Shipped on Watch. Shift-click a second name (or Overlay window) to draw both last-4 series on one chart. No invented shared WHY.
-- **Next:** Same overlay on Footprint occurrence when two phrases are plugged.
+- **Why:** Shipped on Watch (shift-click) and Footprint (Overlay field / `?vs=`). Two occurrence lines. Never an invented shared WHY.
+- **Next:** Same overlay control on Insights/Research TermStage when a second campaign is in session.
 
 ## P1 — Shared-artifact bridges on the mind map
 
@@ -53,8 +57,13 @@ Last run: 2026-08-25T07:15:00+00:00
 
 ## P2 — News + disaster markers on the same timeseries
 
-- **Why:** GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.
-- **Next:** Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY.
+- **Why:** Shipped. GDELT and NWS receipts plot as ticks on occurrence with lag vs first X/Reddit/HN print. Click opens the receipt. Never a WHY.
+- **Next:** Cap ticks per window once a campaign actually prints on both social and GDELT in the same hour.
+
+## P1 — Hourly snapshots on occurrence
+
+- **Why:** Shipped. `GET /api/collect?hourly=1` (Vercel cron `0 * * * *`) writes topic-score snapshots for watchlist phrases. History draws as a violet line when two snaps exist.
+- **Next:** Set `TREND_DB_*` so hourly snaps survive across serverless instances. Hobby cron is daily — Pro for true hourly.
 
 ## P0 — Wire Postgres for Historical Predictions
 

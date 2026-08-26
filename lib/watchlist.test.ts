@@ -10,7 +10,8 @@ import {
 } from "./poi";
 import { deltaLabel, pct, rollupWatchlist, sortInsights } from "./watchlist-metrics";
 import { payloadFromQrImageUrl } from "./qr";
-import type { PoiInsight, WatchlistEntity } from "./types";
+import { insightForQuery, leadTopic, postsInBucket, relatedPrints, topicPosts, topicsInBucket } from "./watchlist-lookup";
+import type { PoiInsight, TimeBucket, Topic, WatchlistEntity } from "./types";
 
 function entity(label: string, extra: string[] = []): WatchlistEntity {
   return {
@@ -200,6 +201,86 @@ test("watchlist store add, join tape, remove", async () => {
   } finally {
     await removeWatchlist(added.id);
   }
+});
+
+function topic(label: string, posts: { title: string; url: string; createdAt: string; platform?: Topic["platforms"]["public"]["posts"][0]["platform"] }[]): Topic {
+  const empty = { score: 0, posts: [] as Topic["platforms"]["public"]["posts"] };
+  const publicPosts = posts.map((p) => ({
+    platform: p.platform ?? "public",
+    title: p.title,
+    url: p.url,
+    score: 10,
+    createdAt: p.createdAt,
+  }));
+  return {
+    id: label.toLowerCase(),
+    label,
+    velocity: "rising",
+    divergence: 0.25,
+    tickers: [],
+    platforms: {
+      x: empty,
+      reddit: empty,
+      hn: empty,
+      public: { score: publicPosts.length * 10, posts: publicPosts },
+    },
+  };
+}
+
+test("leadTopic and relatedPrints follow payload order", () => {
+  const camry = topic("Camry", []);
+  const tesla = topic("Tesla", []);
+  const payload = {
+    topics: [camry, tesla],
+    updatedAt: "2026-08-26T00:00:00.000Z",
+    sources: { x: false, reddit: false, hn: false, public: true },
+    degraded: [],
+  };
+  assert.equal(leadTopic(payload)?.label, "Camry");
+  assert.deepEqual(relatedPrints(payload).map((t) => t.label), ["Tesla"]);
+  assert.equal(leadTopic(null), null);
+});
+
+test("postsInBucket filters dated receipts to the selected window", () => {
+  const posts = topicPosts(
+    topic("Camry", [
+      { title: "early", url: "https://a.test/1", createdAt: "2026-08-26T14:10:00.000Z" },
+      { title: "later", url: "https://a.test/2", createdAt: "2026-08-26T16:10:00.000Z" },
+    ]),
+  );
+  const series: TimeBucket[] = [
+    { t: "2026-08-26T14:00:00.000Z", label: "9 AM", x: 1, reddit: 0, hn: 0, public: 1, total: 1 },
+    { t: "2026-08-26T16:00:00.000Z", label: "11 AM", x: 0, reddit: 0, hn: 0, public: 1, total: 1 },
+  ];
+  const early = postsInBucket(posts, series, series[0].t);
+  assert.equal(early.length, 1);
+  assert.equal(early[0].title, "early");
+  assert.equal(postsInBucket(posts, series, null).length, 2);
+});
+
+test("topicsInBucket keeps prints with receipts in the window", () => {
+  const early = topic("Camry", [
+    { title: "early", url: "https://a.test/1", createdAt: "2026-08-26T14:10:00.000Z" },
+  ]);
+  const later = topic("Tesla", [
+    { title: "later", url: "https://a.test/2", createdAt: "2026-08-26T16:10:00.000Z" },
+  ]);
+  const series: TimeBucket[] = [
+    { t: "2026-08-26T14:00:00.000Z", label: "9 AM", x: 1, reddit: 0, hn: 0, public: 1, total: 1 },
+    { t: "2026-08-26T16:00:00.000Z", label: "11 AM", x: 0, reddit: 0, hn: 0, public: 1, total: 1 },
+  ];
+  const inEarly = topicsInBucket([early, later], series, series[0].t);
+  assert.deepEqual(inEarly.map((t) => t.label), ["Camry"]);
+  assert.equal(topicsInBucket([early, later], series, null).length, 2);
+});
+
+test("insightForQuery prefers exact label then alias", () => {
+  const camry = fakeInsight("Camry", 0.6, 0.4);
+  camry.entity.aliases = ["Camry", "Toyota Camry"];
+  const tesla = fakeInsight("Tesla", 0.2, 0.8);
+  assert.equal(insightForQuery([tesla, camry], "Toyota Camry")?.entity.label, "Camry");
+  assert.equal(insightForQuery([tesla, camry], "tes")?.entity.label, "Tesla");
+  assert.equal(insightForQuery([tesla, camry], "  "), null);
 });
 
 test("payloadFromQrImageUrl reads chart-API data params", () => {

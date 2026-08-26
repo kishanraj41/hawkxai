@@ -12,6 +12,8 @@ There is no `/health` route. Treat these as live checks:
 | `GET /api/trends?topic=Camry` | 200 JSON after first lookup (30–60s cold) |
 | `GET /api/booster` | 200 after a phrase is cached; **409** if lookup never ran |
 | `GET /api/collect?category=markets` | 200 `{ backend, databases, snapshots, forecasts }` after a tape exists |
+| `GET /api/fleet` | 200 `{ configured, ok, ms }` — warms Cloud Run `/health` |
+| `GET /api/collect?hourly=1` | 200 `{ snapped, skipped, snapshots }` after a tape or watchlist exists |
 | `POST /api/ask` `{"q":"..."}` | 200 `{ answer, topicIds }`; **400** if `q` missing; **409** if no lookup |
 
 `degraded` on trends (e.g. `reddit offline`) is expected on some networks — still render other sources.

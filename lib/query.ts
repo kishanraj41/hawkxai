@@ -1,5 +1,6 @@
 import { geminiChat, hasGoogleKey } from "./gemini";
 import { PLACE_NEEDLES } from "./geo";
+import { tokenHits } from "./phrase-hit";
 import { CATEGORIES, type CategoryId, type QueryInsight, type QueryKind, type SentimentReport, type Topic } from "./types";
 
 export interface QueryIntent {
@@ -76,11 +77,10 @@ export function needlesOf(intent: Pick<QueryIntent, "raw" | "aliases">): string[
 }
 
 export function titleScore(title: string, needles: string[]): number {
-  const t = title.toLowerCase();
   let s = 0;
   for (const n of needles) {
     if (!n) continue;
-    if (t.includes(n)) s += n.length >= 5 ? 3 : 2;
+    if (tokenHits(title, n)) s += n.length >= 5 ? 3 : 2;
   }
   const tTok = new Set(tokens(title));
   const qTok = new Set(needles.flatMap(tokens));

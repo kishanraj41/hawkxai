@@ -3,7 +3,7 @@ import { PLATFORMS, type Platform, type Post, type Topic } from "./types";
 
 export { totalScore };
 
-const PLATFORM_LABEL: Record<Platform, string> = {
+export const PLATFORM_LABEL: Record<Platform, string> = {
   x: "X",
   reddit: "Reddit",
   hn: "HN",

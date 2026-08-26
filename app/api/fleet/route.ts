@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validatorAgent } from "@/lib/agents";
 import { plugTopicFromPosts } from "@/lib/cluster";
+import { fleetHealth, fleetIngest } from "@/lib/fleet";
 import { inferQueryIntent, toQueryInsight } from "@/lib/query";
 import { buildSentiment } from "@/lib/sentiment";
 import type { Post, TrendsPayload } from "@/lib/types";
@@ -45,6 +46,12 @@ function asPost(raw: unknown): Post | null {
   return post;
 }
 
+/** Warm Cloud Run and report whether Footprint ingest is live. Never leaks the URL. */
+export async function GET() {
+  const health = await fleetHealth();
+  return NextResponse.json(health);
+}
+
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as { phrase?: string };
   const phrase = (body.phrase ?? "").trim();
@@ -52,30 +59,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "phrase too short" }, { status: 400 });
   }
 
-  const fleetUrl = (process.env.FLEET_URL ?? "").replace(/\/$/, "");
-  if (!fleetUrl) {
-    return NextResponse.json(
-      { error: "FLEET_URL missing — Footprint ingest needs the Cloud Run fleet" },
-      { status: 503 },
-    );
-  }
-
-  const upstream = await fetch(`${fleetUrl}/v1/ingest`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ phrase }),
-  });
-  const raw = await upstream.text();
+  const upstream = await fleetIngest(phrase);
   if (!upstream.ok) {
     return NextResponse.json(
-      { error: `fleet ingest failed (${upstream.status})`, detail: raw.slice(0, 800) },
-      { status: 502 },
+      { error: upstream.text, detail: upstream.text.slice(0, 800) },
+      { status: upstream.status === 503 || upstream.status === 504 ? upstream.status : 502 },
     );
   }
 
   let snap: FleetSnap;
   try {
-    snap = JSON.parse(raw) as FleetSnap;
+    snap = JSON.parse(upstream.text) as FleetSnap;
   } catch {
     return NextResponse.json({ error: "fleet returned non-JSON" }, { status: 502 });
   }
