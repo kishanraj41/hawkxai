@@ -371,6 +371,18 @@ export interface ResearchFinding {
   confidence: "high" | "medium" | "thin";
 }
 
+export interface ResearchSense {
+  id: string;
+  label: string;
+  count: number;
+  sourceIds: string[];
+}
+
+export interface ResearchDropped {
+  title: string;
+  url: string;
+}
+
 export interface ResearchPayload {
   query: string;
   updatedAt: string;
@@ -381,6 +393,10 @@ export interface ResearchPayload {
   sources: ResearchSource[];
   degraded: string[];
   thin: boolean;
+  droppedCount?: number;
+  dropped?: ResearchDropped[];
+  senses?: ResearchSense[];
+  defaultSenseId?: string | null;
 }
 
 export interface WatchlistEntity {

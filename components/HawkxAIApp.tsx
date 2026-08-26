@@ -34,6 +34,7 @@ import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
 import {
   ingestTape,
+  mergeWatchStores,
   parseWatchStore,
   TAPE_WATCH_KEY,
   toggleWatch,
@@ -57,12 +58,21 @@ function readWatch(): TapeWatchStore {
   }
 }
 
-function writeWatch(store: TapeWatchStore) {
+function writeWatchLocal(store: TapeWatchStore) {
   try {
     window.localStorage.setItem(TAPE_WATCH_KEY, JSON.stringify(store));
   } catch {
     /* quota / private mode */
   }
+}
+
+function persistWatch(store: TapeWatchStore) {
+  writeWatchLocal(store);
+  void fetch("/api/tape-watch", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ store }),
+  }).catch(() => undefined);
 }
 
 function setQueryUrl(phrase: string, vs = "") {
@@ -116,6 +126,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
   const [surface, setSurface] = useState<Surface>("mind");
   const [plugged, setPlugged] = useState("");
   const [watchIds, setWatchIds] = useState<string[]>([]);
+  const [watchHydrated, setWatchHydrated] = useState(false);
   const [deltas, setDeltas] = useState<TapeDelta[]>([]);
   const [watchingPoi, setWatchingPoi] = useState(false);
   const [vsQuery, setVsQuery] = useState("");
@@ -237,17 +248,43 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
   }, [footprint]);
 
   useEffect(() => {
-    if (!payload || !booster) return;
+    let cancelled = false;
+    async function hydrateWatch() {
+      const local = readWatch();
+      let remote: TapeWatchStore = { ids: [], snaps: {} };
+      try {
+        const res = await fetch("/api/tape-watch");
+        if (res.ok) {
+          const data = (await res.json()) as { store?: TapeWatchStore };
+          remote = parseWatchStore(JSON.stringify(data.store ?? null));
+        }
+      } catch {
+        /* offline — localStorage still holds stars */
+      }
+      if (cancelled) return;
+      const merged = mergeWatchStores(local, remote);
+      writeWatchLocal(merged);
+      setWatchIds(merged.ids);
+      setWatchHydrated(true);
+    }
+    void hydrateWatch();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!watchHydrated || !payload || !booster) return;
     const next = ingestTape(
       readWatch(),
       payload.topics,
       booster.briefs,
       payload.updatedAt,
     );
-    writeWatch(next.store);
+    persistWatch(next.store);
     setWatchIds(next.store.ids);
     setDeltas(next.deltas);
-  }, [payload, booster]);
+  }, [watchHydrated, payload, booster]);
 
   useEffect(() => {
     if (footprint) {
@@ -277,7 +314,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     const store = readWatch();
     if (store.ids.includes(topicId)) return;
     const next = toggleWatch(store, topicId);
-    writeWatch(next);
+    persistWatch(next);
     setWatchIds(next.ids);
   }
 
@@ -459,7 +496,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
 
   function handleToggleWatch(topicId: string) {
     const next = toggleWatch(readWatch(), topicId);
-    writeWatch(next);
+    persistWatch(next);
     setWatchIds(next.ids);
   }
 

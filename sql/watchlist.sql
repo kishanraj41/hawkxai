@@ -47,3 +47,10 @@ CREATE TABLE IF NOT EXISTS poi_labels (
   tag TEXT NOT NULL CHECK (tag IN ('official','occupied','ignore')),
   PRIMARY KEY (entity_id, url)
 );
+
+-- Starred trend prints + measured snapshots. Survives a cold start when TREND_DB_* is set.
+CREATE TABLE IF NOT EXISTS tape_watch (
+  owner TEXT PRIMARY KEY,
+  payload JSONB NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
