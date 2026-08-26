@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const degraded: string[] = [];
 
     const publicSources = await fetchPublicSources();
-    
+
     if (!publicSources || publicSources.length === 0) {
       degraded.push("Limited public data sources available");
     }
@@ -33,14 +33,6 @@ export async function GET(req: NextRequest) {
       const dashboard = await generateDashboard(poiId, category, publicSources);
       if (dashboard) {
         dashboards.push(dashboard);
-      }
-    } else {
-      const topPOIs = await getTopPOIs(category);
-      for (const poi of topPOIs.slice(0, 5)) {
-        const dashboard = await generateDashboard(poi.id, category, publicSources);
-        if (dashboard) {
-          dashboards.push(dashboard);
-        }
       }
     }
 
@@ -101,8 +93,8 @@ export async function POST(req: NextRequest) {
       analysis
     );
 
-    const timeSeries = generateTimeSeries(publicSources);
-    const heatmap = generateHeatmap();
+    const timeSeries: InsightsDashboard["timeSeries"] = [];
+    const heatmap: InsightsDashboard["heatmap"] = [];
     const comparisons = generateComparisons(analysis, footprint);
 
     const dashboard: InsightsDashboard = {
@@ -194,14 +186,6 @@ async function fetchPublicSources() {
   return sources;
 }
 
-async function getTopPOIs(category: IndustryCategory | null) {
-  return [
-    { id: "poi-1", label: "Sample Product", category: category || "technology" },
-    { id: "poi-2", label: "Sample Campaign", category: category || "technology" },
-    { id: "poi-3", label: "Sample Brand", category: category || "technology" },
-  ];
-}
-
 async function generateDashboard(
   poiId: string,
   category: IndustryCategory | null,
@@ -230,8 +214,8 @@ async function generateDashboard(
 
   const footprint = await calculateFootprint(poiData, publicSources, analysis);
 
-  const timeSeries = generateTimeSeries(publicSources);
-  const heatmap = generateHeatmap();
+  const timeSeries: InsightsDashboard["timeSeries"] = [];
+  const heatmap: InsightsDashboard["heatmap"] = [];
   const comparisons = generateComparisons(analysis, footprint);
 
   return {
@@ -266,44 +250,8 @@ function calculateRelevance(publicSources: PublicDataSource[]): number {
   return Math.min(1, (totalDataPoints / 10000) * avgReliability);
 }
 
-function generateTimeSeries(publicSources: PublicDataSource[]) {
-  const points = [];
-  const now = Date.now();
-  for (let i = 30; i >= 0; i--) {
-    const timestamp = new Date(now - i * 24 * 60 * 60 * 1000).toISOString();
-    const value = Math.floor(Math.random() * 100) + 50;
-    const organic = Math.floor(value * (0.6 + Math.random() * 0.3));
-    points.push({
-      timestamp,
-      value,
-      organic,
-      synthetic: value - organic,
-      sources: publicSources.length,
-    });
-  }
-  return points;
-}
-
-function generateHeatmap() {
-  const cells = [];
-  const platforms = ["micro", "tech", "b2b", "etech", "silicon"];
-  const metrics = ["reach", "engagement", "sentiment", "velocity"];
-
-  for (const platform of platforms) {
-    for (const metric of metrics) {
-      cells.push({
-        x: platform,
-        y: metric,
-        value: Math.random(),
-        label: `${platform}-${metric}`,
-      });
-    }
-  }
-  return cells;
-}
-
 function generateComparisons(
-  analysis: IndustryAnalysis,
+  _analysis: IndustryAnalysis,
   footprint: FootprintAnalysis
 ) {
   return [
@@ -311,28 +259,28 @@ function generateComparisons(
       id: "infiltration",
       label: "Market Infiltration",
       value: footprint.infiltrationScore,
-      change: (Math.random() - 0.5) * 20,
+      change: 0,
       benchmark: 0.65,
     },
     {
       id: "organic",
       label: "Organic Ratio",
       value: footprint.organicRatio,
-      change: (Math.random() - 0.5) * 15,
+      change: 0,
       benchmark: 0.75,
     },
     {
       id: "penetration",
       label: "Market Penetration",
       value: footprint.marketPenetration,
-      change: (Math.random() - 0.5) * 25,
+      change: 0,
       benchmark: 0.55,
     },
     {
       id: "engagement",
       label: "Engagement Score",
       value: footprint.engagement,
-      change: (Math.random() - 0.5) * 18,
+      change: 0,
       benchmark: 0.60,
     },
   ];

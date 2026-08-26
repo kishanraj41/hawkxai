@@ -307,9 +307,10 @@ export function categoryOf(topic: Topic, brief?: BoosterTopicBrief): DeskCategor
 export async function collectTape(
   payload: TrendsPayload,
   briefs: BoosterTopicBrief[] = [],
+  opts?: { snapshotId?: string },
 ): Promise<{ snapshotId: string; store: TrendStore; wrote: number }> {
   const store = trendStore();
-  const snapshotId = `${payload.updatedAt}|${payload.plugged ?? "tape"}`;
+  const snapshotId = opts?.snapshotId ?? `${payload.updatedAt}|${payload.plugged ?? "tape"}`;
   const at = payload.updatedAt;
   const briefById = new Map(briefs.map((b) => [b.topicId, b]));
   const byCategory = new Map<DeskCategory, HistoryPoint[]>();

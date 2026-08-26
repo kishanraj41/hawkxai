@@ -28,6 +28,8 @@ import TrendMap from "@/components/TrendMap";
 import { AUDIENCE_OPTIONS, boostTrends } from "@/lib/booster";
 import { lensCaption } from "@/lib/brief";
 import { categoryCounts, filterByCategory } from "@/lib/desk";
+import type { FleetHealth } from "@/lib/fleet";
+import { fleetChip } from "@/lib/fleet";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import { CITY_OPTIONS, type CityId } from "@/lib/geo";
 import {
@@ -63,10 +65,12 @@ function writeWatch(store: TapeWatchStore) {
   }
 }
 
-function setQueryUrl(phrase: string) {
+function setQueryUrl(phrase: string, vs = "") {
   const url = new URL(window.location.href);
   if (phrase) url.searchParams.set("q", phrase);
   else url.searchParams.delete("q");
+  if (vs) url.searchParams.set("vs", vs);
+  else url.searchParams.delete("vs");
   url.searchParams.delete("topic");
   window.history.replaceState(null, "", `${url.pathname}${url.search}`);
 }
@@ -114,10 +118,17 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
   const [watchIds, setWatchIds] = useState<string[]>([]);
   const [deltas, setDeltas] = useState<TapeDelta[]>([]);
   const [watchingPoi, setWatchingPoi] = useState(false);
+  const [vsQuery, setVsQuery] = useState("");
+  const [compareLabel, setCompareLabel] = useState("");
+  const [comparePayload, setComparePayload] = useState<TrendsPayload | null>(null);
+  const [overlaying, setOverlaying] = useState(false);
+  const [fleet, setFleet] = useState<FleetHealth | null>(null);
   const askRef = useRef<HTMLInputElement>(null);
   const pluggedRef = useRef("");
+  const compareLabelRef = useRef("");
   const bootedRef = useRef(false);
   pluggedRef.current = plugged;
+  compareLabelRef.current = compareLabel;
 
   const loadTrends = useCallback(async (refresh = false, topicOverride?: string | null) => {
     if (refresh) setRefreshing(true);
@@ -127,58 +138,63 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     try {
       const topic =
         topicOverride === null ? "" : (topicOverride ?? pluggedRef.current).trim();
+
+      async function fetchTrendsTape(phrase: string): Promise<TrendsPayload> {
+        const params = new URLSearchParams();
+        if (refresh) params.set("refresh", "1");
+        if (city !== "all") params.set("city", city);
+        if (phrase) params.set("topic", phrase);
+        const qs = params.toString();
+        const res = await fetch(`/api/trends${qs ? `?${qs}` : ""}`);
+        if (!res.ok) throw new Error(`Trends failed (${res.status})`);
+        return (await res.json()) as TrendsPayload;
+      }
+
+      async function applyTape(data: TrendsPayload, phraseUrl: boolean) {
+        setPayload(data);
+        const local = boostTrends(data);
+        setBooster(local);
+        void fetch("/api/booster")
+          .then((boostRes) => (boostRes.ok ? boostRes.json() : null))
+          .then((remote: BoosterPayload | null) => {
+            if (!remote?.forecasts?.length) return;
+            setBooster((prev) =>
+              prev && prev.sourceUpdatedAt === remote.sourceUpdatedAt
+                ? { ...prev, forecasts: remote.forecasts, collection: remote.collection }
+                : prev,
+            );
+          })
+          .catch(() => undefined);
+        if (data.plugged) {
+          setPlugged(data.plugged);
+          if (phraseUrl) setQueryUrl(data.plugged, compareLabelRef.current);
+          const first = data.topics[0] ?? null;
+          setSelected(first);
+          setHighlightedIds(data.topics.map((t) => t.id));
+          if (footprint) setSurface("desk");
+        }
+        return data;
+      }
+
       if (footprint && topic) {
         const res = await fetch("/api/fleet", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ phrase: topic }),
         });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({})) as { error?: string };
-          throw new Error(err.error || `Fleet ingest failed (${res.status})`);
+        if (res.ok) {
+          const data = (await res.json()) as TrendsPayload;
+          return applyTape(data, true);
         }
-        const data = (await res.json()) as TrendsPayload;
-        setPayload(data);
-        setBooster(boostTrends(data));
-        if (data.plugged) {
-          setPlugged(data.plugged);
-          setQueryUrl(data.plugged);
-          const first = data.topics[0] ?? null;
-          setSelected(first);
-          setHighlightedIds(data.topics.map((t) => t.id));
-        }
-        return data;
+        const data = await fetchTrendsTape(topic);
+        return applyTape(
+          { ...data, degraded: [...(data.degraded ?? []), "fleet offline · live tape"] },
+          true,
+        );
       }
-      const params = new URLSearchParams();
-      if (refresh) params.set("refresh", "1");
-      if (city !== "all") params.set("city", city);
-      if (topic) params.set("topic", topic);
-      const qs = params.toString();
-      const res = await fetch(`/api/trends${qs ? `?${qs}` : ""}`);
-      if (!res.ok) throw new Error(`Trends failed (${res.status})`);
-      const data = (await res.json()) as TrendsPayload;
-      setPayload(data);
-      const local = boostTrends(data);
-      setBooster(local);
-      void fetch("/api/booster")
-        .then((boostRes) => (boostRes.ok ? boostRes.json() : null))
-        .then((remote: BoosterPayload | null) => {
-          if (!remote?.forecasts?.length) return;
-          setBooster((prev) =>
-            prev && prev.sourceUpdatedAt === remote.sourceUpdatedAt
-              ? { ...prev, forecasts: remote.forecasts, collection: remote.collection }
-              : prev,
-          );
-        })
-        .catch(() => undefined);
-      if (data.plugged) {
-        setPlugged(data.plugged);
-        if (footprint) setQueryUrl(data.plugged);
-        const first = data.topics[0] ?? null;
-        setSelected(first);
-        setHighlightedIds(data.topics.map((t) => t.id));
-      }
-      return data;
+
+      const data = await fetchTrendsTape(topic);
+      return applyTape(data, Boolean(footprint && topic));
     } catch (err) {
       setError(err instanceof Error ? err.message : footprint ? "Could not look up that phrase" : "Could not load trends");
       return null;
@@ -187,6 +203,38 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       setRefreshing(false);
     }
   }, [city, footprint]);
+
+  async function overlayPhrase(raw: string) {
+    const vs = raw.trim();
+    const primary = pluggedRef.current.trim();
+    if (vs.length < 2 || !primary || vs.toLowerCase() === primary.toLowerCase()) return;
+    setOverlaying(true);
+    try {
+      const res = await fetch(`/api/trends?topic=${encodeURIComponent(vs)}`);
+      if (!res.ok) throw new Error(`Overlay failed (${res.status})`);
+      const data = (await res.json()) as TrendsPayload;
+      setComparePayload(data);
+      setCompareLabel(data.plugged || vs);
+      setVsQuery(data.plugged || vs);
+      setQueryUrl(primary, data.plugged || vs);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not overlay that phrase");
+      setComparePayload(null);
+      setCompareLabel("");
+    } finally {
+      setOverlaying(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!footprint) return;
+    void fetch("/api/fleet")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((row: FleetHealth | null) => {
+        if (row) setFleet(row);
+      })
+      .catch(() => undefined);
+  }, [footprint]);
 
   useEffect(() => {
     if (!payload || !booster) return;
@@ -210,7 +258,11 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
         if (q) {
           setAskQuery(q);
           setPlugged(q);
-          void loadTrends(false, q);
+          const vs = (params.get("vs") ?? "").trim();
+          if (vs) setVsQuery(vs);
+          void loadTrends(false, q).then(() => {
+            if (vs) void overlayPhrase(vs);
+          });
         }
         return;
       }
@@ -237,6 +289,9 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     setPlugged(q);
     setAskAnswer(null);
     setHighlightedIds([]);
+    setVsQuery("");
+    setCompareLabel("");
+    setComparePayload(null);
     setSurface("desk");
     setCategory("all");
     try {
@@ -257,6 +312,9 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     setAskQuery(q);
     setPlugged(q);
     setAskAnswer(null);
+    setVsQuery("");
+    setCompareLabel("");
+    setComparePayload(null);
     setSurface("desk");
     setCategory("all");
     try {
@@ -274,6 +332,9 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
     setAskAnswer(null);
     setSelected(null);
     setHighlightedIds([]);
+    setVsQuery("");
+    setCompareLabel("");
+    setComparePayload(null);
     if (footprint) {
       setPayload(null);
       setBooster(null);
@@ -281,6 +342,13 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       return;
     }
     await loadTrends(true, null);
+  }
+
+  function handleClearOverlay() {
+    setVsQuery("");
+    setCompareLabel("");
+    setComparePayload(null);
+    if (pluggedRef.current) setQueryUrl(pluggedRef.current, "");
   }
 
   const artifactsById = useMemo(() => {
@@ -463,12 +531,17 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               onSubmit={handleAsk}
               className="desk-chrome__toolbar-form flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-lg"
             >
+              <label htmlFor="desk-lookup" className="sr-only">
+                {footprint ? "Look up a campaign or phrase" : "Ask or plug a name"}
+              </label>
               <input
+                id="desk-lookup"
                 ref={askRef}
                 value={askQuery}
                 onChange={(e) => setAskQuery(e.target.value)}
                 placeholder={footprint ? "Campaign, hashtag, or phrase…" : "Ask or plug a name…"}
                 enterKeyHint="search"
+                autoComplete="off"
                 className="field-input"
               />
               <PrimaryButton type="submit" disabled={asking || !askQuery.trim()}>
@@ -489,6 +562,36 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
                   <StatusChip>
                     {payload.query.kind} · {payload.query.match} · {payload.query.hitCount}
                   </StatusChip>
+                ) : null}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void overlayPhrase(vsQuery);
+                  }}
+                  className="flex min-w-0 items-center gap-1.5"
+                >
+                  <label htmlFor="desk-overlay" className="sr-only">
+                    Overlay a second phrase
+                  </label>
+                  <input
+                    id="desk-overlay"
+                    value={vsQuery}
+                    onChange={(e) => setVsQuery(e.target.value)}
+                    placeholder="vs another phrase…"
+                    autoComplete="off"
+                    className="field-input max-w-[160px]"
+                  />
+                  <GhostButton type="submit" disabled={overlaying || vsQuery.trim().length < 2}>
+                    {overlaying ? "Overlay…" : compareLabel ? "Update" : "Overlay"}
+                  </GhostButton>
+                </form>
+                {compareLabel ? (
+                  <>
+                    <StatusChip>
+                      {plugged} vs {compareLabel}
+                    </StatusChip>
+                    <GhostButton onClick={handleClearOverlay}>Clear overlay</GhostButton>
+                  </>
                 ) : null}
                 <GhostButton onClick={() => void handleClearPlug()}>Clear</GhostButton>
                 <div className="desk-chrome__context-trail ml-auto flex items-center gap-2">
@@ -539,6 +642,9 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
           {payload?.degraded.map((msg) => (
             <StatusChip key={msg}>{msg}</StatusChip>
           ))}
+          {footprint && fleetChip(fleet) && !payload?.degraded.some((m) => m.includes("fleet")) ? (
+            <StatusChip>{fleetChip(fleet)}</StatusChip>
+          ) : null}
         </div>
         <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
           {footprint && plugged ? (
@@ -581,8 +687,9 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
         }
         detailLabel="Intel"
         detailBlurb="This print"
-        jumpToDetailKey={selected?.id ?? null}
+        jumpToDetailKey={plugged ? null : selected?.id ?? null}
         preferStage={Boolean(footprint && !plugged && !loading)}
+        stageKey={plugged || null}
         list={
           <OverviewRail
             payload={payload}
@@ -627,6 +734,8 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               loading={loading}
               query={payload?.query ?? null}
               takeaway={lens === "all" ? undefined : focusCaption}
+              overlayTopics={comparePayload?.topics ?? null}
+              overlayLabel={compareLabel || null}
               onSelect={pickTopic}
               onHover={setHoverId}
             />

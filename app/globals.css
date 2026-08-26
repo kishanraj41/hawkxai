@@ -677,8 +677,33 @@ body {
   transform-origin: right center;
 }
 
-.watch-area {
-  margin-top: 12px;
+.watch-term {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-strong);
+}
+
+.watch-ts-hit {
+  cursor: pointer;
+}
+
+.watch-ts-hit:hover {
+  fill: rgba(255, 255, 255, 0.06);
+}
+
+.watch-ts-hit:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: -1px;
+}
+
+.ts-event-tick {
+  cursor: pointer;
+}
+
+.ts-event-tick:hover {
+  stroke: #fff;
+  stroke-width: 1.2;
 }
 
 @media (max-width: 1023px) {
@@ -1046,6 +1071,32 @@ body {
   border-color: var(--line-strong);
   color: #fff;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.demo-walk {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-walk__step {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.demo-walk__n {
+  flex-shrink: 0;
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* ——— Motion ——— */

@@ -307,11 +307,19 @@ export interface Improvisation {
   next: string;
 }
 
+export interface SnapshotPoint {
+  at: string;
+  score: number;
+  receipts: number;
+}
+
 export interface CollectionStatus {
   backend: "memory" | "postgres";
   databases: string[];
   snapshots: number;
   predicted: number;
+  /** Hourly topic-score history for the lead print. Never an invented WHY. */
+  history?: SnapshotPoint[];
 }
 
 export interface BoosterPayload {

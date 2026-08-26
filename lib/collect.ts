@@ -69,6 +69,8 @@ export async function collectAndForecast(
   }
 
   const snapshots = await store.snapshotCount().catch(() => 0);
+  const leadId = payload.topics[0]?.id;
+  const leadHistory = leadId ? history.get(leadId) ?? [] : [];
   return {
     forecasts,
     graph,
@@ -77,6 +79,11 @@ export async function collectAndForecast(
       databases: store.databases,
       snapshots,
       predicted: forecasts.filter((f) => !f.thin).length,
+      history: leadHistory.map((p) => ({
+        at: p.at,
+        score: p.score,
+        receipts: p.receiptCount,
+      })),
     },
   };
 }
