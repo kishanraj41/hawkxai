@@ -65,8 +65,8 @@ test("buildCausation treats recall language as a risk driver, not a slogan", () 
   const report = buildCausation(
     topic(
       [
-        post("public", "Camry recall lawsuit", "2026-08-26T12:00:00.000Z"),
-        post("hn", "Camry crash investigation", "2026-08-26T13:00:00.000Z"),
+        post("public", "Camry recall announced", "2026-08-26T12:00:00.000Z"),
+        post("hn", "Camry hybrid thread", "2026-08-26T13:00:00.000Z"),
       ],
       { velocity: "fading" },
     ),
