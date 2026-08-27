@@ -7,11 +7,7 @@ import {
   predictPeakTime,
   predictPlatformSpread,
 } from "./predictions";
-import type { Post, SentimentReport, Topic } from "./types";
-
-function emptySlice() {
-  return { score: 0, posts: [] as Post[] };
-}
+import type { SentimentReport, Topic } from "./types";
 
 function topic(velocity: Topic["velocity"], divergence: number, scores: Partial<Record<Topic["platforms"] extends infer P ? keyof P : never, number>>): Topic {
   return {
