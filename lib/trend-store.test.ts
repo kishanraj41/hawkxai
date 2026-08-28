@@ -106,8 +106,8 @@ test("wordFromTopic and categoryOf copy receipts, not a slogan", () => {
   assert.equal(point.firstPlatform, "public");
   assert.equal(point.driverWeight, 22);
   assert.equal(point.at, "2026-08-26T13:00:00.000Z");
+  assert.equal(categoryOf(camry), "markets");
   assert.equal(categoryOf(camry, brief("camry-store", { category: "campaigns" })), "campaigns");
-  assert.equal(categoryOf(camry), "news");
 });
 
 test("memory collectTape is idempotent and replaces only when artifacts are richer", async () => {
