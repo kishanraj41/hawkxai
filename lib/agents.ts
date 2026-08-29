@@ -49,9 +49,13 @@ async function collectSource(
   }
 }
 
-async function collectPublicSource(city: GeoQuery["city"], topic?: string): Promise<SourceResult> {
+async function collectPublicSource(
+  city: GeoQuery["city"],
+  topic?: string,
+  enabledSources?: string[],
+): Promise<SourceResult> {
   try {
-    const { posts, ingest } = await collectPublicApis(city, topic);
+    const { posts, ingest } = await collectPublicApis(city, topic, enabledSources);
     const result: SourceResult = {
       source: "public",
       ok: posts.length > 0,
@@ -71,6 +75,7 @@ async function collectPublicSource(city: GeoQuery["city"], topic?: string): Prom
 export function collectorAgent(
   geo: GeoQuery = geoAgent("all"),
   topic?: string,
+  enabledSources?: string[],
 ): {
   reddit: Promise<SourceResult>;
   hn: Promise<SourceResult>;
@@ -81,7 +86,7 @@ export function collectorAgent(
   return {
     reddit: collectSource("reddit", () => (q ? searchReddit(q) : fetchReddit(geo.redditSubs))),
     hn: collectSource("hn", () => (q ? searchHn(q) : fetchHn())),
-    public: collectPublicSource(geo.city, q),
+    public: collectPublicSource(geo.city, q, enabledSources),
     x: hasGoogleKey()
       ? collectSource("x", () => fetchX(geo.label ?? undefined, q))
       : Promise.resolve({ source: "x", ok: false, count: 0, posts: [] }),
