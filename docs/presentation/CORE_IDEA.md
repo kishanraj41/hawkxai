@@ -2,7 +2,7 @@
 
 Capturing the current trend hashtags/ QRs/phrases/URLs etc and analyze them and co-relate them on why they are treanding and collect this information to create a cool interactive dashboard that gives us most useful information to all age groups and compititors in the bussiness that will leverage their campains.
 
-**Additional desks:** look up a particular word or phrase. A marketing team opens **Footprint** (`/footprint`) and plugs a campaign name. A researcher opens **Research** (`/research`) and digs Wikipedia, the open web, HN, Reddit, and X for a topic brief with cited receipts. Trending words stay on `/`. Both desks are additive.
+**Additional desks:** look up a particular word or phrase. A marketing team opens **Footprint** (`/footprint`) and plugs a campaign name. **Insights** (`/insights`) traces that name to its origin page, family categories, and oldest dated receipt — a taproot, not a search ranking. A researcher opens **Research** (`/research`) and digs Wikipedia, the open web, HN, Reddit, and X for a topic brief with cited receipts. Trending words stay on `/`. Desks are additive.
 
 ## Plug-and-play desk
 
@@ -52,6 +52,7 @@ The map stays the map. Booster sits beside it: capture trending words **or** loo
 | Surface | Owner |
 |---|---|
 | Phrase lookup | `components/desk/PhraseLookup.tsx` + header `⌘K` |
+| Insights taproot | `components/insights/` + `GET /api/insights?q=` + `lib/insights-roots.ts` |
 | Research desk | `components/research/ResearchDesk.tsx` + `GET /api/research?q=` + `lib/research-brief.ts` |
 | Correlation mind map | `components/MindDesk.tsx` + `lib/mindmap.ts` |
 | Category collect + leaf prediction | `lib/collect.ts` · `lib/predict.ts` · `lib/trend-store.ts` · `GET /api/collect` |

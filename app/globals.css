@@ -1211,6 +1211,183 @@ body {
   line-height: 1.45;
 }
 
+/* ——— Insights taproot ——— */
+
+.taproot {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: auto;
+  padding: 18px 20px 28px;
+}
+
+.taproot--wait {
+  align-items: center;
+  justify-content: center;
+}
+
+.taproot__head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.taproot__senses {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 18px;
+}
+
+.taproot__sense {
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  padding: 0 11px;
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.68);
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.taproot__sense:hover {
+  border-color: var(--line-strong);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.taproot__sense--on {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.taproot__title {
+  margin-top: 6px;
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.taproot__well {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.taproot__layer {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+.taproot__spine {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.taproot__spine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(232, 162, 58, 0.45));
+}
+
+.taproot__layer:first-child .taproot__spine::before {
+  top: 14px;
+}
+
+.taproot__layer:last-child .taproot__spine::before {
+  bottom: calc(100% - 18px);
+}
+
+.taproot__knot {
+  position: relative;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  margin-top: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: #0c0d10;
+}
+
+.taproot__layer--deep .taproot__knot {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(232, 162, 58, 0.18);
+}
+
+.taproot__card {
+  min-width: 0;
+  padding: 10px 0 22px;
+}
+
+.taproot__kind {
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.taproot__layer--deep .taproot__kind {
+  color: var(--amber);
+}
+
+.taproot__label {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-wrap: pretty;
+}
+
+.taproot__detail {
+  margin-top: 6px;
+  max-width: 42rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mute-strong);
+  text-wrap: pretty;
+}
+
+.taproot__cite {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.taproot__cite:hover {
+  color: #fff;
+}
+
+.taproot__degraded {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 @media print {
   body * {
     visibility: hidden;

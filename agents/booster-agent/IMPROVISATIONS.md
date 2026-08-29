@@ -23,6 +23,13 @@ Last run: 2026-08-25T07:15:00+00:00
 - **Files:** `lib/watch.ts` `mergeWatchStores`, `lib/watchlist-store.ts`, `app/api/tape-watch/route.ts`, `components/HawkxAIApp.tsx`
 - **Next:** Per-user owner once auth exists. Demo owner is still `demo`.
 
+## ✅ SHIPPED — Insights as a taproot, not a search page
+
+- **What:** `/insights` traces a particular name down through senses, live tape, encyclopedia origin, family categories, and the oldest dated receipt (Wikipedia first revision, USPTO, PubMed). Camera receipts cannot steal Camry. Thin queries stay thin — no invented WHY.
+- **Files:** `lib/insights-roots.ts`, `GET /api/insights?q=`, `components/insights/InsightsTaproot.tsx`
+- **Shipped:** First-revision + patents + inception persist in Cloud SQL `insight_roots` (memory fallback). Wikidata P571/P580 birth year vs first dated receipt is a measured GAP layer, never a WHY. `?sense=` + chips fork Camry vs Camryn Manheim. Older USPTO grant beats a later wiki edit; PatentsView legacy + v2 + Wikidata P1246 + cache when live USPTO is down.
+- **Next:** Stamp real grant dates on Wikidata P1246 numbers (ODP) so an undated patent number cannot fake a 1982 root.
+
 ## P0 — Watchlist desk (Public × POI)
 
 - **Why:** Shipped. Occupied/Organic sorts. Overlay two names (shift-click). Inspect tags official/occupied/ignore for HistGB. QR payloads from chart-API image URLs and decoded PNG/JPEG (capped).
