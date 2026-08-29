@@ -128,7 +128,7 @@ export function measureOriginLag(
 ): OriginLag | null {
   const claimedT = validTime(claimedAt);
   const recordT = validTime(firstRecordAt);
-  if (!claimedAt || !claimedSource || claimedT === null || recordT === null) return null;
+  if (!claimedAt || !claimedSource || !firstRecordAt || claimedT === null || recordT === null) return null;
   const lagYears = new Date(recordT).getUTCFullYear() - new Date(claimedT).getUTCFullYear();
   if (lagYears < 1) return null;
   return {
@@ -644,7 +644,7 @@ export async function traceRoots(query: string, senseId?: string | null): Promis
   const senseKey = wiki?.title ?? senseId ?? "";
   const cached = await loadInsightRoot(q, senseKey);
 
-  let wikiRoot = cached?.firstAt
+  let wikiRoot: WikiRoot | null = cached?.firstAt
     ? {
         firstAt: cached.firstAt,
         firstEditor: cached.firstEditor,
