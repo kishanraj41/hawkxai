@@ -1640,9 +1640,15 @@ const FEEDS: Feed[] = [
   },
 ];
 
-function selectFeeds(topic?: string): Feed[] {
+function selectFeeds(topic?: string, enabledSources?: string[]): Feed[] {
   const q = topic?.trim();
-  const available = FEEDS.filter((f) => !f.include || f.include(q));
+  let available = FEEDS.filter((f) => !f.include || f.include(q));
+  
+  // Filter by enabled sources if provided
+  if (enabledSources && enabledSources.length > 0) {
+    available = available.filter((f) => enabledSources.includes(f.name));
+  }
+  
   const names = available.map((f) => f.name);
   const core = q
     ? available.filter((f) => f.topicAware).map((f) => f.name)
@@ -1660,6 +1666,7 @@ function selectFeeds(topic?: string): Feed[] {
 export async function collectPublicApis(
   city: CityId = "all",
   topic?: string,
+  enabledSources?: string[],
 ): Promise<PublicApiCollect> {
   let catalog: PublicApiEntry[] | null = null;
   try {
@@ -1670,7 +1677,7 @@ export async function collectPublicApis(
 
   const open = catalog?.filter((e) => noAuth(e.auth) && e.https) ?? [];
   const q = topic?.trim() || undefined;
-  const feeds = selectFeeds(q);
+  const feeds = selectFeeds(q, enabledSources);
   recordPulls(feeds.map((f) => f.name));
   const settled = await Promise.allSettled(feeds.map((f) => f.run(city, q)));
   const posts: Post[] = [];
@@ -1703,7 +1710,7 @@ export async function collectPublicApis(
     topic: q,
   };
   console.log(
-    `[public-apis] catalog=${ingest.catalog} open=${open.length} live=${ingest.live}/${ingest.attempted} posts=${posts.length}${q ? ` topic="${q}"` : ""}`,
+    `[public-apis] catalog=${ingest.catalog} open=${open.length} live=${ingest.live}/${ingest.attempted} posts=${posts.length}${q ? ` topic="${q}"` : ""}${enabledSources ? ` filtered=${enabledSources.length}` : ""}`,
   );
   return { posts: posts.slice(0, MAX_POSTS), ingest };
 }
