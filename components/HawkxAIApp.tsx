@@ -758,6 +758,8 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               loading={loading}
               phrase={plugged}
               caption={focusCaption}
+              city={city}
+              located={payload?.located ?? []}
               onSelect={pickTopic}
               onHover={setHoverId}
             />
@@ -773,6 +775,8 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               takeaway={lens === "all" ? undefined : focusCaption}
               overlayTopics={comparePayload?.topics ?? null}
               overlayLabel={compareLabel || null}
+              city={city}
+              located={payload?.located ?? []}
               onSelect={pickTopic}
               onHover={setHoverId}
             />

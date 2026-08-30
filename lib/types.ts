@@ -2,6 +2,12 @@ export const PLATFORMS = ["x", "reddit", "hn", "public"] as const;
 
 export type Platform = (typeof PLATFORMS)[number];
 
+export interface PostGeo {
+  lat: number;
+  lon: number;
+  label: string;
+}
+
 export interface Post {
   platform: Platform;
   title: string;
@@ -9,6 +15,8 @@ export interface Post {
   score: number;
   createdAt: string;
   sourceApi?: string;
+  /** Proven coordinates from the source. Never geocoded from a title. */
+  geo?: PostGeo;
   /** AutoLineage: which collect step produced this receipt. */
   tool?: string;
   /** AutoLineage: when that collect step wrote the receipt. */
@@ -68,6 +76,8 @@ export interface TrendsPayload {
   degraded: string[];
   pipeline?: string;
   publicApis?: PublicApiIngest;
+  /** Receipts that already carry coordinates — plotted on the world under the mind map. */
+  located?: Post[];
   plugged?: string;
   query?: QueryInsight;
 }
