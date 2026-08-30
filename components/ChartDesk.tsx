@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Desk } from "@/components/desk/Desk";
 import FloorBrief from "@/components/desk/FloorBrief";
+import WorldMap from "@/components/desk/WorldMap";
 import { buildCausation, buildTimeseries } from "@/lib/desk";
 import { buildEventTicks } from "@/lib/event-ticks";
 import { buildMindMap } from "@/lib/mindmap";
 import { alignTotals } from "@/lib/occurrence-overlay";
 import { buildSentiment } from "@/lib/sentiment";
-import type { BoosterPayload, MindNode, QueryInsight, Topic } from "@/lib/types";
+import type { BoosterPayload, MindNode, Post, QueryInsight, Topic } from "@/lib/types";
+import type { CityId } from "@/lib/geo";
 import type { DeskCategory } from "@/lib/types";
 
 interface ChartDeskProps {
@@ -22,6 +24,8 @@ interface ChartDeskProps {
   takeaway?: string;
   overlayTopics?: Topic[] | null;
   overlayLabel?: string | null;
+  city?: CityId;
+  located?: Post[];
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
 }
@@ -37,6 +41,8 @@ export default function ChartDesk({
   takeaway,
   overlayTopics = null,
   overlayLabel = null,
+  city = "all",
+  located = [],
   onSelect,
   onHover,
 }: ChartDeskProps) {
@@ -133,6 +139,17 @@ export default function ChartDesk({
               </div>
             ) : null}
             <Desk.Mind />
+            <div className="world-map--card mt-4 overflow-hidden">
+              <WorldMap
+                topics={topics}
+                located={located}
+                city={city}
+                selectedId={selected?.id ?? focus?.id ?? null}
+                hoverId={hoverId}
+                onSelect={onSelect}
+                onHover={onHover}
+              />
+            </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <Desk.Timeseries />
               <Desk.Sentiment />

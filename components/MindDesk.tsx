@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import MindInspect from "@/components/desk/MindInspect";
 import MindMapChart from "@/components/desk/MindMap";
+import WorldMap from "@/components/desk/WorldMap";
 import { CATEGORY_LABEL } from "@/lib/desk";
+import type { CityId } from "@/lib/geo";
 import { buildMindMap } from "@/lib/mindmap";
-import type { BoosterPayload, DeskCategory, MindNode, Topic } from "@/lib/types";
+import type { BoosterPayload, DeskCategory, MindNode, Post, Topic } from "@/lib/types";
 
 interface MindDeskProps {
   category: DeskCategory;
@@ -16,6 +18,8 @@ interface MindDeskProps {
   loading: boolean;
   caption?: string;
   phrase?: string;
+  city?: CityId;
+  located?: Post[];
   onSelect: (topic: Topic | null) => void;
   onHover: (id: string | null) => void;
 }
@@ -29,6 +33,8 @@ export default function MindDesk({
   loading,
   caption,
   phrase,
+  city = "all",
+  located = [],
   onSelect,
   onHover,
 }: MindDeskProps) {
@@ -63,7 +69,9 @@ export default function MindDesk({
             {phrase ? `“${phrase}” mind` : `${CATEGORY_LABEL[category]} mind`}
           </h1>
           <p className="mt-0.5 text-xs text-white/45">
-            {caption ? caption : "Hover a blob to read the receipt. Stick is the plug. Never an invented WHY."}
+            {caption
+              ? caption
+              : "Hover a blob to read the receipt. The world below is the same tape, only the receipts that already have a place."}
           </p>
         </div>
         <div className="flex shrink-0 gap-4 font-mono text-[11px] tabular-nums">
@@ -76,41 +84,52 @@ export default function MindDesk({
           />
         </div>
       </div>
-      <div className="relative flex min-h-0 flex-1">
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-40 w-40 rounded-full border border-white/10" />
-          </div>
-        ) : (
-          <div className="relative min-h-0 min-w-0 flex-1">
-            <MindMapChart
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="relative flex min-h-0 flex-1">
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-40 w-40 rounded-full border border-white/10" />
+            </div>
+          ) : (
+            <div className="relative min-h-0 min-w-0 flex-1">
+              <MindMapChart
+                graph={graph}
+                topics={topics}
+                selectedId={selected?.id ?? null}
+                hoverId={hoverId}
+                inspectId={inspect?.id ?? null}
+                onSelect={onSelect}
+                onHover={onHover}
+                onInspect={setInspect}
+              />
+            </div>
+          )}
+          {node && !loading ? (
+            <MindInspect
+              node={node}
               graph={graph}
               topics={topics}
-              selectedId={selected?.id ?? null}
-              hoverId={hoverId}
-              inspectId={inspect?.id ?? null}
-              onSelect={onSelect}
-              onHover={onHover}
-              onInspect={setInspect}
+              brief={brief}
+              onClose={() => {
+                setInspect(null);
+                onSelect(null);
+              }}
+              onPick={(topic) => {
+                onSelect(topic);
+                setInspect(graph.nodes.find((n) => n.id === `topic:${topic.id}`) ?? null);
+              }}
             />
-          </div>
-        )}
-        {node && !loading ? (
-          <MindInspect
-            node={node}
-            graph={graph}
-            topics={topics}
-            brief={brief}
-            onClose={() => {
-              setInspect(null);
-              onSelect(null);
-            }}
-            onPick={(topic) => {
-              onSelect(topic);
-              setInspect(graph.nodes.find((n) => n.id === `topic:${topic.id}`) ?? null);
-            }}
-          />
-        ) : null}
+          ) : null}
+        </div>
+        <WorldMap
+          topics={topics}
+          located={located}
+          city={city}
+          selectedId={selected?.id ?? null}
+          hoverId={hoverId}
+          onSelect={onSelect}
+          onHover={onHover}
+        />
       </div>
       <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
         <span className="text-[#e8a23a]">hub</span>

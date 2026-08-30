@@ -10,6 +10,7 @@ import {
   whyAgent,
 } from "@/lib/agents";
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
+import { locatedReceipts } from "@/lib/trend-geo";
 import { enrichQueryIntent, inferQueryIntent, toQueryInsight } from "@/lib/query";
 import { recordPulls } from "@/lib/rl";
 import { buildSentiment } from "@/lib/sentiment";
@@ -81,6 +82,7 @@ async function runPipeline(
     degraded,
     pipeline,
     publicApis: publicR.publicApis,
+    located: locatedReceipts(publicR.posts),
   };
   cacheSet(cacheKey, payload);
   cacheSet(LAST_KEY, payload);
@@ -130,6 +132,7 @@ async function runPlug(
     degraded,
     pipeline,
     publicApis: publicR.publicApis,
+    located: locatedReceipts(publicR.posts),
     plugged: topic,
     query: toQueryInsight(intent, validated.topics, sentiment),
   };

@@ -104,6 +104,7 @@ Last run: 2026-08-25T07:15:00+00:00
 - YouTube Data v3 only when `YOUTUBE_API_KEY` is set.
 - Core tape is pinned (Wikipedia, world news RSS, NWS, GDACS, CoinGecko, Bluesky, Federal Register); bandit fills the rest.
 - Default geo is **world**, not Austin / SF / NYC. Place filter still zooms a metro.
+- **Shipped:** A live world map sits under the mind map. Pins are USGS / Open-Meteo / EONET / NWS points already on the receipt — never geocoded from a title. Place filter draws a lens ring, not a fake trend.
 
 ## Shipped this pass (desk glyphs)
 

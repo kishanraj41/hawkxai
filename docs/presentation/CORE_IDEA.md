@@ -76,7 +76,7 @@ The Booster Agent re-ranks these from real gaps in each run. Seed list:
 4. Overlay GDELT / NWS events as lagged markers on the same timeseries (never as an invented WHY).
 5. Age-group toggle on the map itself — **shipped:** header lens composes desk, map hover, mind subtitle, and the keepable brief.
 6. Brand-risk radar (controversy vs ride-along).
-7. Geo / city pulse — **shipped:** default tape is worldwide (news, weather, Reddit, YouTube, X). Place filter still zooms to a metro.
+7. Geo / city pulse — **shipped:** default tape is worldwide. Place filter zooms a metro. The mind desk now plots a live world under the correlation graph — only receipts that already carry coordinates (USGS, Open-Meteo, EONET, NWS points).
 8. Export a one-page campaign brief for a competitor — **shipped:** Copy / Save .md / Print from receipts. Tape-watch stars persist to Cloud SQL (`tape_watch`) when `TREND_DB_*` is set; localStorage is the offline fallback.
 9. Shared-artifact bridges on the mind map — keep capturing overlapping campaign codes; never invent a dash.
 10. Shareable footprint URL (`/footprint?q=`) — **shipped:** Footprint opens from the trend desk; trending words stay on `/`.
