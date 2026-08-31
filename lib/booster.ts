@@ -298,8 +298,15 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
   const allArtifacts = briefs.flatMap((b) => b.artifacts);
   const hashtags = allArtifacts.filter((a) => a.kind === "hashtag");
   const qrs = allArtifacts.filter((a) => a.kind === "qr");
-  const qrDecoded = qrs.some((a) => a.value.startsWith("decoded:"));
+  const qrDecoded = qrs.some((a) => !/^https?:/i.test(a.value) && !/mentioned/i.test(a.value));
   const bubbles = payload.topics.filter((t) => t.divergence >= 0.66).length;
+
+  items.push({
+    priority: "P0",
+    title: "Tag Camry occupiers for occupancy HistGB",
+    why: "Next-window HistGB is live; occupancy still uses host-class L1 until 20 gold inspect tags.",
+    next: "On Watch inspect, mark occupiers Official / Occupied / Ignore. Camry first. Do not invent tags.",
+  });
 
   if (payload.degraded.some((d) => d.includes("x"))) {
     items.push({
@@ -333,12 +340,12 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       next: "Set YOUTUBE_API_KEY for official Shorts titles. TikTok Display API still needs a brand OAuth grant — no unofficial scraper.",
     });
   }
-  if (!qrDecoded) {
+  if (qrs.length === 0 && !qrDecoded) {
     items.push({
       priority: "P0",
       title: "QR image decode, not just QR-shaped URLs",
       why: "Campaigns hide the payload in images. Text regex cannot see a poster QR.",
-      next: "Accept image URLs → decode with a QR library → treat payload as a first-class artifact.",
+      next: "Raise the decode cap once Camry posters land as image receipts.",
     });
   }
   if (bubbles >= 3) {
@@ -353,8 +360,8 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
     items.push({
       priority: "P1",
       title: "Compare two campaign phrases on one desk",
-      why: "A CMO looking up this year's tag also needs last year's phrase on the same timeseries.",
-      next: "Second lookup slot; overlay occurrence without inventing a shared WHY.",
+      why: "Watch can overlay two names. Footprint still plots one plugged phrase.",
+      next: "Second lookup slot on Footprint occurrence — same last-4 series, no invented shared WHY.",
     });
   }
   if (!payload.topics.some((t) => t.tickers.length > 0)) {

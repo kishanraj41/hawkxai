@@ -912,8 +912,10 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
     artifacts = [a for b in briefs for a in b.artifacts]
     hashtags = [a for a in artifacts if a.kind == "hashtag"]
     qrs = [a for a in artifacts if a.kind == "qr"]
-    qr_decoded = any(a.value.startswith("decoded:") for a in qrs)
+    qr_decoded = any(not a.value.startswith("http") and "mentioned" not in a.value.lower() for a in qrs)
     bubbles = sum(1 for t in topics if float(t.get("divergence") or 0) >= 0.66)
+
+    items.append(Improvisation("P0", "Tag Camry occupiers for occupancy HistGB", "Next-window HistGB is live; occupancy still uses host-class L1 until 20 gold inspect tags.", "On Watch inspect, mark occupiers Official / Occupied / Ignore. Camry first. Do not invent tags."))
 
     if any("x" in d for d in degraded):
         items.append(Improvisation("P0", "Stabilize X ingest", "Hashtag and QR campaigns mostly start on X. Offline X blinds the booster.", "Keep x_search, add a Google Trends fallback so capture still runs."))
@@ -923,12 +925,12 @@ def improvisations_for(payload: Dict[str, Any], briefs: Sequence[TopicBrief]) ->
         items.append(Improvisation("P0", "Public-API ingest is offline", "News, weather, crypto, and sports receipts come from the public-apis catalog. Without them WHY stays social-only.", "Retry GDELT/NWS/CoinGecko feeds; keep catalog cache so the allowlist still configures the desk."))
     if len(hashtags) < 3:
         items.append(Improvisation("P0", "Ingest TikTok / Reels / Shorts caption text", "Almost no hashtags in HN/Reddit titles. Short-form campaigns are invisible.", "Set YOUTUBE_API_KEY for official Shorts titles. TikTok Display API still needs a brand OAuth grant — no unofficial scraper."))
-    if not qr_decoded:
-        items.append(Improvisation("P0", "QR image decode, not just QR-shaped URLs", "Campaigns hide the payload in images. Text regex cannot see a poster QR.", "Accept image URLs → decode with a QR library → treat payload as a first-class artifact."))
+    if len(qrs) == 0:
+        items.append(Improvisation("P0", "QR image decode, not just QR-shaped URLs", "Campaigns hide the payload in images. Text regex cannot see a poster QR.", "Raise the decode cap once Camry posters land as image receipts."))
     if bubbles >= 3:
         items.append(Improvisation("P1", "Platform-native campaign studio", f"{bubbles} topics are still single-platform bubbles — the cheapest time to act.", "One-click brief: format + hook + risk for the bubbling network only."))
     if payload.get("plugged"):
-        items.append(Improvisation("P1", "Compare two campaign phrases on one desk", "A CMO looking up this year's tag also needs last year's phrase on the same timeseries.", "Second lookup slot; overlay occurrence without inventing a shared WHY."))
+        items.append(Improvisation("P1", "Compare two campaign phrases on one desk", "Watch can overlay two names. Footprint still plots one plugged phrase.", "Second lookup slot on Footprint occurrence — same last-4 series, no invented shared WHY."))
     if not any((t.get("tickers") or []) for t in topics):
         items.append(Improvisation("P1", "Finance overlay even without explicit tickers", "Competitors still need category peers when $TICKER is absent.", "Map topic labels to a small industry lexicon — never invent symbols."))
     thin = sum(1 for b in briefs if b.causation.thin)

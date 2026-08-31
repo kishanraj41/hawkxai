@@ -47,3 +47,9 @@ CREATE TABLE IF NOT EXISTS poi_labels (
   tag TEXT NOT NULL CHECK (tag IN ('official','occupied','ignore')),
   PRIMARY KEY (entity_id, url)
 );
+CREATE TABLE IF NOT EXISTS poi_models (
+  id TEXT PRIMARY KEY,
+  payload JSONB NOT NULL,
+  samples INT NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

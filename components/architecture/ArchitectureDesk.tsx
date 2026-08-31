@@ -18,10 +18,13 @@ function ArchitectureHeader() {
       <p className="text-xs uppercase tracking-[0.18em] text-[var(--mute)]">HawkxAI</p>
       <h1 className="text-2xl font-medium text-[var(--ink)]">Runtime architecture</h1>
       <p className="max-w-2xl text-sm leading-6 text-[var(--mute-strong)]">
-        Next.js 14 on Vercel <code className="text-[var(--ink)]">iad1</code>, Cloud SQL
+        Next.js 14 on Cloud Run (and Vercel until www cutover), Cloud SQL
         Postgres in <code className="text-[var(--ink)]">us-east4</code>, ten category
-        databases. Hobby egress is temporarily allowed from any IP; replace that with
-        Static IPs later.
+        databases. HistGB next-window and the generated handbook live on{" "}
+        <a href="/handbook" className="underline-offset-2 hover:underline">
+          /handbook
+        </a>
+        .
       </p>
     </header>
   );

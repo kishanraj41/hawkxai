@@ -73,6 +73,40 @@ export const ENV_GRAPH = `flowchart TB
   note["Do not vercel env pull over .env.local"]
 `;
 
+export const FLEET_GRAPH = `flowchart LR
+  marketer[Marketer] --> footprint["Footprint /footprint"]
+  footprint -->|"POST /api/fleet"| deskApi["Next.js POST /api/fleet"]
+  trendsTab["Trends GET /api/trends"] --> deskCollectors["Desk collectors"]
+  deskApi --> cloudRun["Cloud Run hawkxai-fleet"]
+  cloudRun --> adk["ADK ingest_agent Gemini 3.5"]
+  adk --> hnTool["collect_hn"]
+  adk --> apiTool["collect_public_apis"]
+  adk --> scoreTool["score_and_dedup"]
+  hnTool --> gcs["GCS snapshot JSON"]
+  apiTool --> gcs
+  scoreTool --> gcs
+  gcs --> deskApi
+  deskApi --> footprint
+`;
+
+export const ML_GRAPH = `flowchart TB
+  receipts[Receipt windows + gold inspect tags] --> features[last-4 counts · occupancy · host · QR]
+  features --> histgb["HistGB next-window and occupancy"]
+  histgb -->|n transitions under 16| stumps[L2 ratio stumps]
+  histgb -->|gold tags under 20| l1[L1 official-host class]
+  histgb --> outlook[rising / peaking / fading]
+  stumps --> outlook
+  l1 --> organic[organic vs occupied]
+  note["Labels are the next actual count or an inspect tag. Never an invented WHY."]
+`;
+
+export const LINEAGE_GRAPH = `flowchart LR
+  collect[Collector tool] --> stamp["Post.tool + collectedAt"]
+  stamp --> strip[Footprint / Research lineage strip]
+  stamp --> save[Save .md lineage table]
+  stamp --> handbook["Generated handbook"]
+`;
+
 export const ARCHITECTURE_SECTIONS = [
   {
     id: "deploy",
@@ -103,5 +137,23 @@ export const ARCHITECTURE_SECTIONS = [
     title: "Env contract",
     caption: "Same TREND_DB_* keys locally and on Vercel. Password is sensitive on Production and Preview. vercel env pull replaces .env.local — do not run it over this file.",
     chart: ENV_GRAPH,
+  },
+  {
+    id: "fleet",
+    title: "Ingest fleet",
+    caption: "Footprint POSTs a phrase to Cloud Run. ADK fans out HN and public APIs, scores existing titles, writes a GCS snapshot. GET /api/trends is untouched.",
+    chart: FLEET_GRAPH,
+  },
+  {
+    id: "ml",
+    title: "HistGB next-window",
+    caption: "Fitted on receipt window transitions and gold occupier tags. Under 16 transitions the desk keeps L2 stumps. Under 20 gold tags occupancy stays host-class L1. Thin stays thin.",
+    chart: ML_GRAPH,
+  },
+  {
+    id: "lineage",
+    title: "AutoLineage",
+    caption: "RudriQ extracts receipts. AutoLineage records which collect step produced each one (tool + collectedAt). Visible on the desk and in the generated handbook.",
+    chart: LINEAGE_GRAPH,
   },
 ] as const;
