@@ -2,6 +2,9 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AmbientBackground from "@/components/AmbientBackground";
+import BoosterInsights from "@/components/BoosterInsights";
+import { KeepBrief } from "@/components/brief/KeepBrief";
+import { TermStage } from "@/components/desk/TermStage";
 import ResearchLookup from "@/components/research/ResearchLookup";
 import {
   DeskFrame,
@@ -12,13 +15,16 @@ import {
   StatusChip,
 } from "@/components/shell/DeskChrome";
 import DeskWorkspace from "@/components/shell/DeskWorkspace";
+import { boostTrends } from "@/lib/booster";
 import {
   formatResearchBrief,
   researchBriefFilename,
 } from "@/lib/research-brief";
+import { sliceResearchPayload } from "@/lib/research-pack";
 import { formatUpdatedAt } from "@/lib/ui-helpers";
 import LineageStrip from "@/components/desk/LineageStrip";
-import type { ResearchPayload, ResearchSource, ResearchSourceKind } from "@/lib/types";
+import { leadTopic } from "@/lib/watchlist-lookup";
+import type { ResearchPayload, ResearchSource, ResearchSourceKind, TrendsPayload } from "@/lib/types";
 
 const KIND_LABEL: Record<ResearchSourceKind, string> = {
   wikipedia: "Wiki",
@@ -37,6 +43,37 @@ function setQueryUrl(topic: string) {
   if (topic) url.searchParams.set("q", topic);
   else url.searchParams.delete("q");
   window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+}
+
+function SenseRail({
+  senses,
+  selectedId,
+  droppedCount,
+  onSelect,
+}: {
+  senses: { id: string; label: string; count: number }[];
+  selectedId: string | null;
+  droppedCount: number;
+  onSelect: (id: string) => void;
+}) {
+  if (senses.length < 2 && droppedCount < 1) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      {senses.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          onClick={() => onSelect(s.id)}
+          className={`empty-stage__chip ${s.id === selectedId ? "border-white/35 bg-white/[0.08]" : ""}`}
+        >
+          {s.label} · {s.count}
+        </button>
+      ))}
+      {droppedCount > 0 ? (
+        <StatusChip>thin · {droppedCount} unrelated</StatusChip>
+      ) : null}
+    </div>
+  );
 }
 
 function ResearchExport({ payload }: { payload: ResearchPayload }) {
@@ -108,25 +145,37 @@ function SourceCard({
 
 export default function ResearchDesk() {
   const [payload, setPayload] = useState<ResearchPayload | null>(null);
+  const [lookup, setLookup] = useState<TrendsPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [senseId, setSenseId] = useState<string | null>(null);
+  const [bucketT, setBucketT] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const booted = useRef(false);
 
-  const selected = useMemo(
-    () => payload?.sources.find((s) => s.id === selectedId) ?? null,
-    [payload, selectedId],
+  const view = useMemo(
+    () => (payload ? sliceResearchPayload(payload, senseId) : null),
+    [payload, senseId],
   );
+
+  const selected = useMemo(
+    () => view?.sources.find((s) => s.id === selectedId) ?? null,
+    [view, selectedId],
+  );
+
+  const booster = useMemo(() => (lookup ? boostTrends(lookup) : null), [lookup]);
+  const lead = leadTopic(lookup);
+  const brief = lead ? booster?.briefs.find((b) => b.topicId === lead.id) : undefined;
 
   const byKind = useMemo(() => {
     const counts: Partial<Record<ResearchSourceKind, number>> = {};
-    for (const s of payload?.sources ?? []) {
+    for (const s of view?.sources ?? []) {
       counts[s.kind] = (counts[s.kind] ?? 0) + 1;
     }
     return counts;
-  }, [payload]);
+  }, [view]);
 
   const runResearch = useCallback(async (topic: string) => {
     const q = topic.trim();
@@ -135,12 +184,24 @@ export default function ResearchDesk() {
     setError(null);
     setQuery(q);
     setQueryUrl(q);
+    setBucketT(null);
     try {
-      const res = await fetch(`/api/research?q=${encodeURIComponent(q)}`);
+      const [res, trendsRes] = await Promise.all([
+        fetch(`/api/research?q=${encodeURIComponent(q)}`),
+        fetch(`/api/trends?topic=${encodeURIComponent(q)}`),
+      ]);
+      if (trendsRes.ok) {
+        setLookup((await trendsRes.json()) as TrendsPayload);
+      } else {
+        setLookup(null);
+      }
       if (!res.ok) throw new Error(`Research failed (${res.status})`);
       const data = (await res.json()) as ResearchPayload;
       setPayload(data);
-      setSelectedId(data.sources[0]?.id ?? null);
+      const nextSense = data.defaultSenseId ?? data.senses?.[0]?.id ?? null;
+      setSenseId(nextSense);
+      const sliced = sliceResearchPayload(data, nextSense);
+      setSelectedId(sliced.sources[0]?.id ?? data.sources[0]?.id ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not research that topic");
       setPayload(null);
@@ -177,14 +238,17 @@ export default function ResearchDesk() {
 
   function handleClear() {
     setPayload(null);
+    setLookup(null);
     setQuery("");
     setSelectedId(null);
+    setSenseId(null);
+    setBucketT(null);
     setError(null);
     setQueryUrl("");
     inputRef.current?.focus();
   }
 
-  const empty = !payload && !loading;
+  const empty = !payload && !lookup && !loading;
 
   return (
     <main className="desk-shell">
@@ -196,12 +260,17 @@ export default function ResearchDesk() {
             onSubmit={handleSubmit}
             className="desk-chrome__toolbar-form flex min-w-0 flex-1 items-center gap-2"
           >
+            <label htmlFor="research-lookup" className="sr-only">
+              Research a topic
+            </label>
             <input
+              id="research-lookup"
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Topic, paper, policy, patent…"
               enterKeyHint="search"
+              autoComplete="off"
               className="field-input max-w-xl"
             />
             <PrimaryButton type="submit" disabled={loading || !query.trim()}>
@@ -242,18 +311,23 @@ export default function ResearchDesk() {
             {loading
               ? "researching"
               : payload
-                ? `${payload.sources.length} sources · ${formatUpdatedAt(payload.updatedAt)}`
+                ? `${(view ?? payload).sources.length} sources · ${formatUpdatedAt(payload.updatedAt)}`
                 : "research a topic"}
           </StatusChip>
           {payload?.thin ? (
             <span className="status-chip status-chip--warn">thin evidence</span>
+          ) : null}
+          {(payload?.droppedCount ?? 0) > 0 ? (
+            <span className="status-chip status-chip--warn">
+              thin · {payload!.droppedCount} unrelated
+            </span>
           ) : null}
           {payload?.degraded.map((msg) => (
             <StatusChip key={msg}>{msg}</StatusChip>
           ))}
         </div>
         <div className="desk-chrome__actions ml-auto flex shrink-0 items-center gap-1">
-          {payload ? <ResearchExport payload={payload} /> : null}
+          {payload ? <ResearchExport payload={view ?? payload} /> : null}
           <GhostButton
             onClick={() => void runResearch(query)}
             disabled={loading || !query.trim()}
@@ -276,8 +350,9 @@ export default function ResearchDesk() {
         stageBlurb="What they say"
         detailLabel="Inspect"
         detailBlurb="One source"
-        jumpToDetailKey={selectedId}
+        jumpToDetailKey={loading || lookup ? null : selectedId}
         preferStage={empty}
+        stageKey={query && (payload || loading) ? query : null}
         list={
           <aside className="signal-glass flex min-h-0 flex-col overflow-hidden p-3.5">
             <p className="text-sm font-medium tracking-tight">Sources</p>
@@ -288,7 +363,7 @@ export default function ResearchDesk() {
               {loading && !payload ? (
                 <p className="signal-label">Gathering…</p>
               ) : (
-                (payload?.sources ?? []).map((s) => (
+                (view?.sources ?? []).map((s) => (
                   <SourceCard
                     key={s.id}
                     source={s}
@@ -320,19 +395,47 @@ export default function ResearchDesk() {
                 ) : null}
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+                <TermStage
+                  payload={lookup}
+                  loading={loading && !lookup}
+                  bucketT={bucketT}
+                  queryLabel={payload?.query ?? query}
+                  emptyTitle="No live print yet"
+                  emptyCopy="Occurrence fills from live tape while the brief below cites sources — never an invented WHY."
+                  onSelectBucket={setBucketT}
+                  onSelectRelated={(name) => void runResearch(name)}
+                />
+                {lead && brief ? (
+                  <KeepBrief.Provider topic={lead} brief={brief} query={lookup?.query}>
+                    <BoosterInsights brief={brief} topic={lead} />
+                  </KeepBrief.Provider>
+                ) : null}
                 {loading && !payload ? (
-                  <p className="text-sm text-white/45">
+                  <p className="mt-6 text-sm text-white/45">
                     Digging Wikipedia, web, PubMed, arXiv, USPTO, HN, Reddit, X…
                   </p>
                 ) : (
                   <>
-                    <p className="text-pretty text-[15px] leading-relaxed text-white/88">
-                      {payload?.summary}
+                    <p className="mt-6 text-pretty text-[15px] leading-relaxed text-white/88">
+                      {view?.summary}
                     </p>
+
+                    {payload ? (
+                      <SenseRail
+                        senses={payload.senses ?? []}
+                        selectedId={senseId}
+                        droppedCount={payload.droppedCount ?? 0}
+                        onSelect={(id) => {
+                          setSenseId(id);
+                          const next = sliceResearchPayload(payload, id);
+                          setSelectedId(next.sources[0]?.id ?? null);
+                        }}
+                      />
+                    ) : null}
 
                     <h2 className="mt-7 signal-label">Findings</h2>
                     <ul className="mt-2.5 space-y-2.5">
-                      {(payload?.findings ?? []).map((f, i) => (
+                      {(view?.findings ?? []).map((f, i) => (
                         <li
                           key={`${f.claim.slice(0, 40)}-${i}`}
                           className="rounded-[var(--radius-sm)] border border-white/8 bg-white/[0.02] px-3 py-2.5"
@@ -354,31 +457,28 @@ export default function ResearchDesk() {
                       ))}
                     </ul>
 
-                    {(payload?.angles.length ?? 0) > 0 ? (
+                    {(view?.angles.length ?? 0) > 0 ? (
                       <>
                         <h2 className="mt-7 signal-label">Angles</h2>
-                        <div className="mt-2.5 flex flex-wrap gap-1.5">
-                          {payload!.angles.map((a) => (
-                            <button
+                        <ul className="mt-2.5 space-y-1.5">
+                          {view!.angles.map((a) => (
+                            <li
                               key={a}
-                              type="button"
-                              disabled={loading}
-                              onClick={() => void runResearch(`${payload!.query}: ${a}`)}
-                              className="empty-stage__chip disabled:opacity-40"
+                              className="rounded-[var(--radius-sm)] border border-white/8 px-3 py-2.5 text-[13px] leading-snug text-white/75"
                             >
                               {a}
-                            </button>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </>
                     ) : null}
 
-                    {(payload?.openQuestions.length ?? 0) > 0 ? (
+                    {(view?.openQuestions.length ?? 0) > 0 ? (
                       <>
                         <h2 className="mt-7 signal-label">Open questions</h2>
-                        <p className="mt-1 text-xs text-white/40">Tap to research that angle.</p>
+                        <p className="mt-1 text-xs text-white/40">From opposing hosts in this pack. Tap to dig.</p>
                         <ul className="mt-2.5 space-y-1.5">
-                          {payload!.openQuestions.map((q) => (
+                          {view!.openQuestions.map((q) => (
                             <li key={q}>
                               <button
                                 type="button"
@@ -427,6 +527,9 @@ export default function ResearchDesk() {
           </aside>
         }
       />
+      <p className="sr-only" aria-live="polite">
+        {loading ? `Researching ${query}` : payload ? `${payload.query}: ${payload.sources.length} sources` : ""}
+      </p>
     </main>
   );
 }

@@ -1,8 +1,12 @@
-# HawkxAI — Hackathon
+# HawkxAI — Campaign Footprint Intelligence
+
+**🚀 Ready to launch!** See [LAUNCH_NOW.md](LAUNCH_NOW.md) for 3-day launch plan.
 
 A live trend map across X, Reddit, and Hacker News. Gemini 3.5 clusters related topics, while divergence is calculated in code. A topic exploding on one platform tells a different story from one gaining momentum across all platforms.
 
-**Additional tab:** Footprint (`/footprint`) opens from the dashboard in a new browser tab. Look up a campaign name or phrase and see its internet footprint on the same desk, mind, and map.
+**Campaign Footprint**: Look up a specific phrase you own (product, hashtag, event) on `/footprint`. See where it printed, what artifacts co-occurred (hashtags, QR codes, URLs), and when it will peak. Evidence-only. No invented WHY.
+
+**What makes HawkxAI different**: Brandwatch tells you "what's trending globally." We tell you "where YOUR campaign landed." Different job, different tool. See [docs/BRANDWATCH_COMPARISON.md](docs/BRANDWATCH_COMPARISON.md) for detailed positioning.
 
 # Core Idea — Booster Agent
 
@@ -152,3 +156,15 @@ python3 agents/smartsalesguy/smartsalesguy.py
 ```
 
 Canonical investor page: [docs/presentation/VC_ONE_PAGER.md](docs/presentation/VC_ONE_PAGER.md) · Deck file list: [docs/presentation/README.md](docs/presentation/README.md#proposal-presentation)
+
+## Launch Resources
+
+🚀 **Ready to go public?** Start here:
+
+- **[LAUNCH_NOW.md](LAUNCH_NOW.md)** — 3-day launch plan (Deploy → Record → Publish)
+- **[DECISION_SUMMARY.md](DECISION_SUMMARY.md)** — Executive summary: Should you make HawkxAI public? (YES)
+- **[docs/GO_TO_MARKET_STRATEGY.md](docs/GO_TO_MARKET_STRATEGY.md)** — Complete GTM strategy (15 pages)
+- **[docs/LAUNCH_CHECKLIST.md](docs/LAUNCH_CHECKLIST.md)** — Pre-launch checklist (18 tasks)
+- **[marketing/SOCIAL_MEDIA_TEMPLATES.md](marketing/SOCIAL_MEDIA_TEMPLATES.md)** — Copy-paste ready posts for X, LinkedIn, Reddit, Product Hunt, HN
+
+**TL;DR**: Target 10-20 performance marketers first. Success metric: 10 daily active users by Week 4. Then scale to public launch (Product Hunt, HN, Reddit).

@@ -1,5 +1,6 @@
 "use client";
 
+import DemoWalk from "@/components/desk/DemoWalk";
 import EmptyStage from "@/components/shell/EmptyStage";
 
 const SUGGESTIONS = [
@@ -20,11 +21,13 @@ export default function PhraseLookup({ onLookup, onFocusLookup }: PhraseLookupPr
     <EmptyStage
       eyebrow="Footprint"
       title="Look up a campaign or phrase"
-      copy="Plug the name your team already owns. The desk fills with where it is printing — mind, related prints, and receipts for that print only."
+      copy="Plug the name your team already owns. Occurrence, receipts, and a keepable brief fill from live tape — never an invented WHY. Overlay a second phrase after lookup: two lines, not a shared story."
       primaryLabel="Focus lookup"
       onPrimary={onFocusLookup}
       suggestions={[...SUGGESTIONS]}
       onSuggest={onLookup}
-    />
+    >
+      <DemoWalk />
+    </EmptyStage>
   );
 }

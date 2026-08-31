@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 interface EmptyStageProps {
   eyebrow: string;
   title: string;
@@ -9,6 +11,7 @@ interface EmptyStageProps {
   onPrimary: () => void;
   suggestions: { id: string; label: string }[];
   onSuggest: (label: string) => void;
+  children?: ReactNode;
 }
 
 export default function EmptyStage({
@@ -20,6 +23,7 @@ export default function EmptyStage({
   onPrimary,
   suggestions,
   onSuggest,
+  children,
 }: EmptyStageProps) {
   return (
     <section className="empty-stage">
@@ -50,6 +54,7 @@ export default function EmptyStage({
             </button>
           ))}
         </div>
+        {children}
       </div>
     </section>
   );

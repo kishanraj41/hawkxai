@@ -12,6 +12,7 @@ import {
 } from "./histgb";
 import { databaseName, readTrendDbConfig } from "./trend-db";
 import type { PoiInsight, PoiTag, Post, TrendsPayload, WatchlistEntity } from "./types";
+import { emptyWatchStore, parseWatchStore, type TapeWatchStore } from "./watch";
 
 const OWNER = "demo";
 
@@ -66,6 +67,11 @@ CREATE TABLE IF NOT EXISTS poi_models (
   samples INT NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS tape_watch (
+  owner TEXT PRIMARY KEY,
+  payload JSONB NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
 
 type PgPool = {
@@ -79,6 +85,7 @@ const memory: WatchlistEntity[] = [];
 const memoryLabels = new Map<string, Map<string, PoiTag>>();
 const memoryQr = new Map<string, string>();
 const memoryBlobs = new Map<string, unknown>();
+let memoryTape: TapeWatchStore = emptyWatchStore();
 let schemaReady = false;
 let pool: PgPool | null | undefined;
 
@@ -497,4 +504,34 @@ async function loadStoredModel(id: string): Promise<HistGbModel | null> {
 
 async function saveStoredModel(id: string, model: HistGbModel): Promise<void> {
   await writeModelBlob(id, model, model.samples);
+}
+
+export async function loadTapeWatch(): Promise<{ backend: "postgres" | "memory"; store: TapeWatchStore }> {
+  const db = await allPool();
+  if (!db) return { backend: "memory", store: memoryTape };
+  await ensureSchema(db);
+  try {
+    const res = await db.query(`SELECT payload FROM tape_watch WHERE owner = $1`, [OWNER]);
+    const raw = res.rows[0]?.payload;
+    if (raw == null) return { backend: "postgres", store: memoryTape };
+    const store = parseWatchStore(typeof raw === "string" ? raw : JSON.stringify(raw));
+    return { backend: "postgres", store };
+  } catch (err) {
+    console.warn("[tape-watch] load", err instanceof Error ? err.message : err);
+    return { backend: "postgres", store: memoryTape };
+  }
+}
+
+export async function saveTapeWatch(store: TapeWatchStore): Promise<{ backend: "postgres" | "memory" }> {
+  memoryTape = { ids: [...store.ids], snaps: { ...store.snaps } };
+  const db = await allPool();
+  if (!db) return { backend: "memory" };
+  await ensureSchema(db);
+  await db.query(
+    `INSERT INTO tape_watch (owner, payload, updated_at)
+     VALUES ($1, $2::jsonb, NOW())
+     ON CONFLICT (owner) DO UPDATE SET payload = EXCLUDED.payload, updated_at = NOW()`,
+    [OWNER, JSON.stringify(store)],
+  );
+  return { backend: "postgres" };
 }

@@ -1,4 +1,4 @@
-import { CATEGORY_LABEL } from "@/lib/desk";
+import { TrendMark, categoryCaption } from "@/components/desk/TrendMarks";
 import { CATEGORIES, type DeskCategory } from "@/lib/types";
 
 interface CategoryPlugsProps {
@@ -27,13 +27,15 @@ export default function CategoryPlugs({ value, counts, onChange }: CategoryPlugs
             role="tab"
             aria-selected={active}
             onClick={() => onChange(id)}
-            className={`flex h-10 shrink-0 items-center gap-1.5 rounded border px-2.5 text-[11px] transition-colors duration-80 sm:h-9 ${
+            aria-label={`${categoryCaption(id)} · ${n}`}
+            title={categoryCaption(id)}
+            className={`flex h-10 shrink-0 items-center justify-center gap-1 rounded border px-1.5 transition-colors duration-80 sm:h-9 sm:px-2 ${
               active
                 ? "border-white/40 bg-white/[0.08] text-white"
                 : "border-white/10 text-white/55 hover:border-white/20 hover:text-white"
             }`}
           >
-            {CATEGORY_LABEL[id]}
+            <TrendMark.Plug category={id} size={22} />
             <span className="font-mono text-[10px] tabular-nums text-white/45">{n}</span>
           </button>
         );

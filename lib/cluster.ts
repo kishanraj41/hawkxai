@@ -10,6 +10,7 @@ import {
   velocityOf,
 } from "./metrics";
 import { needlesOf, titleHits, titleScore, type QueryIntent } from "./query";
+import { tokenHits } from "./phrase-hit";
 import { topicBoost } from "./rl";
 import { PLATFORMS, type Platform, type Post, type RawSignals, type Topic } from "./types";
 
@@ -151,10 +152,9 @@ function overlap(a: Set<string>, b: Set<string>): number {
 function matchesQuery(title: string, query: string): boolean {
   const q = query.toLowerCase().trim();
   if (!q) return false;
-  const t = title.toLowerCase();
-  if (t.includes(q)) return true;
+  if (tokenHits(title, q)) return true;
   const qTok = new Set(q.split(/[^a-z0-9]+/).filter((w) => w.length > 1));
-  if ([...qTok].some((w) => w.length > 2 && t.includes(w))) return true;
+  if ([...qTok].some((w) => w.length > 2 && tokenHits(title, w))) return true;
   return overlap(qTok, tokens(title)) >= 0.18;
 }
 
@@ -275,7 +275,10 @@ export function attachPublicPosts(topics: Topic[], publicPosts: Post[]): Topic[]
     .toSorted((a, b) => b.score - a.score)
     .slice(0, 24);
   for (const p of leftover) {
-    topics.push(hydrate(p.title, { x: [], reddit: [], hn: [], public: [p] }));
+    const topic = hydrate(p.title, { x: [], reddit: [], hn: [], public: [p] });
+    // Keep leftover public singletons unique — NWS titles often share a long prefix.
+    topic.id = slug(`${p.sourceApi || p.platform}-${p.url}`).slice(0, 48) || topic.id;
+    topics.push(topic);
   }
   return topics;
 }

@@ -1,57 +1,70 @@
+"use client";
+
+import { useState } from "react";
+import { TrendMark, trendAria } from "@/components/desk/TrendMarks";
 import { topicRisk } from "@/lib/booster";
 import { totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { Topic } from "@/lib/types";
+import type { CapturedArtifact, Topic } from "@/lib/types";
 
 interface TickerTapeProps {
   topics: Topic[];
+  artifactsById?: Map<string, CapturedArtifact[]>;
   onSelect: (topic: Topic) => void;
 }
 
-export default function TickerTape({ topics, onSelect }: TickerTapeProps) {
+export default function TickerTape({ topics, artifactsById, onSelect }: TickerTapeProps) {
   const ranked = [...topics].toSorted((a, b) => totalScore(b) - totalScore(a));
   const items = ranked.length ? [...ranked, ...ranked] : [];
+  const [caption, setCaption] = useState<string | null>(null);
 
   if (items.length === 0) return null;
 
   return (
-    <div className="relative z-20 mx-3 mt-2 overflow-hidden rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)]">
-      <div className="tape-track flex w-max gap-7 px-4 py-2">
-        {items.map((t, i) => {
-          const risk = topicRisk(t);
-          return (
-            <button
-              key={`${t.id}-${i}`}
-              type="button"
-              onClick={() => onSelect(t)}
-              className="flex shrink-0 items-center gap-2 font-mono text-[11px] tabular-nums text-white/80 transition-colors duration-150 hover:text-white"
-            >
-              <span className="max-w-[220px] truncate">{t.label}</span>
-              <span className="text-white">{Math.round(totalScore(t))}</span>
-              <span
-                className={
-                  t.velocity === "rising"
-                    ? "text-emerald-400"
-                    : t.velocity === "fading"
-                      ? "text-red-400"
-                      : "text-white/40"
-                }
+    <div className="relative z-20 mx-3 mt-2">
+      <div className="mb-1 px-1">
+        <TrendMark.Caption>{caption}</TrendMark.Caption>
+      </div>
+      <div className="overflow-hidden rounded-[var(--radius-md)] border border-white/8 bg-[var(--panel-strong)]">
+        <div className="tape-track flex w-max gap-7 px-4 py-2">
+          {items.map((t, i) => {
+            const risk = topicRisk(t);
+            const category = TrendMark.category(t, artifactsById?.get(t.id) ?? []);
+            const name = trendAria(t, category);
+            return (
+              <button
+                key={`${t.id}-${i}`}
+                type="button"
+                onClick={() => onSelect(t)}
+                onMouseEnter={() => setCaption(name)}
+                onMouseLeave={() => setCaption(null)}
+                onFocus={() => setCaption(name)}
+                onBlur={() => setCaption(null)}
+                title={name}
+                aria-label={name}
+                className="flex shrink-0 items-center gap-2 font-mono text-[11px] tabular-nums text-white/80 transition-colors duration-150 hover:text-white"
               >
-                {VELOCITY_MARK[t.velocity]}
-              </span>
-              <span
-                className={
-                  risk === "high"
-                    ? "text-red-400"
-                    : risk === "medium"
-                      ? "text-amber-400"
-                      : "text-white/35"
-                }
-              >
-                {risk}
-              </span>
-            </button>
-          );
-        })}
+                <TrendMark.Tile topic={t} category={category} size={22} />
+                <span className="text-white">{Math.round(totalScore(t))}</span>
+                <span
+                  className={
+                    t.velocity === "rising"
+                      ? "text-emerald-400"
+                      : t.velocity === "fading"
+                        ? "text-red-400"
+                        : "text-white/40"
+                  }
+                >
+                  {VELOCITY_MARK[t.velocity]}
+                </span>
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    risk === "high" ? "bg-red-400" : risk === "medium" ? "bg-amber-400" : "bg-emerald-400"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

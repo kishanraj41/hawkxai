@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { KeepBrief } from "@/components/brief/KeepBrief";
+import { PredictionPanel } from "@/components/PredictionPanel";
 import { takeawayFor } from "@/lib/brief";
-import type { AgeLens, BoosterTopicBrief } from "@/lib/types";
+import type { AgeLens, BoosterTopicBrief, Topic } from "@/lib/types";
 
 const RISK_STYLE = {
   low: "text-emerald-400",
@@ -13,10 +14,11 @@ const RISK_STYLE = {
 
 interface BoosterInsightsProps {
   brief: BoosterTopicBrief;
+  topic: Topic;
   lens?: AgeLens | "all";
 }
 
-export default function BoosterInsights({ brief, lens = "all" }: BoosterInsightsProps) {
+export default function BoosterInsights({ brief, topic, lens = "all" }: BoosterInsightsProps) {
   const [picked, setPicked] = useState<AgeLens>("millennial");
   const locked = lens !== "all";
   const active = locked
@@ -36,6 +38,14 @@ export default function BoosterInsights({ brief, lens = "all" }: BoosterInsights
       </div>
 
       <p className="mt-2 text-pretty text-sm leading-relaxed text-white/70">{brief.whyTrending}</p>
+
+      {/* World-Class Predictions */}
+      {brief.predictions && (
+        <div className="mt-4">
+          <h3 className="signal-label mb-3">Intelligence · Predictions</h3>
+          <PredictionPanel topic={topic} brief={brief} />
+        </div>
+      )}
 
       {brief.artifacts.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-1.5">

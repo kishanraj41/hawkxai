@@ -2,6 +2,12 @@ export const PLATFORMS = ["x", "reddit", "hn", "public"] as const;
 
 export type Platform = (typeof PLATFORMS)[number];
 
+export interface PostGeo {
+  lat: number;
+  lon: number;
+  label: string;
+}
+
 export interface Post {
   platform: Platform;
   title: string;
@@ -9,6 +15,8 @@ export interface Post {
   score: number;
   createdAt: string;
   sourceApi?: string;
+  /** Proven coordinates from the source. Never geocoded from a title. */
+  geo?: PostGeo;
   /** AutoLineage: which collect step produced this receipt. */
   tool?: string;
   /** AutoLineage: when that collect step wrote the receipt. */
@@ -61,6 +69,92 @@ export interface PublicApiIngest {
   topic?: string;
 }
 
+export type ExamplePoiIndustry =
+  | "technology"
+  | "finance"
+  | "healthcare"
+  | "retail"
+  | "automotive"
+  | "real-estate"
+  | "entertainment"
+  | "education"
+  | "hospitality"
+  | "manufacturing";
+
+export interface ExamplePoiHop {
+  examplePinId: string;
+  livePinId: string;
+}
+
+export interface ExamplePoiPair {
+  poiId: string;
+  poiName: string;
+  poiCity: string;
+  industry: ExamplePoiIndustry;
+  liveTitle: string;
+  liveUrl: string;
+  liveSource: string;
+  km: number;
+  poiLat: number;
+  poiLon: number;
+  liveLat: number;
+  liveLon: number;
+  examplePinId: string;
+  livePinId: string;
+}
+
+export interface ExamplePoiIndustryCall {
+  category: ExamplePoiIndustry;
+  poiCount: number;
+  liveNear: number;
+  nearestKm: number | null;
+  sources: string[];
+  factors: { id: string; name: string; weight: number; value: number; unit: string; trend: "up" | "down" | "stable" }[];
+  constraints: {
+    id: string;
+    name: string;
+    threshold: number;
+    current: number;
+    met: boolean;
+    impact: "critical" | "high" | "medium" | "low";
+  }[];
+  variables: {
+    id: string;
+    name: string;
+    type: "numeric" | "boolean" | "categorical";
+    value: string | number | boolean;
+    impact: number;
+  }[];
+  outlook: ForecastOutlook;
+  confidence: number;
+  thin: boolean;
+  analysis: string;
+  /** Last hourly liveNear counts, oldest → newest. */
+  window: number[];
+  prediction: {
+    headline: string;
+    nextAction: string;
+    timeframe: string;
+    confidence: number;
+  };
+}
+
+export interface ExamplePoiCompare {
+  dataset: string;
+  license: string;
+  collectedAt: string;
+  datasetSha: string | null;
+  exampleCount: number;
+  locatedCount: number;
+  pairCount: number;
+  pairs: ExamplePoiPair[];
+  industries: ExamplePoiIndustryCall[];
+  thin: boolean;
+  analysis: string;
+  /** `hub` when the Hugging Face CSV streamed this process; otherwise the vendored sample. */
+  liveRefresh: "hub" | "sample";
+}
+
 export interface TrendsPayload {
   topics: Topic[];
   updatedAt: string;
@@ -68,6 +162,12 @@ export interface TrendsPayload {
   degraded: string[];
   pipeline?: string;
   publicApis?: PublicApiIngest;
+  /** Receipts that already carry coordinates — plotted on the world under the mind map. */
+  located?: Post[];
+  /** Hugging Face travel places, labeled Example POI — not live tape. */
+  examplePoi?: Post[];
+  /** Example POI vs located public tape, scored per industry. */
+  poiCompare?: ExamplePoiCompare;
   plugged?: string;
   query?: QueryInsight;
 }
@@ -193,6 +293,8 @@ export interface MindNode {
   weight: number;
   detail?: string;
   forecast?: LeafForecast;
+  /** Receipt kind for artifact leaves. Hub / topic / source / driver omit this. */
+  artifactKind?: ArtifactKind;
 }
 
 export interface MindLink {
@@ -232,6 +334,54 @@ export interface AgeTranslation {
   takeaway: string;
 }
 
+export interface PeakTimePrediction {
+  predictedPeakTime: string | null;
+  confidence: number;
+  reasoning: string;
+  currentPhase: "pre-peak" | "at-peak" | "post-peak" | "unknown";
+  hoursUntilPeak: number | null;
+}
+
+export interface PlatformSpreadPrediction {
+  willSpreadTo: {
+    platform: Platform;
+    probability: number;
+    estimatedHours: number | null;
+  }[];
+  reasoning: string;
+  confidence: number;
+}
+
+export interface CampaignArcPrediction {
+  currentPhase: "rise" | "peak" | "fade";
+  estimatedPhaseEnd: string | null;
+  totalLifecycleHours: number | null;
+  arcCurve: {
+    phase: "rise" | "peak" | "fade";
+    durationHours: number;
+    peakMultiplier: number;
+  }[];
+  confidence: number;
+  reasoning: string;
+}
+
+export interface RiskAlert {
+  level: "low" | "medium" | "high";
+  clustering: boolean;
+  recentPosts: number;
+  riskRatio: number;
+  timeWindow: string;
+  reasoning: string;
+  recommendations: string[];
+}
+
+export interface PredictionSummary {
+  headline: string;
+  nextAction: string;
+  confidence: number;
+  timeframe: string;
+}
+
 export interface BoosterTopicBrief {
   topicId: string;
   whyTrending: string;
@@ -242,6 +392,13 @@ export interface BoosterTopicBrief {
   campaign: CampaignMove;
   causation: CausationReport;
   sentiment: SentimentReport;
+  predictions?: {
+    peakTime: PeakTimePrediction;
+    platformSpread: PlatformSpreadPrediction;
+    campaignArc: CampaignArcPrediction;
+    riskAlert: RiskAlert;
+    summary: PredictionSummary;
+  };
 }
 
 export interface Improvisation {
@@ -251,11 +408,19 @@ export interface Improvisation {
   next: string;
 }
 
+export interface SnapshotPoint {
+  at: string;
+  score: number;
+  receipts: number;
+}
+
 export interface CollectionStatus {
   backend: "memory" | "postgres";
   databases: string[];
   snapshots: number;
   predicted: number;
+  /** Hourly topic-score history for the lead print. Never an invented WHY. */
+  history?: SnapshotPoint[];
 }
 
 export interface BoosterPayload {
@@ -307,6 +472,18 @@ export interface ResearchFinding {
   confidence: "high" | "medium" | "thin";
 }
 
+export interface ResearchSense {
+  id: string;
+  label: string;
+  count: number;
+  sourceIds: string[];
+}
+
+export interface ResearchDropped {
+  title: string;
+  url: string;
+}
+
 export interface ResearchPayload {
   query: string;
   updatedAt: string;
@@ -317,6 +494,10 @@ export interface ResearchPayload {
   sources: ResearchSource[];
   degraded: string[];
   thin: boolean;
+  droppedCount?: number;
+  dropped?: ResearchDropped[];
+  senses?: ResearchSense[];
+  defaultSenseId?: string | null;
 }
 
 export interface WatchlistEntity {

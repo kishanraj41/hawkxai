@@ -1,5 +1,6 @@
 import { slug } from "./metrics";
 import { occupancyVector, predictHistGb, type HistGbExample, type HistGbModel } from "./histgb";
+import { tokenHits } from "./phrase-hit";
 import { confidenceOf, outlookFromScores } from "./predict";
 import type { ForecastOutlook, Occupier, PoiInsight, PoiTag, WatchlistEntity } from "./types";
 
@@ -50,18 +51,9 @@ export function normalizeAliases(label: string, extra: string[] = []): string[] 
   return out;
 }
 
-function escapeRe(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 export function receiptHitsAlias(receipt: Pick<PoiReceipt, "title" | "url">, aliases: string[]): boolean {
   const hay = `${receipt.title} ${receipt.url}`;
-  return aliases.some((alias) => {
-    if (alias.startsWith("#") || alias.startsWith("$")) {
-      return hay.toLowerCase().includes(alias.toLowerCase());
-    }
-    return new RegExp(`\\b${escapeRe(alias)}\\b`, "i").test(hay);
-  });
+  return aliases.some((alias) => tokenHits(hay, alias));
 }
 
 export function hostOf(url: string): string {

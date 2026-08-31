@@ -10,6 +10,10 @@ import {
   whyAgent,
 } from "@/lib/agents";
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
+import { compareExamplePoi } from "@/lib/example-poi-compare";
+import { collectExamplePoi } from "@/lib/example-poi";
+import { hydrateIndustrySeries } from "@/lib/example-poi-series";
+import { locatedReceipts } from "@/lib/trend-geo";
 import { enrichQueryIntent, inferQueryIntent, toQueryInsight } from "@/lib/query";
 import { recordPulls } from "@/lib/rl";
 import { buildSentiment } from "@/lib/sentiment";
@@ -31,13 +35,19 @@ function markPlatformPulls(sources: TrendsPayload["sources"]) {
   if (names.length) recordPulls(names);
 }
 
-async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
+async function runPipeline(
+  geo: ReturnType<typeof geoAgent>,
+  cacheKey: string,
+  enabledSources?: string[],
+) {
   const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
-  const collected = collectorAgent(geo);
-  const [redditR, hnR, publicR] = await Promise.all([
+  const collected = collectorAgent(geo, undefined, enabledSources);
+  const [, redditR, hnR, publicR, exampleR] = await Promise.all([
+    hydrateIndustrySeries(),
     collected.reddit,
     collected.hn,
     collected.public,
+    collectExamplePoi(geo.city),
   ]);
 
   const [clustered, xR] = await Promise.all([
@@ -77,6 +87,13 @@ async function runPipeline(geo: ReturnType<typeof geoAgent>, cacheKey: string) {
     degraded,
     pipeline,
     publicApis: publicR.publicApis,
+    located: locatedReceipts(publicR.posts),
+    examplePoi: exampleR.posts,
+    poiCompare: compareExamplePoi(exampleR.places, locatedReceipts(publicR.posts), {
+      collectedAt: exampleR.collectedAt,
+      datasetSha: exampleR.datasetSha,
+      liveRefresh: exampleR.liveRefresh,
+    }),
   };
   cacheSet(cacheKey, payload);
   cacheSet(LAST_KEY, payload);
@@ -88,16 +105,19 @@ async function runPlug(
   geo: ReturnType<typeof geoAgent>,
   topic: string,
   cacheKey: string,
+  enabledSources?: string[],
 ) {
   const local = inferQueryIntent(topic);
   const intentPromise = enrichQueryIntent(local);
-  const collected = collectorAgent(geo, local.search);
-  const [redditR, hnR, xR, publicR, intent] = await Promise.all([
+  const collected = collectorAgent(geo, local.search, enabledSources);
+  const [, redditR, hnR, xR, publicR, intent, exampleR] = await Promise.all([
+    hydrateIndustrySeries(),
     collected.reddit,
     collected.hn,
     collected.x,
     collected.public,
     intentPromise,
+    collectExamplePoi(geo.city),
   ]);
   const posts = [...redditR.posts, ...hnR.posts, ...xR.posts, ...publicR.posts];
   let clustered = plugTopicFromPosts(topic, posts, intent);
@@ -125,6 +145,13 @@ async function runPlug(
     degraded,
     pipeline,
     publicApis: publicR.publicApis,
+    located: locatedReceipts(publicR.posts),
+    examplePoi: exampleR.posts,
+    poiCompare: compareExamplePoi(exampleR.places, locatedReceipts(publicR.posts), {
+      collectedAt: exampleR.collectedAt,
+      datasetSha: exampleR.datasetSha,
+      liveRefresh: exampleR.liveRefresh,
+    }),
     plugged: topic,
     query: toQueryInsight(intent, validated.topics, sentiment),
   };
@@ -138,6 +165,25 @@ export async function GET(req: NextRequest) {
   const refresh = req.nextUrl.searchParams.get("refresh") === "1";
   const geo = geoAgent(req.nextUrl.searchParams.get("city"));
   const topic = (req.nextUrl.searchParams.get("topic") ?? "").trim();
+  
+  // Get enabled sources from query params (comma-separated) or cookie
+  let enabledSources: string[] | undefined;
+  const sourcesParam = req.nextUrl.searchParams.get("sources");
+  const sourcesCookie = req.cookies.get("hawkxai-api-sources")?.value;
+  
+  if (sourcesParam) {
+    enabledSources = sourcesParam.split(",").map((s) => s.trim()).filter(Boolean);
+  } else if (sourcesCookie) {
+    try {
+      const parsed = JSON.parse(sourcesCookie);
+      if (Array.isArray(parsed)) {
+        enabledSources = parsed.filter((s): s is string => typeof s === "string");
+      }
+    } catch {
+      // Invalid cookie, ignore
+    }
+  }
+  
   console.log(topic ? `${geo.log} topic="${topic}"` : geo.log);
   const cacheKey = trendsCacheKey(geo.city, topic || undefined);
 
@@ -154,7 +200,9 @@ export async function GET(req: NextRequest) {
   }
 
   const job = (
-    topic ? runPlug(geo, topic, cacheKey) : runPipeline(geo, cacheKey)
+    topic 
+      ? runPlug(geo, topic, cacheKey, enabledSources) 
+      : runPipeline(geo, cacheKey, enabledSources)
   ).finally(() => {
     if (inflight.get(cacheKey) === job) inflight.delete(cacheKey);
   });

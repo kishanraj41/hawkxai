@@ -1,8 +1,9 @@
 "use client";
 
+import { TrendMark, trendAria } from "@/components/desk/TrendMarks";
 import { topicRisk } from "@/lib/booster";
 import { totalScore, VELOCITY_MARK } from "@/lib/ui-helpers";
-import type { Platform, Topic, TrendsPayload } from "@/lib/types";
+import type { CapturedArtifact, Platform, Topic, TrendsPayload } from "@/lib/types";
 
 type SortKey = "score" | Platform | "risk";
 
@@ -43,6 +44,7 @@ interface OverviewRailProps {
   hoverId: string | null;
   sortKey: SortKey;
   watchedIds: string[];
+  artifactsById?: Map<string, CapturedArtifact[]>;
   onSort: (key: SortKey) => void;
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
@@ -56,6 +58,7 @@ export default function OverviewRail({
   hoverId,
   sortKey,
   watchedIds,
+  artifactsById,
   onSort,
   onSelect,
   onHover,
@@ -99,13 +102,7 @@ export default function OverviewRail({
         </span>
       </div>
       <p className="mt-1 text-xs text-white/45">
-        {payload
-          ? "○ watches a name. Refresh to see tape deltas — never an invented cause."
-          : "Live names load on the trend desk. Footprint and Research open from the header."}
-      </p>
-      <p className="mt-1 text-xs text-white/45">
-        {payload?.sources.x ? "X" : "X off"} · {payload?.sources.reddit ? "Reddit" : "Reddit off"} ·{" "}
-        {payload?.sources.hn ? "HN" : "HN off"} · {payload?.sources.public ? "APIs" : "APIs off"}
+        {payload ? "Icon is the print. Pin is the plug." : "Tape loads on this desk."}
       </p>
       {payload?.plugged ? (
         <p className="mt-1 text-xs text-white/70">
@@ -116,71 +113,20 @@ export default function OverviewRail({
       {payload?.publicApis ? (
         <p className="mt-1 font-mono text-[10px] tabular-nums text-white/40">
           {payload.publicApis.live}/{payload.publicApis.attempted} live
-          {payload.publicApis.sources.length
-            ? ` · ${payload.publicApis.sources.slice(0, 6).join(", ")}`
-            : ""}
-          {payload.publicApis.sources.length > 6
-            ? ` +${payload.publicApis.sources.length - 6}`
-            : ""}
         </p>
       ) : null}
 
-      <div className="mt-4 space-y-2.5">
-        <HeatBar label="X" value={xAvg} active={sortKey === "x"} onClick={() => onSort("x")} />
-        <HeatBar
-          label="Reddit"
-          value={redditAvg}
-          active={sortKey === "reddit"}
-          onClick={() => onSort("reddit")}
-        />
-        <HeatBar label="HN" value={hnAvg} active={sortKey === "hn"} onClick={() => onSort("hn")} />
-        <HeatBar
-          label="APIs"
-          value={publicAvg}
-          active={sortKey === "public"}
-          onClick={() => onSort("public")}
-        />
-      </div>
-
-      {payload?.publicApis?.feeds?.length ? (
-        <ul className="mt-3 max-h-36 space-y-1 overflow-y-auto">
-          {payload.publicApis.feeds
-            .filter((f) => f.posts > 0)
-            .map((f) => (
-              <li key={f.name} className="flex items-baseline justify-between gap-2">
-                <span className="min-w-0 truncate text-[11px] text-white/70">{f.name}</span>
-                <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/40">{f.posts}</span>
-              </li>
-            ))}
-        </ul>
-      ) : null}
-
-      <div className="mt-4 flex gap-2">
-        <button
-          type="button"
-          onClick={() => onSort("score")}
-          className={`signal-label ${sortKey === "score" ? "text-white" : ""}`}
-        >
-          Score
-        </button>
-        <button
-          type="button"
-          onClick={() => onSort("risk")}
-          className={`signal-label ${sortKey === "risk" ? "text-white" : ""}`}
-        >
-          Risk
-        </button>
-      </div>
-
-      <ul className="mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+      <ul className="mt-3 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
         {ranked.map((t) => {
           const active = selectedId === t.id || hoverId === t.id;
           const risk = topicRisk(t);
           const watching = watchedIds.includes(t.id);
+          const category = TrendMark.category(t, artifactsById?.get(t.id) ?? []);
+          const name = trendAria(t, category);
           return (
             <li key={t.id}>
               <div
-                className={`flex w-full items-baseline gap-1 rounded-md px-1 py-1.5 transition-colors duration-150 ${
+                className={`flex w-full items-center gap-1 rounded-md px-1 py-1.5 transition-colors duration-150 ${
                   active ? "bg-white/8" : "hover:bg-white/[0.04]"
                 }`}
               >
@@ -199,8 +145,12 @@ export default function OverviewRail({
                   onClick={() => onSelect(t)}
                   onMouseEnter={() => onHover(t.id)}
                   onMouseLeave={() => onHover(null)}
-                  className="flex min-w-0 flex-1 items-baseline gap-2 text-left"
+                  title={name}
+                  aria-label={name}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 >
+                <TrendMark.Tile topic={t} category={category} size={26} />
+                <span className="min-w-0 flex-1 truncate text-[12px] leading-tight">{t.label}</span>
                 <span className="w-8 shrink-0 text-right font-mono text-[11px] tabular-nums">
                   {Math.round(totalScore(t))}
                 </span>
@@ -215,7 +165,6 @@ export default function OverviewRail({
                 >
                   {VELOCITY_MARK[t.velocity]}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[12px] leading-tight">{t.label}</span>
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full ${
                     risk === "high"
@@ -231,6 +180,39 @@ export default function OverviewRail({
           );
         })}
       </ul>
+
+      <div className="mt-3 shrink-0 space-y-2.5 border-t border-white/8 pt-3">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onSort("score")}
+            className={`signal-label ${sortKey === "score" ? "text-white" : ""}`}
+          >
+            Score
+          </button>
+          <button
+            type="button"
+            onClick={() => onSort("risk")}
+            className={`signal-label ${sortKey === "risk" ? "text-white" : ""}`}
+          >
+            Risk
+          </button>
+        </div>
+        <HeatBar label="X" value={xAvg} active={sortKey === "x"} onClick={() => onSort("x")} />
+        <HeatBar
+          label="Reddit"
+          value={redditAvg}
+          active={sortKey === "reddit"}
+          onClick={() => onSort("reddit")}
+        />
+        <HeatBar label="HN" value={hnAvg} active={sortKey === "hn"} onClick={() => onSort("hn")} />
+        <HeatBar
+          label="APIs"
+          value={publicAvg}
+          active={sortKey === "public"}
+          onClick={() => onSort("public")}
+        />
+      </div>
     </aside>
   );
 }

@@ -4,6 +4,13 @@ import { buildCausation, classifyTopic } from "./desk";
 import { payloadFromQrImageUrl } from "./qr";
 import { buildSentiment } from "./sentiment";
 import {
+  detectRiskClustering,
+  generatePredictionSummary,
+  predictCampaignArc,
+  predictPeakTime,
+  predictPlatformSpread,
+} from "./predictions";
+import {
   PLATFORMS,
   type AgeLens,
   type AgeTranslation,
@@ -280,7 +287,8 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
         : sentiment.thin
           ? ""
           : ` Titles are split (${sentiment.overall.pos} pos / ${sentiment.overall.neg} neg).`;
-  return {
+
+  const brief: BoosterTopicBrief = {
     topicId: topic.id,
     whyTrending: why + tone,
     confidence,
@@ -291,6 +299,23 @@ export function boostTopic(topic: Topic): BoosterTopicBrief {
     causation: buildCausation(topic, artifacts),
     sentiment,
   };
+
+  // Generate world-class predictions
+  const peakTime = predictPeakTime(topic);
+  const platformSpread = predictPlatformSpread(topic, brief);
+  const campaignArc = predictCampaignArc(topic, brief);
+  const riskAlert = detectRiskClustering(topic, sentiment);
+  const summary = generatePredictionSummary(topic, brief);
+
+  brief.predictions = {
+    peakTime,
+    platformSpread,
+    campaignArc,
+    riskAlert,
+    summary,
+  };
+
+  return brief;
 }
 
 export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBrief[]): Improvisation[] {
@@ -356,12 +381,12 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
       next: "One-click brief: format + hook + risk for the bubbling network only.",
     });
   }
-  if (payload.plugged) {
+  if (bubbles >= 3) {
     items.push({
       priority: "P1",
-      title: "Compare two campaign phrases on one desk",
-      why: "Watch can overlay two names. Footprint still plots one plugged phrase.",
-      next: "Second lookup slot on Footprint occurrence — same last-4 series, no invented shared WHY.",
+      title: "Platform-native campaign studio",
+      why: `${bubbles} topics are still single-platform bubbles — the cheapest time to act.`,
+      next: "One-click brief: format + hook + risk for the bubbling network only.",
     });
   }
   if (!payload.topics.some((t) => t.tickers.length > 0)) {
@@ -376,20 +401,14 @@ export function improvisationsFor(payload: TrendsPayload, briefs: BoosterTopicBr
   if (thinCausation >= 3) {
     items.push({
       priority: "P1",
-      title: "Persist ingest snapshots for multi-day occurrence charts",
-      why: `${thinCausation} topics have fewer than two dated receipts — the timeseries cannot show a peak, only a point.`,
-      next: "Write hourly topic-score snapshots and join them on the area chart next to live posts.",
+      title: "Keep hourly snapshots writing",
+      why: `${thinCausation} topics have fewer than two dated receipts — occurrence still needs time.`,
+      next: "Confirm GET /api/collect?hourly=1 snaps watchlist phrases; TREND_DB_* keeps them across instances.",
     });
   }
-    items.push({
-      priority: "P2",
-      title: "News + disaster markers on the same timeseries",
-      why: "GDELT and NWS land as receipts, but they are not lagged as event ticks against social velocity.",
-      next: "Overlay public-api events on the occurrence chart with a 0–24h lag, never as an invented WHY.",
-    });
   items.push({
-      priority: "P2",
-      title: "Wire the provisioned Postgres server",
+    priority: "P2",
+    title: "Wire the provisioned Postgres server",
       why: "Leaf calls currently land in the warm-instance memory store. Ten category databases are ready once credentials arrive.",
       next: "Set TREND_DB_HOST / USER / PASSWORD, run npm run provision:trend-db, confirm GET /api/collect says backend=postgres.",
     });

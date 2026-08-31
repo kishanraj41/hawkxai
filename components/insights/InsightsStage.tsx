@@ -26,21 +26,14 @@ export default function InsightsStage({ dashboard, loading }: InsightsStageProps
   }
 
   if (!dashboard) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-6">
-        <p className="signal-label text-center">
-          No dashboard selected
-        </p>
-        <p className="text-sm text-white/50 text-center max-w-md">
-          Create a new insight by entering a campaign, product, or brand name above,
-          or select an existing dashboard from the list.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-hidden p-4">
+    <div className="flex flex-col gap-3">
+      <p className="signal-label">
+        Industry model — not live receipts. Live tape is the occurrence board above.
+      </p>
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => setView("insightful")}

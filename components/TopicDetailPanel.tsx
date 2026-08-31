@@ -5,6 +5,7 @@ import BoosterInsights from "@/components/BoosterInsights";
 import { SentimentChart } from "@/components/desk/SentimentChart";
 import Sparkline from "@/components/Sparkline";
 import TimeseriesChart from "@/components/desk/TimeseriesChart";
+import { TrendMark } from "@/components/desk/TrendMarks";
 import { buildTimeseries, CATEGORY_LABEL } from "@/lib/desk";
 import { divergenceLabel, sparkValues, topPosts } from "@/lib/ui-helpers";
 import LineageStrip from "@/components/desk/LineageStrip";
@@ -96,18 +97,29 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
         Close
       </button>
 
-      <motion.h2
-        className="text-balance text-xl font-medium leading-snug tracking-tight"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
-      >
-        {topic.label}
-      </motion.h2>
-
-        {brief ? (
-          <p className="signal-label mt-2">{CATEGORY_LABEL[brief.category]}</p>
-        ) : null}
+      <div className="flex items-start gap-3">
+        <TrendMark.Tile
+          topic={topic}
+          category={brief?.category ?? TrendMark.category(topic)}
+          size={36}
+        />
+        <div className="min-w-0 flex-1">
+          <motion.h2
+            className="text-balance text-xl font-medium leading-snug tracking-tight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
+          >
+            {topic.label}
+          </motion.h2>
+          {brief ? (
+            <p className="signal-label mt-2 inline-flex items-center gap-1.5">
+              <TrendMark.Stick category={brief.category} size={12} />
+              {CATEGORY_LABEL[brief.category]}
+            </p>
+          ) : null}
+        </div>
+      </div>
 
       <div className="mt-5 space-y-4">
         <div>
@@ -190,7 +202,7 @@ export default function TopicDetailPanel({ topic, brief, lens, onClose }: TopicD
           )}
         </div>
 
-        {brief ? <BoosterInsights brief={brief} lens={lens} /> : null}
+        {brief ? <BoosterInsights brief={brief} topic={topic} lens={lens} /> : null}
       </div>
 
       {topic.tickers.length > 0 ? (

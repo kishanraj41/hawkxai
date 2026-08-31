@@ -2,6 +2,7 @@
 
 Investor and pitch materials for HawkxAI. Ops docs stay in [docs/](../README.md) (`CONTRIBUTING.md`, `RUNBOOK.md`).
 
+- **[MVP pitch deck](./hawkxai-mvp-pitch.html)** — founder-MVP slides (open in a browser; ← → / space)
 - **[VC one-pager](./VC_ONE_PAGER.md)** — SmartSalesGuy investor proposal (problem, solution, live / next)
 - **[Core idea](./CORE_IDEA.md)** — product contract: look up a phrase → capture → correlate → footprint desk (mind map, related prints, causation, occurrence) → campaign
 - **[Agent roster canvas](./agent_team_canvas.html)** — visual of the agent team

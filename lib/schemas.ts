@@ -9,6 +9,13 @@ export const postSchema = z.object({
   score: z.number(),
   createdAt: z.string(),
   sourceApi: z.string().optional(),
+  geo: z
+    .object({
+      lat: z.number(),
+      lon: z.number(),
+      label: z.string(),
+    })
+    .optional(),
 });
 
 export const platformSliceSchema = z.object({

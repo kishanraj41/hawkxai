@@ -1,5 +1,6 @@
 "use client";
 
+import { TrendMark, trendAria } from "@/components/desk/TrendMarks";
 import type { AgeLens, BoosterPayload, Topic } from "@/lib/types";
 import { lensCaption } from "@/lib/brief";
 import RiskBoard from "@/components/RiskBoard";
@@ -69,15 +70,23 @@ export default function IntelRail({
                 onClick={() => onPickId(b.topicId)}
                 onMouseEnter={() => onHover(b.topicId)}
                 onMouseLeave={() => onHover(null)}
+                title={topic ? trendAria(topic, b.category) : b.campaign.hook}
                 className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 ${
                   hoverId === b.topicId
                     ? "border-white/25 bg-white/[0.04]"
                     : "border-white/8 hover:border-white/16"
                 }`}
               >
-                <p className="line-clamp-2 text-[13px] leading-snug text-white">
-                  {topic?.label ?? b.campaign.hook}
-                </p>
+                <span className="flex items-start gap-2">
+                  {topic ? (
+                    <TrendMark.Tile topic={topic} category={b.category} size={26} />
+                  ) : (
+                    <TrendMark.Stick category={b.category} size={14} />
+                  )}
+                  <p className="line-clamp-2 min-w-0 flex-1 text-[13px] leading-snug text-white">
+                    {topic?.label ?? b.campaign.hook}
+                  </p>
+                </span>
                 <p className="signal-label mt-2">
                   {b.campaign.risk} risk · {b.campaign.timing}
                 </p>

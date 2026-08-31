@@ -268,7 +268,7 @@ export function WatchlistNames({
     <aside className="signal-glass flex min-h-0 flex-col overflow-hidden">
       <div className="shrink-0 border-b border-white/8 px-3 py-2">
         <p className="text-[13px] font-medium tracking-tight">Names</p>
-        <p className="mt-0.5 text-[11px] text-white/45">J/K to move. Shift-click to overlay.</p>
+          <p className="mt-0.5 text-[11px] text-white/45">J/K to move. Click a name to load its trend. Shift-click to overlay.</p>
       </div>
       <ul className="min-h-0 flex-1 overflow-y-auto">
         {insights.map((row) => {
@@ -362,7 +362,7 @@ export function WatchlistTable({
         <div>
           <h1 className="text-[13px] font-medium tracking-tight">Public × POI</h1>
           <p className="mt-0.5 text-[11px] text-white/45">
-            Click a column to sort. Click a row for occupiers. Enter opens Footprint.
+            Click a column to sort. Click a row to load trends. Enter opens Footprint.
           </p>
         </div>
         {loading ? (

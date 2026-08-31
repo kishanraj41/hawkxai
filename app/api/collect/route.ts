@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cachePeek } from "@/lib/cache";
 import { collectAndForecast } from "@/lib/collect";
+import { cronAuthorized, requestOrigin, runHourlyCollect } from "@/lib/hourly-collect";
 import { allDatabaseNames, readTrendDbConfig } from "@/lib/trend-db";
 import { trendStore } from "@/lib/trend-store";
 import type { BoosterPayload, DeskCategory, TrendsPayload } from "@/lib/types";
 import { TREND_DATABASES } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 function asCategory(value: string | null): DeskCategory {
   if (value && (TREND_DATABASES as readonly string[]).includes(value)) {
@@ -16,6 +18,14 @@ function asCategory(value: string | null): DeskCategory {
 }
 
 export async function GET(req: NextRequest) {
+  if (req.nextUrl.searchParams.get("hourly") === "1") {
+    if (!cronAuthorized(req)) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+    const result = await runHourlyCollect(requestOrigin(req));
+    return NextResponse.json(result);
+  }
+
   const store = trendStore();
   const configured = Boolean(readTrendDbConfig());
   const category = asCategory(req.nextUrl.searchParams.get("category"));
@@ -38,6 +48,7 @@ export async function GET(req: NextRequest) {
     databases: result.collection.databases,
     snapshots: result.collection.snapshots,
     predicted: result.collection.predicted,
+    history: result.collection.history ?? [],
     category,
     forecasts: result.forecasts,
   });
