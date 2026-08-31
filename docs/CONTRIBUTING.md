@@ -13,8 +13,8 @@ HawkxAI is a hackathon wedge. Keep the map and `/api/trends` stable. Never inven
 ## Setup
 
 ```bash
-git clone https://github.com/snagaram3/grokhackx.git
-cd grokhackx
+git clone https://github.com/kishanraj41/hawkxai.git
+cd hawkxai
 npm install
 cp .env.example .env.local
 ```

@@ -1,8 +1,8 @@
 /** Mermaid sources for the live HawkxAI runtime. Keep in sync with docs/ARCHITECTURE.md. */
 
 export const DEPLOY_GRAPH = `flowchart LR
-  gh["GitHub<br/>snagaram3/grokhackx"]
-  vercel["Vercel project<br/>hawk-ai4/grokhackx"]
+  gh["GitHub<br/>kishanraj41/hawkxai"]
+  vercel["Vercel hawkxai.vercel.app<br/>until www Cloud Run cutover"]
   fn["Next.js 14 functions<br/>region iad1"]
   env["Env: GOOGLE_API_KEY<br/>FLEET_URL<br/>YOUTUBE_API_KEY<br/>TREND_DB_*"]
   sql["Cloud SQL Postgres 16<br/>hawkxai-trends · us-east4<br/>35.245.139.208:5432 TLS"]
@@ -111,7 +111,7 @@ export const ARCHITECTURE_SECTIONS = [
   {
     id: "deploy",
     title: "Deploy path",
-    caption: "GitHub is the source. Vercel hawk-ai4/grokhackx builds Next.js 14 in iad1 and aliases hawkxai.com. Functions reach Cloud SQL over TLS on the public IP.",
+    caption: "GitHub kishanraj41/hawkxai is the source. Vercel hawkxai.vercel.app still builds Next.js 14 in iad1 until www points at Cloud Run. Functions reach Cloud SQL over TLS on the public IP.",
     chart: DEPLOY_GRAPH,
   },
   {
@@ -153,7 +153,7 @@ export const ARCHITECTURE_SECTIONS = [
   {
     id: "lineage",
     title: "AutoLineage",
-    caption: "RudriQ extracts receipts. AutoLineage records which collect step produced each one (tool + collectedAt). Visible on the desk and in the generated handbook.",
+    caption: "RudriQ extracts receipts. AutoLineage records which collect step produced each one (tool + collectedAt). Snapshots persist those fields on Cloud SQL receipts. Visible on the desk and in the generated handbook.",
     chart: LINEAGE_GRAPH,
   },
 ] as const;

@@ -5,10 +5,10 @@
       "channel": "hn",
       "note": "HN Algolia. First reliable channel."
     },
-    "collect_public_apis": {
+    "collect_google_trends": {
       "enabled": true,
       "channel": "public",
-      "note": "Wikipedia, Google News RSS, NHTSA. Not the full desk catalog."
+      "note": "Google Trends RSS when X is empty. Phrase lookups keep only tokenHits. Never stamped as X."
     },
     "score_and_dedup": {
       "enabled": true,

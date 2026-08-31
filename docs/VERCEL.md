@@ -6,7 +6,7 @@ The app is Next.js 14 (App Router). Demo locally with `npm run dev`. Use Vercel 
 
 ## 1. Prerequisites
 
-- GitHub repo: `https://github.com/snagaram3/grokhackx`
+- GitHub repo: `https://github.com/kishanraj41/hawkxai`
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 - A [Vercel](https://vercel.com) account (GitHub login is fastest)
 
@@ -15,7 +15,7 @@ Do **not** put `GOOGLE_API_KEY` in git. Local only: `.env.local`.
 ## 2. Deploy from the dashboard (recommended)
 
 1. Open [vercel.com/new](https://vercel.com/new).
-2. Import **snagaram3/grokhackx**.
+2. Import **kishanraj41/hawkxai**.
 3. Set **Framework Preset** to **Next.js** (auto-detected).
 4. Set **Root Directory** to `.` (repo root).
 5. Production branch: `main` or `feat/d3-map` if that is the demo branch.
@@ -64,7 +64,7 @@ Do not switch nameservers unless you want Vercel to own all DNS. Keep GoDaddy NS
 
 ```bash
 npm i -g vercel
-cd grokhackx
+cd hawkxai
 npx vercel login
 npx vercel
 ```

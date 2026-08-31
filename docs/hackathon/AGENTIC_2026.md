@@ -17,7 +17,7 @@ HawkxAI is not rebuilt on ADK. The Vercel frontend stays. The fleet on Cloud Run
 
 ## What judges must see (unedited)
 
-1. Open [https://hawkxai.vercel.app/footprint](https://hawkxai.vercel.app/footprint). Tagline: “Receipts only — never an invented WHY.”
+1. Open [https://hawkxai-qalms3xvxq-uc.a.run.app/footprint](https://hawkxai-qalms3xvxq-uc.a.run.app/footprint). Tagline: “Receipts only — never an invented WHY.” Address bar must show `.run.app`.
 2. Plug **Camry** (or WWDC). Terminal: Cloud Run ADK agent fans out (HN first; X is never the centerpiece).
 3. Desk fills: prints, artifacts, mind map. No “Waiting on live sources.”
 4. Handbook regenerates. Optional money shot: change one tool permission in fleet config → handbook diffs.
@@ -30,7 +30,7 @@ Live as of 2026-08-18: Trends hydrates (~42 prints, 27/28 public APIs). **X is o
 - Google ADK (`google-adk`)
 - Cloud Run (this `fleet/` service)
 - Optional second service: Firestore or GCS for snapshots
-- Existing desk: Next.js on Vercel (`grokhackx` / hawkxai.vercel.app)
+- Existing desk: Next.js on Cloud Run + Vercel (`hawkxai.vercel.app` until www cutover)
 
 ## Disclose in the write-up (Official Rules)
 

@@ -24,7 +24,7 @@ python3 agents/booster-agent/booster_agent.py --self-check
 
 North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) — trending desk on `/`, phrase footprint on `/footprint`. Live: `GET /api/trends`. Footprint plug: `POST /api/fleet` `{ "phrase": "Camry" }` (needs `FLEET_URL`).
 
-Repo: https://github.com/snagaram3/grokhackx
+Repo: https://github.com/kishanraj41/hawkxai
 
 ## Team split
 
@@ -39,8 +39,8 @@ Repo: https://github.com/snagaram3/grokhackx
 ## Setup (everyone)
 
 ```bash
-git clone https://github.com/snagaram3/grokhackx.git
-cd grokhackx
+git clone https://github.com/kishanraj41/hawkxai.git
+cd hawkxai
 git pull
 npm install
 cp .env.example .env.local
@@ -124,7 +124,7 @@ Never invent posts or a fake WHY.
 
 Public URL: host on **Vercel**. Step-by-step: [docs/VERCEL.md](docs/VERCEL.md).
 
-1. Import `snagaram3/grokhackx` at [vercel.com/new](https://vercel.com/new)
+1. Import `kishanraj41/hawkxai` at [vercel.com/new](https://vercel.com/new)
 2. Framework: Next.js · root: `.`
 3. Env: `GOOGLE_API_KEY` and `FLEET_URL` (Production + Preview)
 4. Deploy. First `/api/trends` can take up to ~60s.
