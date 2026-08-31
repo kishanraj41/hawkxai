@@ -1,9 +1,11 @@
 import sample from "./data/example-poi.json";
 import { cacheGet, cachePeek, cacheSet } from "./cache";
-import { CITIES, type CityId } from "./geo";
+import { nearPlaceFilter, type CityId } from "./geo";
 import { stampPosts } from "./lineage";
 import { validGeo } from "./trend-geo";
 import type { Post } from "./types";
+
+export { nearPlaceFilter, PLACE_NEAR_KM } from "./geo";
 
 export const EXAMPLE_POI_DATASET = "audiala/audiala-places";
 export const EXAMPLE_POI_LICENSE = "cc-by-4.0";
@@ -95,14 +97,6 @@ export function examplePoiPosts(places: ExamplePoiPlace[], collectedAt: string):
     places.map((place) => placeToPost(place, collectedAt)),
     EXAMPLE_POI_TOOL,
   );
-}
-
-export function nearPlaceFilter(lat: number, lon: number, city: CityId): boolean {
-  if (city === "all") return true;
-  const spec = CITIES[city];
-  const dlat = lat - spec.lat;
-  const dlon = lon - spec.lon;
-  return dlat * dlat + dlon * dlon < 64; // ~8° box, not a geocode
 }
 
 function nearCity(place: ExamplePoiPlace, city: CityId): boolean {

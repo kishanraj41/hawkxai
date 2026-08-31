@@ -12,6 +12,7 @@ import {
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
 import { compareExamplePoi } from "@/lib/example-poi-compare";
 import { collectExamplePoi } from "@/lib/example-poi";
+import { hydrateIndustrySeries } from "@/lib/example-poi-series";
 import { locatedReceipts } from "@/lib/trend-geo";
 import { enrichQueryIntent, inferQueryIntent, toQueryInsight } from "@/lib/query";
 import { recordPulls } from "@/lib/rl";
@@ -41,7 +42,8 @@ async function runPipeline(
 ) {
   const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
   const collected = collectorAgent(geo, undefined, enabledSources);
-  const [redditR, hnR, publicR, exampleR] = await Promise.all([
+  const [, redditR, hnR, publicR, exampleR] = await Promise.all([
+    hydrateIndustrySeries(),
     collected.reddit,
     collected.hn,
     collected.public,
@@ -108,7 +110,8 @@ async function runPlug(
   const local = inferQueryIntent(topic);
   const intentPromise = enrichQueryIntent(local);
   const collected = collectorAgent(geo, local.search, enabledSources);
-  const [redditR, hnR, xR, publicR, intent, exampleR] = await Promise.all([
+  const [, redditR, hnR, xR, publicR, intent, exampleR] = await Promise.all([
+    hydrateIndustrySeries(),
     collected.reddit,
     collected.hn,
     collected.x,

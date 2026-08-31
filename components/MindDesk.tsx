@@ -71,9 +71,20 @@ export default function MindDesk({
   function scrollToId(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
-    const offset = window.matchMedia("(max-width: 767px)").matches ? 72 : 96;
-    const top = el.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    // Nudge into compact chrome first so the jump does not overshoot when
+    // the toolbar collapses mid-smooth-scroll.
+    if (window.scrollY <= 56) window.scrollTo({ top: 57, behavior: "auto" });
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => {
+        const head = document.querySelector(".mind-desk__head");
+        const need = (head?.getBoundingClientRect().bottom ?? 96) + 8;
+        const top = el.getBoundingClientRect().top;
+        if (Math.abs(top - need) > 12) {
+          window.scrollBy({ top: top - need, left: 0, behavior: "auto" });
+        }
+      }, 420);
+    });
   }
 
   function jumpToWorld() {
@@ -159,6 +170,7 @@ export default function MindDesk({
             selectedId={selected?.id ?? null}
             hoverId={hoverId}
             pairHover={pairHover}
+            liveRefresh={poiCompare?.liveRefresh ?? null}
             onSelect={onSelect}
             onHover={onHover}
           />
