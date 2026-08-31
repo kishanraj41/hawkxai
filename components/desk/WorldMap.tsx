@@ -3,8 +3,9 @@
 import * as d3 from "d3";
 import { useEffect, useMemo, useRef } from "react";
 import type { CityId } from "@/lib/geo";
+import { nearPlaceFilter } from "@/lib/example-poi";
 import { buildTrendPins, type TrendPin } from "@/lib/trend-geo";
-import type { Post, Topic } from "@/lib/types";
+import type { ExamplePoiHop, Post, Topic } from "@/lib/types";
 import { loadWorldLand, type LandPolygon } from "@/lib/world-land";
 
 interface WorldMapProps {
@@ -14,6 +15,7 @@ interface WorldMapProps {
   city?: CityId;
   selectedId: string | null;
   hoverId: string | null;
+  pairHover?: ExamplePoiHop | null;
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
 }
@@ -35,11 +37,14 @@ export default function WorldMap({
   city = "all",
   selectedId,
   hoverId,
+  pairHover = null,
   onSelect,
   onHover,
 }: WorldMapProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const pinGRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
+  const hopRef = useRef<d3.Selection<SVGPathElement, unknown, null, undefined> | null>(null);
+  const projectionRef = useRef<d3.GeoProjection | null>(null);
   const topicsRef = useRef(topics);
   const onSelectRef = useRef(onSelect);
   const onHoverRef = useRef(onHover);
@@ -71,10 +76,12 @@ export default function WorldMap({
       .attr("viewBox", `0 0 ${width0} ${height0}`);
     const meshG = svg.append("g").attr("class", "world-map__mesh");
     const landG = svg.append("g").attr("class", "world-map__land");
+    const hop = svg.append("path").attr("class", "world-map__hop");
     const pinG = svg.append("g").attr("class", "world-map__pins");
-    pinGRef.current = pinG;
-
     const projection = d3.geoNaturalEarth1();
+    pinGRef.current = pinG;
+    hopRef.current = hop;
+    projectionRef.current = projection;
     const path = d3.geoPath(projection);
     const graticule = d3.geoGraticule10();
 
@@ -119,6 +126,7 @@ export default function WorldMap({
     nodes
       .classed("world-map__pin--lens", (d) => d.kind === "lens")
       .classed("world-map__pin--example", (d) => d.kind === "example")
+      .classed("world-map__pin--far", (d) => d.kind === "example" && !nearPlaceFilter(d.lat, d.lon, city))
       .attr("tabindex", (d) => (d.kind === "receipt" || d.kind === "example" ? 0 : null))
       .attr("role", (d) => (d.kind === "receipt" || d.kind === "example" ? "button" : null))
       .attr("aria-label", (d) => `${d.label} · ${d.source}`)
@@ -156,6 +164,8 @@ export default function WorldMap({
       ro.disconnect();
       pinG.on("pointerenter", null).on("pointerleave", null).on("click", null);
       pinGRef.current = null;
+      hopRef.current = null;
+      projectionRef.current = null;
       host.replaceChildren();
     };
   }, [pins, city]);
@@ -164,13 +174,34 @@ export default function WorldMap({
   useEffect(() => {
     const pinG = pinGRef.current;
     if (!pinG) return;
+    const pairHot = (id: string) =>
+      Boolean(pairHover && (pairHover.examplePinId === id || pairHover.livePinId === id));
     pinG
       .selectAll<SVGGElement, TrendPin>("g.world-map__pin")
-      .classed("world-map__pin--on", (d) => d.topicIds.includes(selectedId ?? "") || d.id === `lens:${city}`)
-      .classed("world-map__pin--hot", (d) => d.topicIds.includes(hoverId ?? ""))
+      .classed("world-map__pin--on", (d) => d.topicIds.includes(selectedId ?? "") || d.id === `lens:${city}` || pairHot(d.id))
+      .classed("world-map__pin--hot", (d) => d.topicIds.includes(hoverId ?? "") || pairHot(d.id))
       .select("circle.world-map__dot")
-      .attr("fill", (d) => pinFill(d, d.topicIds.includes(selectedId ?? ""), d.topicIds.includes(hoverId ?? "")));
-  }, [selectedId, hoverId, city, pins]);
+      .attr("fill", (d) =>
+        pinFill(d, d.topicIds.includes(selectedId ?? "") || pairHot(d.id), d.topicIds.includes(hoverId ?? "") || pairHot(d.id)),
+      );
+
+    const hop = hopRef.current;
+    const projection = projectionRef.current;
+    if (!hop || !projection) return;
+    const a = pairHover ? pins.find((p) => p.id === pairHover.examplePinId) : null;
+    const b = pairHover ? pins.find((p) => p.id === pairHover.livePinId) : null;
+    if (!a || !b) {
+      hop.attr("d", "").attr("opacity", 0);
+      return;
+    }
+    const pa = projection([a.lon, a.lat]);
+    const pb = projection([b.lon, b.lat]);
+    if (!pa || !pb) {
+      hop.attr("d", "").attr("opacity", 0);
+      return;
+    }
+    hop.attr("d", `M${pa[0]},${pa[1]}L${pb[0]},${pb[1]}`).attr("opacity", 1);
+  }, [selectedId, hoverId, city, pins, pairHover]);
 
   return (
     <section className="world-map" aria-label="Live world">

@@ -9,7 +9,7 @@ import { GhostButton } from "@/components/shell/DeskChrome";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import type { CityId } from "@/lib/geo";
 import { buildMindMap } from "@/lib/mindmap";
-import type { BoosterPayload, DeskCategory, ExamplePoiCompare as PoiCompare, MindNode, Post, Topic } from "@/lib/types";
+import type { BoosterPayload, DeskCategory, ExamplePoiCompare as PoiCompare, ExamplePoiHop, MindNode, Post, Topic } from "@/lib/types";
 
 interface MindDeskProps {
   category: DeskCategory;
@@ -59,6 +59,7 @@ export default function MindDesk({
   );
   const artifacts = graph.nodes.filter((n) => n.kind === "artifact").length;
   const [inspect, setInspect] = useState<MindNode | null>(null);
+  const [pairHover, setPairHover] = useState<ExamplePoiHop | null>(null);
   const node =
     inspect ??
     graph.nodes.find((n) => n.id === `topic:${selected?.id}`) ??
@@ -157,10 +158,11 @@ export default function MindDesk({
             city={city}
             selectedId={selected?.id ?? null}
             hoverId={hoverId}
+            pairHover={pairHover}
             onSelect={onSelect}
             onHover={onHover}
           />
-          <ExamplePoiCompare compare={poiCompare} />
+          <ExamplePoiCompare compare={poiCompare} onPairHover={setPairHover} />
         </div>
       </div>
       <div className="mind-desk__legend flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">

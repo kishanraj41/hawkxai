@@ -40,8 +40,16 @@ export function postGeo(post: Post): PostGeo | null {
   return parseUrlGeo(post.url, post.geo?.label || post.title);
 }
 
-function pinKey(lat: number, lon: number): string {
+export function pinKey(lat: number, lon: number): string {
   return `${lat.toFixed(1)},${lon.toFixed(1)}`;
+}
+
+export function receiptPinId(lat: number, lon: number): string {
+  return pinKey(lat, lon);
+}
+
+export function examplePinId(lat: number, lon: number): string {
+  return `ex:${pinKey(lat, lon)}`;
 }
 
 function topicPosts(topic: Topic): Post[] {
@@ -91,7 +99,7 @@ function addPin(
 function addExamplePin(byKey: Map<string, TrendPin>, post: Post): void {
   const geo = postGeo(post);
   if (!geo) return;
-  const id = `ex:${pinKey(geo.lat, geo.lon)}`;
+  const id = examplePinId(geo.lat, geo.lon);
   if (byKey.has(id)) return;
   byKey.set(id, {
     id,

@@ -1,4 +1,5 @@
 import { boostTrends } from "./booster";
+import { recordIndustryHour } from "./example-poi-series";
 import { cachePeek } from "./cache";
 import { fleetHealth, type FleetHealth } from "./fleet";
 import { collectTape } from "./trend-store";
@@ -64,6 +65,7 @@ export async function runHourlyCollect(origin: string): Promise<HourlyCollectRes
   if (phrases.length === 0 && tape) {
     const boosted = boostTrends(tape);
     await collectTape(tape, boosted.briefs, { snapshotId: `${hour}|tape` });
+    if (tape.poiCompare) recordIndustryHour(tape.poiCompare, hour);
     snapped.push("tape");
   }
 
@@ -77,6 +79,7 @@ export async function runHourlyCollect(origin: string): Promise<HourlyCollectRes
         }
         const boosted = boostTrends(payload);
         await collectTape(payload, boosted.briefs, { snapshotId: `${hour}|${phrase}` });
+        if (payload.poiCompare) recordIndustryHour(payload.poiCompare, hour);
         snapped.push(phrase);
       } catch {
         skipped.push(phrase);

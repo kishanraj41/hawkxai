@@ -1628,6 +1628,18 @@ body {
   stroke: #1a1024;
 }
 
+.world-map__pin--far {
+  opacity: 0.28;
+}
+
+.world-map__hop {
+  fill: none;
+  stroke: #c4b5fd;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
 .example-poi {
   border-top: 1px solid var(--line);
   padding: 12px 14px 16px;
@@ -1756,6 +1768,19 @@ body {
 }
 
 .example-poi__table a {
+  color: #c4b5fd;
+}
+
+.example-poi__table tr:hover,
+.example-poi__table tr:focus {
+  background: rgba(167, 139, 250, 0.08);
+  outline: none;
+}
+
+.example-poi__window {
+  margin-top: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
   color: #c4b5fd;
 }
 

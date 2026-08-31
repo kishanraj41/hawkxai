@@ -90,6 +90,7 @@ async function runPipeline(
     poiCompare: compareExamplePoi(exampleR.places, locatedReceipts(publicR.posts), {
       collectedAt: exampleR.collectedAt,
       datasetSha: exampleR.datasetSha,
+      liveRefresh: exampleR.liveRefresh,
     }),
   };
   cacheSet(cacheKey, payload);
@@ -146,6 +147,7 @@ async function runPlug(
     poiCompare: compareExamplePoi(exampleR.places, locatedReceipts(publicR.posts), {
       collectedAt: exampleR.collectedAt,
       datasetSha: exampleR.datasetSha,
+      liveRefresh: exampleR.liveRefresh,
     }),
     plugged: topic,
     query: toQueryInsight(intent, validated.topics, sentiment),
