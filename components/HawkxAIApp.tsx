@@ -806,6 +806,8 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               caption={focusCaption}
               city={city}
               located={payload?.located ?? []}
+              examplePoi={payload?.examplePoi ?? []}
+              poiCompare={payload?.poiCompare ?? null}
               onSelect={pickTopic}
               onHover={setHoverId}
             />
@@ -823,6 +825,8 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
               overlayLabel={compareLabel || null}
               city={city}
               located={payload?.located ?? []}
+              examplePoi={payload?.examplePoi ?? []}
+              poiCompare={payload?.poiCompare ?? null}
               onSelect={pickTopic}
               onHover={setHoverId}
             />

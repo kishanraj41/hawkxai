@@ -10,6 +10,8 @@ import {
   whyAgent,
 } from "@/lib/agents";
 import { geoAgent, trendsCacheKey } from "@/lib/geo";
+import { compareExamplePoi } from "@/lib/example-poi-compare";
+import { collectExamplePoi } from "@/lib/example-poi";
 import { locatedReceipts } from "@/lib/trend-geo";
 import { enrichQueryIntent, inferQueryIntent, toQueryInsight } from "@/lib/query";
 import { recordPulls } from "@/lib/rl";
@@ -39,10 +41,11 @@ async function runPipeline(
 ) {
   const prev = cachePeek<TrendsPayload>(cacheKey)?.topics;
   const collected = collectorAgent(geo, undefined, enabledSources);
-  const [redditR, hnR, publicR] = await Promise.all([
+  const [redditR, hnR, publicR, exampleR] = await Promise.all([
     collected.reddit,
     collected.hn,
     collected.public,
+    collectExamplePoi(geo.city),
   ]);
 
   const [clustered, xR] = await Promise.all([
@@ -83,6 +86,11 @@ async function runPipeline(
     pipeline,
     publicApis: publicR.publicApis,
     located: locatedReceipts(publicR.posts),
+    examplePoi: exampleR.posts,
+    poiCompare: compareExamplePoi(exampleR.places, locatedReceipts(publicR.posts), {
+      collectedAt: exampleR.collectedAt,
+      datasetSha: exampleR.datasetSha,
+    }),
   };
   cacheSet(cacheKey, payload);
   cacheSet(LAST_KEY, payload);
@@ -99,12 +107,13 @@ async function runPlug(
   const local = inferQueryIntent(topic);
   const intentPromise = enrichQueryIntent(local);
   const collected = collectorAgent(geo, local.search, enabledSources);
-  const [redditR, hnR, xR, publicR, intent] = await Promise.all([
+  const [redditR, hnR, xR, publicR, intent, exampleR] = await Promise.all([
     collected.reddit,
     collected.hn,
     collected.x,
     collected.public,
     intentPromise,
+    collectExamplePoi(geo.city),
   ]);
   const posts = [...redditR.posts, ...hnR.posts, ...xR.posts, ...publicR.posts];
   let clustered = plugTopicFromPosts(topic, posts, intent);
@@ -133,6 +142,11 @@ async function runPlug(
     pipeline,
     publicApis: publicR.publicApis,
     located: locatedReceipts(publicR.posts),
+    examplePoi: exampleR.posts,
+    poiCompare: compareExamplePoi(exampleR.places, locatedReceipts(publicR.posts), {
+      collectedAt: exampleR.collectedAt,
+      datasetSha: exampleR.datasetSha,
+    }),
     plugged: topic,
     query: toQueryInsight(intent, validated.topics, sentiment),
   };

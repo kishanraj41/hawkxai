@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Desk } from "@/components/desk/Desk";
 import FloorBrief from "@/components/desk/FloorBrief";
+import ExamplePoiCompare from "@/components/desk/ExamplePoiCompare";
 import WorldMap from "@/components/desk/WorldMap";
 import { buildCausation, buildTimeseries } from "@/lib/desk";
 import { buildEventTicks } from "@/lib/event-ticks";
 import { buildMindMap } from "@/lib/mindmap";
 import { alignTotals } from "@/lib/occurrence-overlay";
 import { buildSentiment } from "@/lib/sentiment";
-import type { BoosterPayload, MindNode, Post, QueryInsight, Topic } from "@/lib/types";
+import type { BoosterPayload, ExamplePoiCompare as PoiCompare, MindNode, Post, QueryInsight, Topic } from "@/lib/types";
 import type { CityId } from "@/lib/geo";
 import type { DeskCategory } from "@/lib/types";
 
@@ -26,6 +27,8 @@ interface ChartDeskProps {
   overlayLabel?: string | null;
   city?: CityId;
   located?: Post[];
+  examplePoi?: Post[];
+  poiCompare?: PoiCompare | null;
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
 }
@@ -43,6 +46,8 @@ export default function ChartDesk({
   overlayLabel = null,
   city = "all",
   located = [],
+  examplePoi = [],
+  poiCompare = null,
   onSelect,
   onHover,
 }: ChartDeskProps) {
@@ -143,12 +148,14 @@ export default function ChartDesk({
               <WorldMap
                 topics={topics}
                 located={located}
+                examplePoi={examplePoi}
                 city={city}
                 selectedId={selected?.id ?? focus?.id ?? null}
                 hoverId={hoverId}
                 onSelect={onSelect}
                 onHover={onHover}
               />
+              <ExamplePoiCompare compare={poiCompare} />
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <Desk.Timeseries />

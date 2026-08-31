@@ -10,6 +10,7 @@ import { loadWorldLand, type LandPolygon } from "@/lib/world-land";
 interface WorldMapProps {
   topics: Topic[];
   located?: Post[];
+  examplePoi?: Post[];
   city?: CityId;
   selectedId: string | null;
   hoverId: string | null;
@@ -19,6 +20,7 @@ interface WorldMapProps {
 
 function pinFill(pin: TrendPin, selected: boolean, hovered: boolean): string {
   if (pin.kind === "lens") return "transparent";
+  if (pin.kind === "example") return hovered ? "#ddd6fe" : "#a78bfa";
   if (selected) return "#e8a23a";
   if (hovered) return "#fff";
   if (/usgs|eonet|quake/i.test(pin.source)) return "#fb7185";
@@ -29,6 +31,7 @@ function pinFill(pin: TrendPin, selected: boolean, hovered: boolean): string {
 export default function WorldMap({
   topics,
   located = [],
+  examplePoi = [],
   city = "all",
   selectedId,
   hoverId,
@@ -44,8 +47,12 @@ export default function WorldMap({
   onSelectRef.current = onSelect;
   onHoverRef.current = onHover;
 
-  const pins = useMemo(() => buildTrendPins(topics, city, located), [topics, city, located]);
+  const pins = useMemo(
+    () => buildTrendPins(topics, city, located, examplePoi),
+    [topics, city, located, examplePoi],
+  );
   const receipts = pins.filter((p) => p.kind === "receipt");
+  const examples = pins.filter((p) => p.kind === "example");
 
   // Own the SVG once; rebuild only when the pin set / city lens changes.
   useEffect(() => {
@@ -111,8 +118,9 @@ export default function WorldMap({
 
     nodes
       .classed("world-map__pin--lens", (d) => d.kind === "lens")
-      .attr("tabindex", (d) => (d.kind === "receipt" ? 0 : null))
-      .attr("role", (d) => (d.kind === "receipt" ? "button" : null))
+      .classed("world-map__pin--example", (d) => d.kind === "example")
+      .attr("tabindex", (d) => (d.kind === "receipt" || d.kind === "example" ? 0 : null))
+      .attr("role", (d) => (d.kind === "receipt" || d.kind === "example" ? "button" : null))
       .attr("aria-label", (d) => `${d.label} · ${d.source}`)
       .on("pointerenter", (_event, d) => onHoverRef.current(d.topicIds[0] ?? null))
       .on("pointerleave", () => onHoverRef.current(null))
@@ -121,8 +129,12 @@ export default function WorldMap({
         if (topic) onSelectRef.current(topic);
       });
 
-    nodes.select("circle.world-map__dot").attr("r", (d) => (d.kind === "lens" ? 7 : Math.max(3, Math.min(7, 2 + d.weight / 40))));
-    nodes.select("title").text((d) => `${d.label} · ${d.source}\n${d.title}`);
+    nodes
+      .select("circle.world-map__dot")
+      .attr("r", (d) =>
+        d.kind === "lens" ? 7 : d.kind === "example" ? 3.2 : Math.max(3, Math.min(7, 2 + d.weight / 40)),
+      );
+    nodes.select("title").text((d) => `${d.kind === "example" ? "Example POI · " : ""}${d.label} · ${d.source}\n${d.title}`);
 
     layout();
     const ro = new ResizeObserver(layout);
@@ -165,11 +177,11 @@ export default function WorldMap({
       <header className="world-map__head">
         <div>
           <p className="empty-stage__eyebrow">World</p>
-          <p className="world-map__lead">Live places on this tape</p>
+          <p className="world-map__lead">Live places vs example POI</p>
         </div>
         <p className="signal-label">
-          {receipts.length
-            ? `${receipts.length} located · receipts only`
+          {receipts.length || examples.length
+            ? `${receipts.length} live · ${examples.length} example POI · HF sample`
             : "No located receipts yet · weather and quakes land here"}
         </p>
       </header>

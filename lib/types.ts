@@ -69,6 +69,77 @@ export interface PublicApiIngest {
   topic?: string;
 }
 
+export type ExamplePoiIndustry =
+  | "technology"
+  | "finance"
+  | "healthcare"
+  | "retail"
+  | "automotive"
+  | "real-estate"
+  | "entertainment"
+  | "education"
+  | "hospitality"
+  | "manufacturing";
+
+export interface ExamplePoiPair {
+  poiId: string;
+  poiName: string;
+  poiCity: string;
+  industry: ExamplePoiIndustry;
+  liveTitle: string;
+  liveUrl: string;
+  liveSource: string;
+  km: number;
+}
+
+export interface ExamplePoiIndustryCall {
+  category: ExamplePoiIndustry;
+  poiCount: number;
+  liveNear: number;
+  nearestKm: number | null;
+  sources: string[];
+  factors: { id: string; name: string; weight: number; value: number; unit: string; trend: "up" | "down" | "stable" }[];
+  constraints: {
+    id: string;
+    name: string;
+    threshold: number;
+    current: number;
+    met: boolean;
+    impact: "critical" | "high" | "medium" | "low";
+  }[];
+  variables: {
+    id: string;
+    name: string;
+    type: "numeric" | "boolean" | "categorical";
+    value: string | number | boolean;
+    impact: number;
+  }[];
+  outlook: ForecastOutlook;
+  confidence: number;
+  thin: boolean;
+  analysis: string;
+  prediction: {
+    headline: string;
+    nextAction: string;
+    timeframe: string;
+    confidence: number;
+  };
+}
+
+export interface ExamplePoiCompare {
+  dataset: string;
+  license: string;
+  collectedAt: string;
+  datasetSha: string | null;
+  exampleCount: number;
+  locatedCount: number;
+  pairCount: number;
+  pairs: ExamplePoiPair[];
+  industries: ExamplePoiIndustryCall[];
+  thin: boolean;
+  analysis: string;
+}
+
 export interface TrendsPayload {
   topics: Topic[];
   updatedAt: string;
@@ -78,6 +149,10 @@ export interface TrendsPayload {
   publicApis?: PublicApiIngest;
   /** Receipts that already carry coordinates — plotted on the world under the mind map. */
   located?: Post[];
+  /** Hugging Face travel places, labeled Example POI — not live tape. */
+  examplePoi?: Post[];
+  /** Example POI vs located public tape, scored per industry. */
+  poiCompare?: ExamplePoiCompare;
   plugged?: string;
   query?: QueryInsight;
 }
