@@ -1388,6 +1388,101 @@ body {
   gap: 4px;
 }
 
+/* ——— Mind desk: page scrolls so the map can be tall ——— */
+
+.desk-shell--mind-scroll {
+  height: auto;
+  max-height: none;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.desk-shell--mind-scroll .desk-workspace {
+  flex: 0 0 auto;
+}
+
+.desk-shell--mind-scroll .desk-workspace__panes,
+.desk-shell--mind-scroll .desk-workspace__pane {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.desk-shell--mind-scroll .desk-workspace__pane > * {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+@media (min-width: 1024px) {
+  .desk-shell--mind-scroll .desk-workspace__panes {
+    align-items: start;
+  }
+
+  .desk-shell--mind-scroll .desk-workspace__pane {
+    max-height: none;
+  }
+
+  /* Side rails keep a usable height while the stage grows with the map. */
+  .desk-shell--mind-scroll .desk-workspace__pane:first-child,
+  .desk-shell--mind-scroll .desk-workspace__pane:last-child {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100dvh - 24px);
+    overflow: hidden;
+  }
+
+  .desk-shell--mind-scroll .desk-workspace__pane:first-child > *,
+  .desk-shell--mind-scroll .desk-workspace__pane:last-child > * {
+    min-height: 0;
+    max-height: calc(100dvh - 24px);
+    height: calc(100dvh - 24px);
+  }
+}
+
+.mind-desk {
+  overflow: visible;
+}
+
+.mind-desk__head {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: var(--panel-strong);
+  backdrop-filter: blur(8px);
+}
+
+.mind-desk__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.mind-desk__map-row {
+  position: relative;
+  display: flex;
+  min-height: min(78vh, 820px);
+  height: min(78vh, 820px);
+}
+
+.mind-desk__map {
+  position: relative;
+  min-width: 0;
+  min-height: 100%;
+  flex: 1;
+}
+
+.mind-desk__legend {
+  background: var(--panel-strong);
+}
+
+@media (max-width: 767px) {
+  .mind-desk__map-row {
+    min-height: min(72vh, 680px);
+    height: min(72vh, 680px);
+  }
+}
+
 /* ——— Live world (along the mind map) ——— */
 
 .world-map {

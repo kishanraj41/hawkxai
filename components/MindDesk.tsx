@@ -62,8 +62,8 @@ export default function MindDesk({
     : undefined;
 
   return (
-    <section className="signal-glass relative flex min-h-0 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-col gap-3 border-b border-white/8 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="mind-desk signal-glass relative flex min-h-0 flex-col">
+      <div className="mind-desk__head flex shrink-0 flex-col gap-3 border-b border-white/8 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-sm font-medium tracking-tight">
             {phrase ? `“${phrase}” mind` : `${CATEGORY_LABEL[category]} mind`}
@@ -71,7 +71,7 @@ export default function MindDesk({
           <p className="mt-0.5 text-xs text-white/45">
             {caption
               ? caption
-              : "Hover a blob to read the receipt. The world below is the same tape, only the receipts that already have a place."}
+              : "Hover a blob to read the receipt. Scroll for the world strip — same tape, only receipts that already have a place."}
           </p>
         </div>
         <div className="flex shrink-0 gap-4 font-mono text-[11px] tabular-nums">
@@ -84,14 +84,14 @@ export default function MindDesk({
           />
         </div>
       </div>
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className="relative flex min-h-0 flex-1">
+      <div className="mind-desk__body">
+        <div className="mind-desk__map-row">
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="h-40 w-40 rounded-full border border-white/10" />
             </div>
           ) : (
-            <div className="relative min-h-0 min-w-0 flex-1">
+            <div className="mind-desk__map">
               <MindMapChart
                 graph={graph}
                 topics={topics}
@@ -131,7 +131,7 @@ export default function MindDesk({
           onHover={onHover}
         />
       </div>
-      <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
+      <div className="mind-desk__legend flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
         <span className="text-[#e8a23a]">hub</span>
         <span>topic</span>
         <span className="text-[#7dd3fc]">artifact</span>

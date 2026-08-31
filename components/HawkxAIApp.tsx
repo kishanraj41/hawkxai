@@ -517,7 +517,7 @@ function LiveDesk({ desk }: { desk: DeskKind }) {
       lens={lens}
       since={sinceLastLook}
     >
-    <main className="desk-shell">
+    <main className={`desk-shell${surface === "mind" ? " desk-shell--mind-scroll" : ""}`}>
       <AmbientBackground />
 
       <DeskFrame
