@@ -1,6 +1,8 @@
 # HawkxAI runtime architecture
 
-Live diagrams: [`/architecture`](../app/architecture/page.tsx) (Mermaid). Source of the charts: [`lib/architecture-diagrams.ts`](../lib/architecture-diagrams.ts).
+Contest poster (use this on Devpost and in the video): [`/architecture`](../app/architecture/page.tsx) or the static export [`public/demo/architecture.html`](../public/demo/architecture.html).
+
+Live mermaid detail: [`/architecture`](../app/architecture/page.tsx). Source of the charts: [`lib/architecture-diagrams.ts`](../lib/architecture-diagrams.ts).
 
 **Stack:** Next.js 14 / React 18 · Vercel `iad1` · Cloud SQL Postgres 16 `us-east4` · ten category databases on one instance.
 

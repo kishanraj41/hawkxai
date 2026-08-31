@@ -2,8 +2,8 @@
 
 Contest: [All Things Agentic](https://allthingsagentichackathon.devpost.com/) · **Taskmaster** · due **Aug 31 2026 5:00pm PDT**.
 
-Architecture diagram (generated): [ARCHITECTURE.md](./ARCHITECTURE.md)  
-Video script (read this while recording): [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md)
+Architecture diagram (contest poster): [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md) · live [`/architecture`](../../app/architecture/page.tsx) · static [`/demo/architecture.html`](../../public/demo/architecture.html)  
+Generated mermaid (from fleet files): [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Devpost form (paste)
 
@@ -66,7 +66,7 @@ Full spoken script: [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md). One take, 1×, English
 2. Cloud Console Cloud Run, then open https://hawkxai-qalms3xvxq-uc.a.run.app/footprint. Address bar must show `.run.app`.
 3. Plug **Camry**. Second tab: https://hawkxai-fleet-qalms3xvxq-uc.a.run.app/dev-ui.
 4. Desk fills: prints, artifacts, mind map. No invented WHY. X is not the centerpiece.
-5. https://hawkxai-qalms3xvxq-uc.a.run.app/handbook — generated architecture. Optional: flip `collect_public_apis.enabled` in `fleet/permissions.json` and refresh.
+5. http://localhost:3000/architecture — contest poster. Optional: `/handbook` for the permission-diff mermaid.
 6. Disclose the pre-existing desk in the last 15 seconds.
 
 Do not submit until the `.run.app` URL is in the video. Blog + `#AllThingsAgenticHackathon` if time.

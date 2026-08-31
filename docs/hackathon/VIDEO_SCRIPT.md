@@ -15,7 +15,7 @@ Open **four tabs**, left to right:
 1. Google Cloud Console → Cloud Run → services `hawkxai` and `hawkxai-fleet` (URL column visible).
 2. Desk: https://hawkxai-qalms3xvxq-uc.a.run.app/footprint
 3. ADK UI: https://hawkxai-fleet-qalms3xvxq-uc.a.run.app/dev-ui
-4. Handbook: https://hawkxai-qalms3xvxq-uc.a.run.app/handbook
+4. Architecture poster: http://localhost:3000/demo/architecture.html — fullscreen (F11) so all five lanes are in frame.
 
 Click the address bar on tab 2 so `.run.app` is readable. Phrase to type: **Camry**.  
 If Footprint is still loading, wait before record. Do **not** demo `hawkxai.vercel.app` as the hosted project.
@@ -62,7 +62,7 @@ Category is Taskmaster: a multi-step chore — collect, score, store, merge — 
 
 ### 3:15–3:40 · Architecture diagram  **[tab 4]**
 
-**[click]** Generated handbook. This mermaid is rendered from `fleet/` files and `permissions.json`, not drawn by hand. Cloud Run, ADK, Gemini, GCS, then back to the desk.
+**[click]** Full-page ingest architecture. Phrase on the left. Two Cloud Run services. ADK agent with Gemini 3.5 Flash in the center. Channels, then GCS and Cloud SQL with `tool` and `collectedAt`. Dashed box is GET /api/trends — the fleet never writes that tape. This diagram is the submission artifact.
 
 ### 3:40–3:55 · Close
 
