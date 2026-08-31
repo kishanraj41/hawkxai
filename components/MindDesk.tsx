@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import MindInspect from "@/components/desk/MindInspect";
 import MindMapChart from "@/components/desk/MindMap";
 import WorldMap from "@/components/desk/WorldMap";
+import { GhostButton } from "@/components/shell/DeskChrome";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import type { CityId } from "@/lib/geo";
 import { buildMindMap } from "@/lib/mindmap";
@@ -61,6 +62,22 @@ export default function MindDesk({
     ? booster?.briefs.find((b) => b.topicId === node.topicId)
     : undefined;
 
+  function scrollToId(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const offset = window.matchMedia("(max-width: 767px)").matches ? 72 : 96;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }
+
+  function jumpToWorld() {
+    scrollToId("mind-world");
+  }
+
+  function jumpToMap() {
+    scrollToId("mind-map");
+  }
+
   return (
     <section className="mind-desk signal-glass relative flex min-h-0 flex-col">
       <div className="mind-desk__head flex shrink-0 flex-col gap-3 border-b border-white/8 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
@@ -74,18 +91,24 @@ export default function MindDesk({
               : "Hover a blob to read the receipt. Scroll for the world strip — same tape, only receipts that already have a place."}
           </p>
         </div>
-        <div className="flex shrink-0 gap-4 font-mono text-[11px] tabular-nums">
-          <Kpi label="Prints" value={String(topics.length)} />
-          <Kpi label="Artifacts" value={String(artifacts)} />
-          <Kpi label="Bridges" value={String(graph.bridges)} />
-          <Kpi
-            label="Called"
-            value={String((booster?.forecasts ?? []).filter((f) => !f.thin && f.kind !== "hub").length)}
-          />
+        <div className="flex shrink-0 flex-wrap items-end justify-end gap-3">
+          <div className="flex gap-4 font-mono text-[11px] tabular-nums">
+            <Kpi label="Prints" value={String(topics.length)} />
+            <Kpi label="Artifacts" value={String(artifacts)} />
+            <Kpi label="Bridges" value={String(graph.bridges)} />
+            <Kpi
+              label="Called"
+              value={String((booster?.forecasts ?? []).filter((f) => !f.thin && f.kind !== "hub").length)}
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <GhostButton onClick={jumpToMap}>Map</GhostButton>
+            <GhostButton onClick={jumpToWorld}>World</GhostButton>
+          </div>
         </div>
       </div>
       <div className="mind-desk__body">
-        <div className="mind-desk__map-row">
+        <div id="mind-map" className="mind-desk__map-row">
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="h-40 w-40 rounded-full border border-white/10" />
@@ -121,15 +144,17 @@ export default function MindDesk({
             />
           ) : null}
         </div>
-        <WorldMap
-          topics={topics}
-          located={located}
-          city={city}
-          selectedId={selected?.id ?? null}
-          hoverId={hoverId}
-          onSelect={onSelect}
-          onHover={onHover}
-        />
+        <div id="mind-world" className="mind-desk__world">
+          <WorldMap
+            topics={topics}
+            located={located}
+            city={city}
+            selectedId={selected?.id ?? null}
+            hoverId={hoverId}
+            onSelect={onSelect}
+            onHover={onHover}
+          />
+        </div>
       </div>
       <div className="mind-desk__legend flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
         <span className="text-[#e8a23a]">hub</span>

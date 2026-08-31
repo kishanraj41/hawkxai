@@ -1395,9 +1395,8 @@ body {
   max-height: none;
   min-height: 100dvh;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
 }
 
 .desk-shell--mind-scroll .desk-workspace {
@@ -1413,6 +1412,28 @@ body {
 .desk-shell--mind-scroll .desk-workspace__pane > * {
   flex: 0 0 auto;
   min-height: 0;
+}
+
+/* While reading the map, tuck chrome so the canvas keeps the viewport. */
+.desk-shell--mind-compact .desk-chrome__toolbar,
+.desk-shell--mind-compact .desk-chrome__context,
+.desk-shell--mind-compact .mind-chrome-collapse {
+  display: none;
+}
+
+.desk-shell--mind-compact .desk-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin-bottom: 0;
+}
+
+.desk-shell--mind-compact .desk-chrome__bar {
+  min-height: 44px;
+}
+
+.mind-chrome-collapse {
+  display: contents;
 }
 
 @media (min-width: 1024px) {
@@ -1439,10 +1460,16 @@ body {
     max-height: calc(100dvh - 24px);
     height: calc(100dvh - 24px);
   }
+
+  .desk-shell--mind-compact .desk-workspace__pane:first-child,
+  .desk-shell--mind-compact .desk-workspace__pane:last-child {
+    top: 56px;
+  }
 }
 
 .mind-desk {
   overflow: visible;
+  scroll-margin-top: 12px;
 }
 
 .mind-desk__head {
@@ -1453,9 +1480,18 @@ body {
   backdrop-filter: blur(8px);
 }
 
+.desk-shell--mind-compact .mind-desk__head {
+  top: 52px;
+}
+
 .mind-desk__body {
   display: flex;
   flex-direction: column;
+}
+
+.mind-desk__map-row,
+.mind-desk__world {
+  scroll-margin-top: 96px;
 }
 
 .mind-desk__map-row {
@@ -1480,6 +1516,22 @@ body {
   .mind-desk__map-row {
     min-height: min(72vh, 680px);
     height: min(72vh, 680px);
+  }
+
+  .mind-desk__map-row,
+  .mind-desk__world {
+    scroll-margin-top: 72px;
+  }
+
+  .desk-shell--mind-compact .mind-desk__head {
+    top: 48px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .mind-desk__map-row {
+    min-height: min(85vh, 960px);
+    height: min(85vh, 960px);
   }
 }
 
