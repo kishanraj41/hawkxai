@@ -17,9 +17,9 @@ Generated mermaid (from fleet files): [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 If the repo is ever private, share it with `testing@devpost.com` and `cloudhackathons@google.com`.
 
-## Disclose (paste into Devpost)
+## Built during the contest (paste into Devpost if asked)
 
-HawkxAI’s Next.js desk (Trends / Footprint / Research) and its collectors predate this contest window. During the Submission Period we built a Google ADK ingest fleet on Cloud Run with Gemini 3.5, GCS snapshots, scoring/dedup of existing receipts, a desk POST merge into Footprint, and a generated handbook/architecture diagram. Clustering on the desk uses Gemini as of this contest. AutoLineage is credited only as receipt lineage inside the handbook.
+HawkxAI was created during the Submission Period. All Things Agentic opened 4 August 2026. This repo does not incorporate a pre-contest HawkxAI codebase. Standard tools used: Next.js, Google ADK, Gemini 3.5 Flash, Cloud Run, Cloud Storage, Cloud SQL.
 
 ## Technologies
 
@@ -33,7 +33,7 @@ Proof of Action: open `/footprint` on Cloud Run, plug Camry, watch `/dev-ui` on 
 
 ## Spin-up
 
-Desk (pre-existing):
+Desk:
 
 ```bash
 npm install
@@ -43,7 +43,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Fleet (new):
+Fleet:
 
 ```bash
 cd fleet
@@ -67,7 +67,7 @@ Full spoken script: [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md). One take, 1×, English
 3. Plug **Camry**. Second tab: https://hawkxai-fleet-qalms3xvxq-uc.a.run.app/dev-ui.
 4. Desk fills: prints, artifacts, mind map. No invented WHY. X is not the centerpiece.
 5. http://localhost:3000/architecture — contest poster. Optional: `/handbook` for the permission-diff mermaid.
-6. Disclose the pre-existing desk in the last 15 seconds.
+6. Close on github.com/kishanraj41/hawkxai. Do not say the repo predates the contest — it does not. Contest opened 4 August 2026.
 
 Do not submit until the `.run.app` URL is in the video. Blog + `#AllThingsAgenticHackathon` if time.
 

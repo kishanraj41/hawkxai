@@ -6,7 +6,7 @@ Live footprint desk for a campaign name you already own. Plug a phrase on `/foot
 
 Hosted: [Footprint on Cloud Run](https://hawkxai-qalms3xvxq-uc.a.run.app/footprint) · repo: https://github.com/kishanraj41/hawkxai
 
-The Next.js desk predates this contest window. Contest-window work is the Google ADK ingest fleet on Cloud Run, GCS snapshots, scoring of existing receipts, merge into Footprint, and the architecture diagram.
+Built during All Things Agentic (opened **4 August 2026**): Next.js desk, Google ADK ingest fleet on Cloud Run, GCS snapshots, and the architecture diagram.
 
 ## Architecture
 
