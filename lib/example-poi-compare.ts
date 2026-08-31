@@ -4,8 +4,9 @@ import {
   INDUSTRY_VARIABLES,
 } from "./insights-analysis";
 import { EXAMPLE_POI_DATASET, EXAMPLE_POI_LICENSE, type ExamplePoiPlace } from "./example-poi";
+import { industryOutlookFromHours, recordIndustryHour } from "./example-poi-series";
 import { confidenceOf, outlookFromScores } from "./predict";
-import { postGeo } from "./trend-geo";
+import { examplePinId, postGeo, receiptPinId } from "./trend-geo";
 import type {
   ExamplePoiCompare,
   ExamplePoiIndustry,
@@ -127,6 +128,12 @@ export function pairExamplePoi(
       liveUrl: post.url,
       liveSource: post.sourceApi || post.platform,
       km: Math.round(best.km * 10) / 10,
+      poiLat: best.place.lat,
+      poiLon: best.place.lon,
+      liveLat: geo.lat,
+      liveLon: geo.lon,
+      examplePinId: examplePinId(best.place.lat, best.place.lon),
+      livePinId: receiptPinId(geo.lat, geo.lon),
     });
   }
   return pairs.toSorted((a, b) => a.km - b.km);
@@ -286,7 +293,7 @@ function callIndustry(
   const hazardNear = pairs.filter((p) => HAZARD_RE.test(p.liveSource) || HAZARD_RE.test(p.liveTitle)).length;
   const weatherNear = pairs.filter((p) => WEATHER_RE.test(p.liveSource) || WEATHER_RE.test(p.liveTitle)).length;
   const liveNear = liveUrls.size;
-  const outlook = industryOutlook(liveNear, hazardNear);
+  const snapshotOutlook = industryOutlook(liveNear, hazardNear);
   const thin = liveNear < 2;
   const analysis = thin
     ? liveNear === 0
@@ -303,10 +310,11 @@ function callIndustry(
     factors: measuredFactors(category, liveNear, nearestKm, hazardNear),
     constraints: measuredConstraints(category, liveNear, nearestKm, hazardNear),
     variables: measuredVariables(category, liveNear, nearestKm, sources[0] ?? "", hazardNear),
-    outlook,
+    outlook: snapshotOutlook,
     confidence: confidenceOf(liveNear, thin),
     thin,
     analysis,
+    window: [liveNear],
     prediction: industryPrediction(category, liveNear, nearestKm, hazardNear, weatherNear, nearest?.poiName ?? null),
   };
 }
@@ -314,7 +322,7 @@ function callIndustry(
 export function compareExamplePoi(
   places: ExamplePoiPlace[],
   located: Post[],
-  meta: { collectedAt: string; datasetSha: string | null },
+  meta: { collectedAt: string; datasetSha: string | null; liveRefresh?: "hub" | "sample" },
 ): ExamplePoiCompare {
   const pairs = pairExamplePoi(places, located);
   const byIndustry = new Map<ExamplePoiIndustry, ExamplePoiPair[]>();
@@ -323,18 +331,19 @@ export function compareExamplePoi(
     list.push(pair);
     byIndustry.set(pair.industry, list);
   }
-  const industries = [...byIndustry.entries()]
+  let industries = [...byIndustry.entries()]
     .map(([category, rows]) => callIndustry(category, rows.toSorted((a, b) => a.km - b.km)))
     .toSorted((a, b) => b.liveNear - a.liveNear || (a.nearestKm ?? 999) - (b.nearestKm ?? 999));
 
   const thin = pairs.length < 2;
+  const liveRefresh = meta.liveRefresh ?? "sample";
   const analysis = thin
     ? pairs.length === 0
       ? `Example POI loaded (${places.length} Hugging Face places). No live public receipt within ${PAIR_KM} km — compare stays thin.`
       : `1 pair only (${pairs[0]?.poiName} · ${pairs[0]?.km} km · ${pairs[0]?.liveSource}). Need 2 before an industry next-window.`
     : `${pairs.length} live×example pairs · ${industries.length} industr${industries.length === 1 ? "y" : "ies"} with a receipt inside ${PAIR_KM} km`;
 
-  return {
+  const report: ExamplePoiCompare = {
     dataset: EXAMPLE_POI_DATASET,
     license: EXAMPLE_POI_LICENSE,
     collectedAt: meta.collectedAt,
@@ -346,5 +355,25 @@ export function compareExamplePoi(
     industries,
     thin,
     analysis,
+    liveRefresh,
   };
+  recordIndustryHour(report);
+  industries = industries.map((row) => {
+    const { outlook, window } = industryOutlookFromHours(row.category, row.liveNear);
+    if (window.length < 2) return { ...row, window };
+    const seriesThin = outlook === "thin";
+    return {
+      ...row,
+      outlook,
+      window,
+      thin: seriesThin && row.liveNear < 2,
+      analysis: `${row.analysis} · hours ${window.join("→")}`,
+      prediction: {
+        ...row.prediction,
+        timeframe: window.length >= 2 ? `${window.length} hourly snaps` : row.prediction.timeframe,
+      },
+    };
+  });
+  report.industries = industries;
+  return report;
 }

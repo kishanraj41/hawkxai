@@ -81,6 +81,11 @@ export type ExamplePoiIndustry =
   | "hospitality"
   | "manufacturing";
 
+export interface ExamplePoiHop {
+  examplePinId: string;
+  livePinId: string;
+}
+
 export interface ExamplePoiPair {
   poiId: string;
   poiName: string;
@@ -90,6 +95,12 @@ export interface ExamplePoiPair {
   liveUrl: string;
   liveSource: string;
   km: number;
+  poiLat: number;
+  poiLon: number;
+  liveLat: number;
+  liveLon: number;
+  examplePinId: string;
+  livePinId: string;
 }
 
 export interface ExamplePoiIndustryCall {
@@ -118,6 +129,8 @@ export interface ExamplePoiIndustryCall {
   confidence: number;
   thin: boolean;
   analysis: string;
+  /** Last hourly liveNear counts, oldest → newest. */
+  window: number[];
   prediction: {
     headline: string;
     nextAction: string;
@@ -138,6 +151,8 @@ export interface ExamplePoiCompare {
   industries: ExamplePoiIndustryCall[];
   thin: boolean;
   analysis: string;
+  /** `hub` when the Hugging Face CSV streamed this process; otherwise the vendored sample. */
+  liveRefresh: "hub" | "sample";
 }
 
 export interface TrendsPayload {

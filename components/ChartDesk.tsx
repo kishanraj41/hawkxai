@@ -10,7 +10,7 @@ import { buildEventTicks } from "@/lib/event-ticks";
 import { buildMindMap } from "@/lib/mindmap";
 import { alignTotals } from "@/lib/occurrence-overlay";
 import { buildSentiment } from "@/lib/sentiment";
-import type { BoosterPayload, ExamplePoiCompare as PoiCompare, MindNode, Post, QueryInsight, Topic } from "@/lib/types";
+import type { BoosterPayload, ExamplePoiCompare as PoiCompare, ExamplePoiHop, MindNode, Post, QueryInsight, Topic } from "@/lib/types";
 import type { CityId } from "@/lib/geo";
 import type { DeskCategory } from "@/lib/types";
 
@@ -86,6 +86,7 @@ export default function ChartDesk({
     return brief?.sentiment ?? buildSentiment(focus);
   }, [focus, brief]);
   const [open, setOpen] = useState<"mind" | "sentiment" | null>(null);
+  const [pairHover, setPairHover] = useState<ExamplePoiHop | null>(null);
   const [inspect, setInspect] = useState<MindNode | null>(null);
   const [bucketT, setBucketT] = useState<string | null>(null);
   const openPanel = useCallback((panel: "mind" | "sentiment" | null) => setOpen(panel), []);
@@ -152,10 +153,11 @@ export default function ChartDesk({
                 city={city}
                 selectedId={selected?.id ?? focus?.id ?? null}
                 hoverId={hoverId}
+                pairHover={pairHover}
                 onSelect={onSelect}
                 onHover={onHover}
               />
-              <ExamplePoiCompare compare={poiCompare} />
+              <ExamplePoiCompare compare={poiCompare} onPairHover={setPairHover} />
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <Desk.Timeseries />

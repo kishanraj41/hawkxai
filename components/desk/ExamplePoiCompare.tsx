@@ -1,9 +1,10 @@
 "use client";
 
-import type { ExamplePoiCompare as Compare, ExamplePoiIndustryCall } from "@/lib/types";
+import type { ExamplePoiCompare as Compare, ExamplePoiHop, ExamplePoiIndustryCall, ExamplePoiPair } from "@/lib/types";
 
 interface ExamplePoiCompareProps {
   compare: Compare | null;
+  onPairHover?: (hop: ExamplePoiHop | null) => void;
 }
 
 function IndustryCard({ call }: { call: ExamplePoiIndustryCall }) {
@@ -17,6 +18,9 @@ function IndustryCard({ call }: { call: ExamplePoiIndustryCall }) {
       <p className="example-poi__headline">{call.prediction.headline}</p>
       <p className="example-poi__action">{call.prediction.nextAction}</p>
       <p className="example-poi__analysis">{call.analysis}</p>
+      {call.window.length > 1 ? (
+        <p className="example-poi__window">hours {call.window.join("→")}</p>
+      ) : null}
       <dl className="example-poi__vars">
         {call.variables.slice(0, 4).map((v) => (
           <div key={v.id}>
@@ -36,9 +40,14 @@ function IndustryCard({ call }: { call: ExamplePoiIndustryCall }) {
   );
 }
 
-export default function ExamplePoiCompare({ compare }: ExamplePoiCompareProps) {
+function hopOf(pair: ExamplePoiPair): ExamplePoiHop {
+  return { examplePinId: pair.examplePinId, livePinId: pair.livePinId };
+}
+
+export default function ExamplePoiCompare({ compare, onPairHover }: ExamplePoiCompareProps) {
   if (!compare) return null;
   const sha = compare.datasetSha ? compare.datasetSha.slice(0, 7) : "sample";
+  const refresh = compare.liveRefresh === "hub" ? "hub" : "sample";
   return (
     <section className="example-poi" aria-label="Example POI compare">
       <header className="example-poi__head">
@@ -47,7 +56,7 @@ export default function ExamplePoiCompare({ compare }: ExamplePoiCompareProps) {
           <p className="example-poi__lead">Hugging Face places vs live public tape</p>
         </div>
         <p className="signal-label">
-          {compare.exampleCount} HF · {compare.locatedCount} live · {compare.pairCount} pairs · {compare.dataset} · {sha}
+          {compare.exampleCount} HF · {compare.locatedCount} live · {compare.pairCount} pairs · {compare.dataset} · {refresh} · {sha}
         </p>
       </header>
       <p className="example-poi__analysis example-poi__analysis--lead">{compare.analysis}</p>
@@ -71,7 +80,14 @@ export default function ExamplePoiCompare({ compare }: ExamplePoiCompareProps) {
           </thead>
           <tbody>
             {compare.pairs.slice(0, 8).map((pair) => (
-              <tr key={`${pair.poiId}:${pair.liveUrl}`}>
+              <tr
+                key={`${pair.poiId}:${pair.liveUrl}`}
+                tabIndex={0}
+                onPointerEnter={() => onPairHover?.(hopOf(pair))}
+                onPointerLeave={() => onPairHover?.(null)}
+                onFocus={() => onPairHover?.(hopOf(pair))}
+                onBlur={() => onPairHover?.(null)}
+              >
                 <td>
                   {pair.poiName}
                   {pair.poiCity ? <span className="example-poi__city"> · {pair.poiCity}</span> : null}
