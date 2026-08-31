@@ -1,7 +1,7 @@
 import { CITIES, type CityId } from "./geo";
 import type { Post, PostGeo, Topic } from "./types";
 
-export type TrendPinKind = "receipt" | "lens";
+export type TrendPinKind = "receipt" | "lens" | "example";
 
 export interface TrendPin {
   id: string;
@@ -88,8 +88,32 @@ function addPin(
   }
 }
 
+function addExamplePin(byKey: Map<string, TrendPin>, post: Post): void {
+  const geo = postGeo(post);
+  if (!geo) return;
+  const id = `ex:${pinKey(geo.lat, geo.lon)}`;
+  if (byKey.has(id)) return;
+  byKey.set(id, {
+    id,
+    lat: geo.lat,
+    lon: geo.lon,
+    label: geo.label,
+    kind: "example",
+    source: post.sourceApi || "HF:audiala-places",
+    title: post.title,
+    url: post.url,
+    topicIds: [],
+    weight: post.score,
+  });
+}
+
 /** Pins from dated receipts with proven coordinates. Lens is the Place filter, not a trend. */
-export function buildTrendPins(topics: Topic[], city: CityId = "all", extras: Post[] = []): TrendPin[] {
+export function buildTrendPins(
+  topics: Topic[],
+  city: CityId = "all",
+  extras: Post[] = [],
+  examples: Post[] = [],
+): TrendPin[] {
   const byKey = new Map<string, TrendPin>();
 
   for (const topic of topics) {
@@ -97,7 +121,12 @@ export function buildTrendPins(topics: Topic[], city: CityId = "all", extras: Po
   }
   for (const post of extras) addPin(byKey, post, null);
 
-  const pins = [...byKey.values()].toSorted((a, b) => b.weight - a.weight).slice(0, 40);
+  const receipts = [...byKey.values()].toSorted((a, b) => b.weight - a.weight).slice(0, 40);
+  const exampleBy = new Map<string, TrendPin>();
+  for (const post of examples) addExamplePin(exampleBy, post);
+  const examplePins = [...exampleBy.values()].toSorted((a, b) => b.weight - a.weight).slice(0, 36);
+
+  const pins = [...receipts, ...examplePins];
   const lens = lensSpec(city);
   if (lens) {
     pins.unshift({

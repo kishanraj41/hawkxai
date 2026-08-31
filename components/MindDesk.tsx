@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import MindInspect from "@/components/desk/MindInspect";
 import MindMapChart from "@/components/desk/MindMap";
+import ExamplePoiCompare from "@/components/desk/ExamplePoiCompare";
 import WorldMap from "@/components/desk/WorldMap";
 import { GhostButton } from "@/components/shell/DeskChrome";
 import { CATEGORY_LABEL } from "@/lib/desk";
 import type { CityId } from "@/lib/geo";
 import { buildMindMap } from "@/lib/mindmap";
-import type { BoosterPayload, DeskCategory, MindNode, Post, Topic } from "@/lib/types";
+import type { BoosterPayload, DeskCategory, ExamplePoiCompare as PoiCompare, MindNode, Post, Topic } from "@/lib/types";
 
 interface MindDeskProps {
   category: DeskCategory;
@@ -21,6 +22,8 @@ interface MindDeskProps {
   phrase?: string;
   city?: CityId;
   located?: Post[];
+  examplePoi?: Post[];
+  poiCompare?: PoiCompare | null;
   onSelect: (topic: Topic | null) => void;
   onHover: (id: string | null) => void;
 }
@@ -36,6 +39,8 @@ export default function MindDesk({
   phrase,
   city = "all",
   located = [],
+  examplePoi = [],
+  poiCompare = null,
   onSelect,
   onHover,
 }: MindDeskProps) {
@@ -148,12 +153,14 @@ export default function MindDesk({
           <WorldMap
             topics={topics}
             located={located}
+            examplePoi={examplePoi}
             city={city}
             selectedId={selected?.id ?? null}
             hoverId={hoverId}
             onSelect={onSelect}
             onHover={onHover}
           />
+          <ExamplePoiCompare compare={poiCompare} />
         </div>
       </div>
       <div className="mind-desk__legend flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-white/8 px-4 py-2 font-mono text-[10px] text-white/45">
@@ -162,6 +169,9 @@ export default function MindDesk({
         <span className="text-[#7dd3fc]">artifact</span>
         <span className="text-[#34d399]">first print</span>
         <span className="text-[#e8a23a]">shared</span>
+        <span className="text-[#a78bfa]">example POI</span>
+        <span className="text-[#7dd3fc]">live weather</span>
+        <span className="text-[#fb7185]">live hazard</span>
       </div>
     </section>
   );
