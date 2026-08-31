@@ -26,6 +26,36 @@ North star: [docs/presentation/CORE_IDEA.md](docs/presentation/CORE_IDEA.md) —
 
 Repo: https://github.com/kishanraj41/hawkxai
 
+## Architecture
+
+Contest poster (fullscreen this in the video): [`public/demo/architecture.html`](public/demo/architecture.html) · live desk [`/architecture`](app/architecture/page.tsx) · generated fleet notes [`docs/hackathon/ARCHITECTURE.md`](docs/hackathon/ARCHITECTURE.md)
+
+Mandatory stack: **Gemini 3.5 Flash** · **Google ADK** (`hawkxai_ingest`) · **Cloud Run** × 2 (`hawkxai` desk + `hawkxai-fleet`) · snapshots on **Cloud Storage**. Receipts keep `tool` + `collectedAt`. `GET /api/trends` stays the tape — the fleet never writes it. Never an invented WHY.
+
+```mermaid
+flowchart LR
+  marketer[Marketer] --> phrase["Phrase plug"]
+  phrase --> footprint["Cloud Run desk /footprint"]
+  footprint -->|"POST /api/fleet"| deskApi["Next.js POST /api/fleet"]
+  trendsTab["GET /api/trends tape"] -.-> deskCollectors["Desk collectors"]
+  deskApi --> cloudRun["Cloud Run hawkxai-fleet"]
+  cloudRun --> adk["ADK hawkxai_ingest<br/>Gemini 3.5 Flash"]
+  adk --> hnTool["collect_hn<br/>HN Algolia"]
+  adk --> apiTool["collect_public_apis<br/>Wiki News NHTSA"]
+  adk --> scoreTool["score_and_dedup<br/>Gemini ranks existing"]
+  hnTool --> gcs["GCS snapshots"]
+  apiTool --> gcs
+  scoreTool --> gcs
+  gcs --> deskApi
+  deskApi --> footprint
+  gcs --> lineage["tool + collectedAt"]
+  lineage --> footprint
+```
+
+Hosted: [Footprint on Cloud Run](https://hawkxai-qalms3xvxq-uc.a.run.app/footprint) · [ADK `/dev-ui`](https://hawkxai-fleet-qalms3xvxq-uc.a.run.app/dev-ui) · GCS `gs://hawkxai-fleet-snapshots/`
+
+Tools are gated by `fleet/permissions.json`. Occupancy HistGB stays host-class L1 until 20 gold inspect tags.
+
 ## Team split
 
 | Person | Owns | Do not touch |
@@ -65,7 +95,7 @@ npm run dev
 - Fleet ingest: `POST /api/fleet` body `{ "phrase": "Camry" }`
 - Ask: `POST /api/ask` body `{ "q": "what's printing worldwide?" }`
 - Booster: http://localhost:3000/api/booster  (after trends are cached)
-- Contest fleet: [fleet/README.md](fleet/README.md) · architecture: [docs/hackathon/ARCHITECTURE.md](docs/hackathon/ARCHITECTURE.md)
+- Contest fleet: [fleet/README.md](fleet/README.md) · architecture: this README · [docs/hackathon/ARCHITECTURE.md](docs/hackathon/ARCHITECTURE.md) · poster: [public/demo/architecture.html](public/demo/architecture.html)
 
 First `/api/trends` can take ~60–90s (Gemini cluster). After that it caches **5 minutes**.
 
@@ -135,7 +165,7 @@ Do not commit `.env.local`. Docker CI still builds the production image on every
 
 Next.js 14 (app router) · TypeScript · D3 v7 · Tailwind · Gemini 3.5 · Google Search · Cloud SQL Postgres (10 category DBs) · no auth
 
-Runtime topology (Mermaid): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · live at `/architecture`.
+Runtime topology: see **Architecture** above. Detail mermaid: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · live `/architecture`.
 
 ## Agents
 
