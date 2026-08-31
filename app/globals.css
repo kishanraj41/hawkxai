@@ -1394,9 +1394,11 @@ body {
   height: auto;
   max-height: none;
   min-height: 100dvh;
-  overflow-x: hidden;
+  /* clip (not hidden): overflow-x:hidden + overflow-y:visible computes to
+     overflow-y:auto and breaks sticky Mind chrome / World jump. */
+  overflow-x: clip;
   overflow-y: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: none;
 }
 
 .desk-shell--mind-scroll .desk-workspace {
@@ -1491,7 +1493,12 @@ body {
 
 .mind-desk__map-row,
 .mind-desk__world {
-  scroll-margin-top: 96px;
+  /* Compact chrome (~52) + sticky Mind head (~60). */
+  scroll-margin-top: 120px;
+}
+
+.mind-desk__world {
+  padding-bottom: 8px;
 }
 
 .mind-desk__map-row {
@@ -1520,7 +1527,7 @@ body {
 
   .mind-desk__map-row,
   .mind-desk__world {
-    scroll-margin-top: 72px;
+    scroll-margin-top: 104px;
   }
 
   .desk-shell--mind-compact .mind-desk__head {
@@ -1612,6 +1619,16 @@ body {
   opacity: 1;
 }
 
+.world-map__pin--hop .world-map__halo {
+  opacity: 1;
+  fill: rgba(167, 139, 250, 0.22);
+}
+
+.world-map__pin--hop .world-map__dot {
+  stroke: #ddd6fe;
+  stroke-width: 1.6;
+}
+
 .world-map__dot {
   stroke: #0c0d10;
   stroke-width: 1;
@@ -1638,6 +1655,11 @@ body {
   stroke-width: 1.2;
   stroke-dasharray: 3 3;
   pointer-events: none;
+}
+
+.world-map__hop--close {
+  stroke-width: 1.6;
+  stroke-dasharray: 2 4;
 }
 
 .example-poi {

@@ -5,6 +5,7 @@ import {
   EXAMPLE_POI_SOURCE,
   EXAMPLE_POI_TOOL,
   loadExamplePoiSample,
+  nearPlaceFilter,
   placeFromCsvRow,
   placeToPost,
   splitCsvLine,
@@ -177,4 +178,43 @@ test("haversine is symmetric and zero on the same point", () => {
   const a = { lat: 40.71, lon: -74.01 };
   assert.equal(haversineKm(a, a), 0);
   assert.ok(Math.abs(haversineKm(a, { lat: 48.86, lon: 2.35 }) - haversineKm({ lat: 48.86, lon: 2.35 }, a)) < 0.01);
+});
+
+test("Place=Tokyo keeps Kyoto bright and dims Paris", () => {
+  assert.equal(nearPlaceFilter(34.9948, 135.785, "tokyo"), true); // Kiyomizu-dera
+  assert.equal(nearPlaceFilter(48.85826, 2.294501, "tokyo"), false);
+});
+
+test("buildTrendPins floats Place-near example POI into the pin cap", () => {
+  const kyoto = {
+    id: "Q647285",
+    name: "Kiyomizu-dera",
+    lat: 34.9948,
+    lon: 135.785,
+    country: "Japan",
+    iso2: "JP",
+    city: "Kyoto",
+    category: "temple",
+    sitelinks: 1,
+    pagerank: 0.01,
+    url: "https://audiala.com/en/japan/kyoto/kiyomizu-dera",
+  };
+  const farHeavy = Array.from({ length: 40 }, (_, i) =>
+    placeToPost(
+      {
+        ...eiffel,
+        id: `Q-far-${i}`,
+        name: `Far ${i}`,
+        lat: 48.85 + i * 0.01,
+        lon: 2.29,
+        pagerank: 10,
+        sitelinks: 200,
+      },
+      "2026-08-30T00:00:00.000Z",
+    ),
+  );
+  const pins = buildTrendPins([], "tokyo", [], [...farHeavy, placeToPost(kyoto, "2026-08-30T00:00:00.000Z")]);
+  const examples = pins.filter((p) => p.kind === "example");
+  assert.ok(examples.some((p) => p.label === "Kiyomizu-dera"));
+  assert.equal(examples[0]?.label, "Kiyomizu-dera");
 });

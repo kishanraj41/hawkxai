@@ -154,6 +154,7 @@ export default function ChartDesk({
                 selectedId={selected?.id ?? focus?.id ?? null}
                 hoverId={hoverId}
                 pairHover={pairHover}
+                liveRefresh={poiCompare?.liveRefresh ?? null}
                 onSelect={onSelect}
                 onHover={onHover}
               />

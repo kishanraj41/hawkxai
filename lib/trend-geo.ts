@@ -1,4 +1,4 @@
-import { CITIES, type CityId } from "./geo";
+import { CITIES, nearPlaceFilter, type CityId } from "./geo";
 import type { Post, PostGeo, Topic } from "./types";
 
 export type TrendPinKind = "receipt" | "lens" | "example";
@@ -132,7 +132,17 @@ export function buildTrendPins(
   const receipts = [...byKey.values()].toSorted((a, b) => b.weight - a.weight).slice(0, 40);
   const exampleBy = new Map<string, TrendPin>();
   for (const post of examples) addExamplePin(exampleBy, post);
-  const examplePins = [...exampleBy.values()].toSorted((a, b) => b.weight - a.weight).slice(0, 36);
+  // When a Place filter is on, keep nearby example POIs in the pin cap first.
+  const examplePins = [...exampleBy.values()]
+    .toSorted((a, b) => {
+      if (city !== "all") {
+        const an = nearPlaceFilter(a.lat, a.lon, city) ? 1 : 0;
+        const bn = nearPlaceFilter(b.lat, b.lon, city) ? 1 : 0;
+        if (an !== bn) return bn - an;
+      }
+      return b.weight - a.weight;
+    })
+    .slice(0, 36);
 
   const pins = [...receipts, ...examplePins];
   const lens = lensSpec(city);

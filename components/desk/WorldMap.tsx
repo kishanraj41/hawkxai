@@ -2,8 +2,7 @@
 
 import * as d3 from "d3";
 import { useEffect, useMemo, useRef } from "react";
-import type { CityId } from "@/lib/geo";
-import { nearPlaceFilter } from "@/lib/example-poi";
+import { nearPlaceFilter, type CityId } from "@/lib/geo";
 import { buildTrendPins, type TrendPin } from "@/lib/trend-geo";
 import type { ExamplePoiHop, Post, Topic } from "@/lib/types";
 import { loadWorldLand, type LandPolygon } from "@/lib/world-land";
@@ -16,6 +15,7 @@ interface WorldMapProps {
   selectedId: string | null;
   hoverId: string | null;
   pairHover?: ExamplePoiHop | null;
+  liveRefresh?: "hub" | "sample" | null;
   onSelect: (topic: Topic) => void;
   onHover: (id: string | null) => void;
 }
@@ -38,6 +38,7 @@ export default function WorldMap({
   selectedId,
   hoverId,
   pairHover = null,
+  liveRefresh = null,
   onSelect,
   onHover,
 }: WorldMapProps) {
@@ -180,10 +181,15 @@ export default function WorldMap({
       .selectAll<SVGGElement, TrendPin>("g.world-map__pin")
       .classed("world-map__pin--on", (d) => d.topicIds.includes(selectedId ?? "") || d.id === `lens:${city}` || pairHot(d.id))
       .classed("world-map__pin--hot", (d) => d.topicIds.includes(hoverId ?? "") || pairHot(d.id))
+      .classed("world-map__pin--hop", (d) => pairHot(d.id))
       .select("circle.world-map__dot")
       .attr("fill", (d) =>
         pinFill(d, d.topicIds.includes(selectedId ?? "") || pairHot(d.id), d.topicIds.includes(hoverId ?? "") || pairHot(d.id)),
-      );
+      )
+      .attr("r", (d) => {
+        if (pairHot(d.id)) return d.kind === "example" ? 5 : Math.max(4.5, Math.min(8, 3 + d.weight / 40));
+        return d.kind === "lens" ? 7 : d.kind === "example" ? 3.2 : Math.max(3, Math.min(7, 2 + d.weight / 40));
+      });
 
     const hop = hopRef.current;
     const projection = projectionRef.current;
@@ -191,17 +197,33 @@ export default function WorldMap({
     const a = pairHover ? pins.find((p) => p.id === pairHover.examplePinId) : null;
     const b = pairHover ? pins.find((p) => p.id === pairHover.livePinId) : null;
     if (!a || !b) {
-      hop.attr("d", "").attr("opacity", 0);
+      hop.attr("d", "").attr("opacity", 0).classed("world-map__hop--close", false);
       return;
     }
     const pa = projection([a.lon, a.lat]);
     const pb = projection([b.lon, b.lat]);
     if (!pa || !pb) {
-      hop.attr("d", "").attr("opacity", 0);
+      hop.attr("d", "").attr("opacity", 0).classed("world-map__hop--close", false);
       return;
     }
-    hop.attr("d", `M${pa[0]},${pa[1]}L${pb[0]},${pb[1]}`).attr("opacity", 1);
+    const dist = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]);
+    // Co-located hops (< ~2 km) collapse to a point — bow the path so it reads.
+    if (dist < 14) {
+      const mx = (pa[0] + pb[0]) / 2;
+      const my = (pa[1] + pb[1]) / 2 - 18;
+      hop
+        .attr("d", `M${pa[0]},${pa[1]} Q${mx},${my} ${pb[0]},${pb[1]}`)
+        .attr("opacity", 1)
+        .classed("world-map__hop--close", true);
+    } else {
+      hop
+        .attr("d", `M${pa[0]},${pa[1]}L${pb[0]},${pb[1]}`)
+        .attr("opacity", 1)
+        .classed("world-map__hop--close", false);
+    }
   }, [selectedId, hoverId, city, pins, pairHover]);
+
+  const refreshLabel = liveRefresh === "hub" ? "hub" : liveRefresh === "sample" ? "sample" : null;
 
   return (
     <section className="world-map" aria-label="Live world">
@@ -212,7 +234,7 @@ export default function WorldMap({
         </div>
         <p className="signal-label">
           {receipts.length || examples.length
-            ? `${receipts.length} live · ${examples.length} example POI · HF sample`
+            ? `${receipts.length} live · ${examples.length} example POI${refreshLabel ? ` · HF ${refreshLabel}` : ""}`
             : "No located receipts yet · weather and quakes land here"}
         </p>
       </header>
