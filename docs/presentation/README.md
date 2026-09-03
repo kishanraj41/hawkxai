@@ -23,7 +23,7 @@ Investor and pitch materials for HawkxAI. Ops docs stay in [docs/](../README.md)
 
 The living product backlog is [IMPROVISATIONS.md](../../agents/booster-agent/IMPROVISATIONS.md) — not duplicated here.
 
-<!-- AUTO-GENERATED: presentation files. Source: grokhackx checkout + docs/presentation/. Do not hand-edit. -->
+<!-- AUTO-GENERATED: presentation files. Source: hawkxai checkout + docs/presentation/. Do not hand-edit. -->
 
 ## Proposal presentation
 
