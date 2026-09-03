@@ -53,7 +53,7 @@ Beta access: DM me with your campaign name.
 First 10 marketers get free access through EOY.
 
 Live demo: [your-vercel-url]
-Open source: github.com/kishanraj41/hawkxai
+Open source: github.com/snagaram3/grokhackx
 
 90-sec demo video: [youtube-link]
 
@@ -109,7 +109,7 @@ Beta users are tracking:
 • Event footprints (Taylor Swift tour, Olympics 2026)
 
 Open beta now: [your-vercel-url]
-Open source: github.com/kishanraj41/hawkxai
+Open source: github.com/snagaram3/grokhackx
 
 If you're a performance marketer who launched a campaign and needs to know if it landed → try it and let me know what you think.
 
@@ -166,7 +166,7 @@ Beta users tracked:
 **Tech stack:**
 Next.js 14, TypeScript, D3 v7, Gemini 3.5 (clustering), Postgres (10 category DBs)
 
-Open source: github.com/kishanraj41/hawkxai
+Open source: github.com/snagaram3/grokhackx
 
 **Try it:**
 Live demo: [your-vercel-url]
@@ -193,7 +193,7 @@ Thanks for checking it out!
 
 **Timing**: Week 5-6 (same week as Product Hunt or 1 week after)  
 **Title**: Show HN: HawkxAI - Evidence-only campaign footprint tracker  
-**Link**: GitHub repo (github.com/kishanraj41/hawkxai)
+**Link**: GitHub repo (github.com/snagaram3/grokhackx)
 
 ### Post Body (HN Comment)
 ```
@@ -228,7 +228,7 @@ Brandwatch ($50k/year) monitors everything. ChatGPT invents sources.
 **Live demo:** [your-vercel-url]
 Try pasting "Camry" or "#HeatWaveFit" on the Footprint tab.
 
-**Open source:** github.com/kishanraj41/hawkxai
+**Open source:** github.com/snagaram3/grokhackx
 Full codebase. MIT license. Contributions welcome.
 
 **What I'd love feedback on:**
@@ -301,7 +301,7 @@ Buddy recommended a tool called HawkxAI. Open source, free beta.
 Free beta (open source). No credit card required.
 
 Live demo: [your-vercel-url]
-Code: github.com/kishanraj41/hawkxai
+Code: github.com/snagaram3/grokhackx
 
 **Not affiliated** (genuinely just sharing what worked).
 
@@ -353,7 +353,7 @@ Next.js 14, D3 v7, Gemini 3.5 (clustering), Postgres (10 category DBs)
 3. Risk clustering (120-min window, early PR crisis detection)
 
 **Live demo:** [your-vercel-url]
-**Open source:** github.com/kishanraj41/hawkxai
+**Open source:** github.com/snagaram3/grokhackx
 
 **Feedback welcome:**
 1. What campaigns would you track?
@@ -413,7 +413,7 @@ Risk alert: (none here, but shows orange/red if negative sentiment clusters)"
 "That's it. 60 seconds. No invented WHY. Evidence-only.
 
 Beta access: [your-vercel-url]
-Open source: github.com/kishanraj41/hawkxai
+Open source: github.com/snagaram3/grokhackx
 
 DM me your campaign name for free access through EOY."
 
@@ -475,7 +475,7 @@ Questions:
 
 **Get help:**
 - Demo video: [youtube-link]
-- GitHub: github.com/kishanraj41/hawkxai
+- GitHub: github.com/snagaram3/grokhackx
 - DM me on X: @[your-handle]
 
 Thanks for being an early user!

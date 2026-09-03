@@ -15,7 +15,7 @@
 ```bash
 # Option A: Vercel (Recommended)
 1. Go to vercel.com/new
-2. Import kishanraj41/hawkxai
+2. Import snagaram3/grokhackx
 3. Framework: Next.js
 4. Root Directory: .
 5. Add Environment Variables:
@@ -187,7 +187,7 @@ with evidence-only correlation. No invented WHY.
 ```
 
 **GitHub Profile**:
-- Pinned repo: `kishanraj41/hawkxai`
+- Pinned repo: `snagaram3/grokhackx`
 - Status: "Launching HawkxAI beta 🚀"
 
 ---

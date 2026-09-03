@@ -11,7 +11,7 @@
 1. **Deploy to Vercel** (30 min)
    ```bash
    # Go to vercel.com/new
-   # Import: github.com/kishanraj41/hawkxai
+   # Import: github.com/snagaram3/grokhackx
    # Add env: GOOGLE_API_KEY, GEMINI_MODEL, FLEET_URL
    # Deploy
    ```
@@ -37,7 +37,7 @@
 2. **Update social bios** (10 min)
    - X: "Building HawkxAI: campaign footprint intelligence. Evidence-only. [link]"
    - LinkedIn: Same
-   - GitHub: Pin `hawkxai` repo
+   - GitHub: Pin `grokhackx` repo
 
 3. **Create beta signup form** (15 min)
    - forms.google.com or typeform.com
@@ -80,7 +80,7 @@ Beta access: DM me with your campaign name.
 First 10 marketers get free access through EOY.
 
 Live demo: [your-vercel-url]
-Open source: github.com/kishanraj41/hawkxai
+Open source: github.com/snagaram3/grokhackx
 
 🧵 Thread: [attach 3 images + demo video]
 ```

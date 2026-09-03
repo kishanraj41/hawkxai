@@ -1,147 +1,124 @@
-# Presentation run of show — product first
+# HawkxAI video — explain it, in flow
 
-One take. **1× speed. No cuts.** English. Stop talking at **3:50**. Max **4:00**.
+One take. **1×.** No cuts. English. Stop by **3:50**. Max **4:00**.
 
-Judges score **Innovation 40%** (friction + twist + the chore getting done), then architecture and demo. Spend the minutes on **HawkxAI**. Cloud proof and the diagram are short, required beats — not the speech.
+Talk the flow. Do not recite commas. Do not jump desks without a sentence that carries you there.
 
-Print this. Do not read section A on camera.
+**AI Glasses** = imagine. **Camry** = live plug. Never invent why Camry is trending. Do not say Grok. Contest opened August fourth.
+
+Flow on camera: empty Footprint → Cloud → plug Camry → agent + lineage → filled Footprint → Insights → Research → poster → GitHub.
 
 ---
 
-## A. Before record — 5 tabs, left to right
-
-One Chrome window. Zoom **125%**. Hide bookmarks. Do Not Disturb.
+## Tabs (open before record)
 
 | Tab | What | Paste |
 |---|---|---|
-| **1** | HawkxAI Footprint (you start here) | https://hawkxai-qalms3xvxq-uc.a.run.app/footprint |
-| **2** | Google Cloud proof | https://console.cloud.google.com/run?project=project-16647bb0-5d45-4404-956 |
-| **3** | Agent working live | https://hawkxai-fleet-qalms3xvxq-uc.a.run.app/dev-ui |
-| **4** | Architecture poster | http://localhost:3000/demo/architecture.html |
-| **5** | GitHub | https://github.com/kishanraj41/hawkxai |
+| **1** | Footprint | https://hawkxai-qalms3xvxq-uc.a.run.app/footprint |
+| **2** | Cloud Run | https://console.cloud.google.com/run?project=project-16647bb0-5d45-4404-956 |
+| **3** | Agent live | https://hawkxai-fleet-qalms3xvxq-uc.a.run.app/dev-ui |
+| **4** | Insights | https://hawkxai-qalms3xvxq-uc.a.run.app/insights?q=Camry |
+| **5** | Research | https://hawkxai-qalms3xvxq-uc.a.run.app/research?q=Camry |
+| **6** | Poster | http://localhost:3000/demo/architecture.html |
+| **7** | GitHub | https://github.com/kishanraj41/hawkxai |
 
-Tab 1: address bar shows `.run.app/footprint`. Title **Look up a campaign or phrase**. Box **Campaign, hashtag, or phrase…**. Button **Look up**.
-
-Tab 2: project **Hawkxai**. Services **`hawkxai`** and **`hawkxai-fleet`**.
-
-Tab 4: `npm run dev` is running. Do not F11 until this tab is on camera.
-
-Do **not** open Vercel. Phrase: **Camry**. Fallback chip: **WWDC**. Never invent a WHY.
-
-Start the recorder on **Tab 1**.
+Zoom **125%**. Hide bookmarks. No Vercel. Fallback: **WWDC**. Start on **Tab 1**.
 
 ---
 
-## B. On camera — every click, every sentence
+## 1. Cool factor — ~70s · empty Footprint · Tab 1
 
-### 0:00–0:55 · Tab 1 — HawkxAI (empty Footprint)
+**Do:** stay. Hover the box. Do not type.
 
-**Do:** nothing but hover the lookup. Let the product be the picture.
+**Talk — this is the hook and the why:**
 
-**Say:**
+Most trend platforms tell you what is trending. HawkxAI is a footprint desk for a name you already own. A product. A campaign. A hashtag. Overnight it prints somewhere. We show *where* it printed, how differently each community is reacting, and what the receipts actually show.
 
-> HawkxAI is the live footprint desk for a campaign name you already own.
->
-> Every morning a marketer has the same chore. They shipped a name — a product, a hashtag, a line. Overnight it printed somewhere. To find it they babysit five feeds, paste screenshots into a slide, and then someone asks why it is trending. If they do not have an answer, they invent one. Brandwatch is a listening seat they will never get. A chatbot will write a story with no receipts.
->
-> That is the friction we brought. Bring your own friction. Ours is: where did our phrase land, and what is the evidence.
->
-> HawkxAI does the chore. You plug the phrase. An agent collects live receipts — where it printed, what hashtags and URLs rode along, when the first print hit. The same desk fills: a mind map, related prints, and a brief a sales team can take into a meeting — useful for every age group, and for a competitor who will ride the need without copying the meme.
->
-> Receipts only. If the tape is thin, we say so. We never invent a WHY.
+Imagine “AI Glasses.” Hype on one platform. Privacy on Reddit. Barely a mention on Hacker News. That gap is platform divergence — calculated in code, not a vibe. On Footprint, the mind map only draws a line when two names share a real artifact: the same hashtag, the same URL, a QR-shaped code if one printed. No invented bridge. If the tape is thin, the map stays thin.
 
-### 0:55–1:10 · Tab 2 — Google Cloud (required proof)
-
-**Do:** click **Tab 2**. Point at **`hawkxai`** and **`hawkxai-fleet`**. Do not click into logs.
-
-**Say:**
-
-> This is not a laptop demo. Both the desk and the ingest fleet run on Cloud Run. Gemini 3.5 and Google ADK drive the agent. HawkxAI was built for this contest, which opened August fourth. Desk, fleet, and diagram — one product.
-
-### 1:10–1:22 · Tab 1 — plug Camry
-
-**Do:** click **Tab 1**. Click the **Camry** chip (or type `Camry` → **Look up**). Stay on Footprint. Do not open Trends / Insights / Research.
-
-**Say:**
-
-> I plug Camry — a name a team already owns. I am not chatting with a bot. I am handing the job to the agent.
-
-### 1:22–1:50 · Tab 3 — Proof of Action (the chore, live)
-
-**Do:** click **Tab 3**. Scroll if a trace is moving. If it is spinning, stay. Do not cut. Do not name tool IDs unless they are on screen.
-
-**Say:**
-
-> Live execution. The agent is collecting, scoring, and storing — the heavy lifting a person used to do by hand, across sources, in the background of this desk. It ranks titles that already exist. It does not invent posts. X is not the centerpiece. When a receipt lands, we keep where it came from and when, so a brief is always traceable.
-
-### 1:50–3:20 · Tab 1 — the product fills (longest beat)
-
-**Do:**
-1. Click **Tab 1**.
-2. Wait for prints / map / receipts. If it is thin, say the thin line — do not fill the gap.
-3. Scroll the **mind map**. Click **one receipt** so the source URL is visible.
-4. If a campaign brief / age lens is on screen, point at it. If not, skip — do not hunt.
-5. Do not click occupancy tags. Do not say the model is fitted.
-
-**Say:**
-
-> Same phrase. This is HawkxAI.
->
-> The hub is Camry. Branches are prints and artifacts that actually co-occurred — hashtags, URLs, a QR-shaped code if one printed. A bridge between two names exists only when they share a real artifact. Click a receipt and you leave our product for the source. That is the point.
->
-> A sales team can quote this in a room. Kids get a safe, plain-language take. A competitor gets hook, timing, and risk — ride the need, do not steal the meme.
->
-> If nothing printed, the desk stays thin. I will not narrate a fake story to fill the silence.
->
-> This is Taskmaster. A messy, multi-step chore — collect, score, store, put it on the desk — finished. Not a conversation.
-
-### 3:20–3:40 · Tab 4 — architecture in one breath
-
-**Do:** click **Tab 4**. Press **F11**. Move the cursor left to right across the five lanes. Do not read boxes aloud.
-
-**Say:**
-
-> Phrase in. Agent in the middle. Receipts out. Gemini, ADK, Cloud Run — that is the stack. The product never lets the fleet invent a story, and it never overwrites the live trend tape. Honesty is the architecture.
-
-### 3:40–3:55 · Esc, Tab 5 — close on HawkxAI
-
-**Do:** **Esc**. Click **Tab 5**. Click the GitHub address bar. Five seconds of silence. Stop recording.
-
-**Say:**
-
-> github.com/kishanraj41/hawkxai. Plug a phrase you own. See where it printed. Leave the story to the receipts.
+Those same receipts feed the rest of the flow. Insights traces the name back to an origin. Research writes the brief you can cite. Or you just plug a name you already own. We never invent a why.
 
 ---
 
-## C. If it breaks — stay on camera
+## 2. Agent + lineage — ~70s · Tabs 2 → 1 → 3
 
-| What happened | Do | Say |
+**Do:** Tab **2**, point at `hawkxai` and `hawkxai-fleet`. Tab **1**, click **Camry**. Tab **3**, let the run move. Do not name tools unless they are on screen.
+
+**Talk — this is how the chore actually runs:**
+
+That is the job we handed off. Not a chat. Collect, score, store, put it on the desk.
+
+Glance at Cloud Run. Two services — the desk and the ingest fleet. Gemini 3.5 Flash does the clustering. Google ADK runs the agent. Built for this contest, which opened August fourth.
+
+I plug Camry. A name a team already owns. Watch the agent. Collectors pull live receipts. Gemini clusters related names. Correlation stays on evidence. Divergence stays in code. X is not the centerpiece.
+
+When a receipt lands we stamp **which tool found it** and **when**. That is lineage. It is how the system remembers. If a sales brief leaves this room, you can still audit the collect step. The booster then translates those same receipts — for a consumer, a marketer, a founder, a competitor. Gemini is classifying and clustering. It is not writing a recap. The ADK agent on Cloud Run is doing the chore live.
+
+---
+
+## 3. Filled desk + who it is for — ~90s · Tabs 1 → 4 → 5 → 6 → 7
+
+Stay in one story. Footprint first, then the two desks that use the same tape, then the picture, then the repo.
+
+### 3a. Footprint — how the print is shown · Tab 1 · ~35s
+
+**Do:** back to Tab **1**. Scroll the mind map. Click **one receipt**. Point at the lineage line if a tool and a time show. If they are missing, still say the sentence — do not fake a stamp.
+
+**Talk:**
+
+Same phrase. This is Footprint, filled from the live collect.
+
+The hub is Camry. The branches are prints and artifacts that actually co-occurred. A line exists only when they share a real artifact. Click a receipt and you leave our product for the source. That is the point. Under it, lineage: the collect tool, the timestamp. That is how we refuse a fake why.
+
+Who uses this map? A consumer sees the print without five apps. A founder sees a cluster with receipts and can flag a pain early. Marketing plugs the campaign they shipped. Competitive intel watches a rival name. An investor can tell a one-platform spike from something that hit more than one community. Sales can quote the receipt in a room.
+
+If Camry printed nothing, say so. I will not invent a story to fill the silence.
+
+### 3b. Insights — the taproot · Tab 4 · ~20s
+
+**Do:** Tab **4**. Point at origin / family / oldest record if they loaded. Ten seconds empty, then move.
+
+**Talk:**
+
+Same receipts. Different question. Insights is not “what ranks for Camry.” It traces the name back — the origin page, the family it sits in, the oldest dated receipt we can prove. A taproot. If two senses collide — the car versus a person — the desk forks. We do not mash them into one myth.
+
+### 3c. Research — the cited brief · Tab 5 · ~20s
+
+**Do:** Tab **5**. Click one cited source. Point at lineage on that row if it is there.
+
+**Talk:**
+
+Research is the brief you would write if you had an hour. Wikipedia, the open web, Hacker News — each line is a citation, not a paragraph we dreamed up. Lineage rides along here too: which source, which collect step, when.
+
+So the flow is one tape, three jobs. Footprint: where did it print. Insights: where did it start. Research: what can I cite.
+
+### 3d. Poster + close · Tabs 6, 7 · ~15s
+
+**Do:** Tab **6**, **F11**, cursor across the five lanes. **Esc**. Tab **7**, click the address bar. Silence. Stop.
+
+**Talk:**
+
+One picture. Phrase in. Agent in the middle — Gemini, ADK, Cloud Run. Receipts out, with lineage, into those three desks. The live trend tape is never overwritten by the fleet.
+
+github.com/kishanraj41/hawkxai. Plug a phrase you own. Leave the story to the receipts.
+
+---
+
+## If it breaks
+
+| What | Do | Say |
 |---|---|---|
-| Camry empty / thin | Stay Tab 1. Click **WWDC**. | The tape is thin on Camry. I will not invent a WHY. Trying WWDC. |
-| Tab 3 error | Click Tab 2, point at **`hawkxai-fleet`**. | The fleet is on Cloud Run. Here is the service. |
-| Tab 1 is not `.run.app` | You opened Vercel. Close it. | — do not mention Vercel — |
-| Tab 4 blank | Stay on Tab 1. Skip poster. | The architecture diagram is in the README. |
-| Past 3:50 | Stop talking. End by 4:00. | — |
+| Camry thin | Stay honest. Try **WWDC**. | The tape is thin. I am not inventing a why. |
+| Insights / Research empty | Ten seconds, move. | That desk is waiting on dated receipts. Thin stays thin. |
+| Agent tab dies | Tab 2, `hawkxai-fleet`. | The fleet is on Cloud Run. |
+| Past 3:50 | Stop talking. | — |
 
-**Never:** cut · speed up · invent why Camry is trending · call occupancy fitted · say Fortified Enterprise Fleet · demo Vercel as the hosted project · list APIs that did not fire.
-
----
-
-## D. After the take
-
-1. Confirm `.run.app` is in the frame and the Camry plug was live.
-2. Upload YouTube or Vimeo (public, or unlisted if it plays without login).
-3. Devpost: https://allthingsagentichackathon.devpost.com/ · **Taskmaster**
-4. Hosted project: https://hawkxai-qalms3xvxq-uc.a.run.app/footprint
-5. GitHub: https://github.com/kishanraj41/hawkxai
-6. Architecture image: F11 screenshot of Tab 4
-
-**Built during the contest (paste into Devpost if asked):**
-
-HawkxAI was created during the Submission Period. All Things Agentic opened 4 August 2026. This repo does not incorporate a pre-contest HawkxAI codebase. Standard tools used: Next.js, Google ADK, Gemini 3.5 Flash, Cloud Run, Cloud Storage, Cloud SQL.
+Do not: cut · invent a Camry why · say occupancy is fitted · demo Vercel · say Grok · call lineage a second product.
 
 ---
 
-## E. Words only — if you freeze, read this block
+## After
 
-HawkxAI is the live footprint desk for a campaign name you already own. Marketers babysit feeds and invent a WHY. We collect receipts and map the footprint. Plug Camry. The agent does the chore. The desk fills from evidence. Thin stays thin. Never an invented WHY. Taskmaster, not a chatbot. Phrase in, receipts out. github.com/kishanraj41/hawkxai.
+YouTube or Vimeo. Devpost **Taskmaster**. Hosted: https://hawkxai-qalms3xvxq-uc.a.run.app/footprint · GitHub: https://github.com/kishanraj41/hawkxai
+
+HawkxAI was created during the Submission Period. All Things Agentic opened 4 August 2026. This repo does not incorporate a pre-contest HawkxAI codebase.

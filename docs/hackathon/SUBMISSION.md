@@ -2,7 +2,9 @@
 
 Contest: [All Things Agentic](https://allthingsagentichackathon.devpost.com/) · **Taskmaster** · due **Aug 31 2026 5:00pm PDT**.
 
-Architecture diagram (contest poster): [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md) · live [`/architecture`](../../app/architecture/page.tsx) · static [`/demo/architecture.html`](../../public/demo/architecture.html)  
+Architecture diagram (contest poster): [VIDEO_SCRIPT.md](./VIDEO_SCRIPT.md) · live [`/architecture`](../../app/architecture/page.tsx) · static [`/demo/architecture.html`](../../public/demo/architecture.html)
+
+**Devpost upload (png, under 35MB):** [`docs/hackathon/hawkxai-architecture.png`](./hawkxai-architecture.png) — five-lane ingest poster. Upload that file. Do not upload the HTML.  
 Generated mermaid (from fleet files): [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Devpost form (paste)

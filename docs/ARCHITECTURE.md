@@ -12,8 +12,8 @@ Hobby has no static egress IPs. Cloud SQL currently allows `0.0.0.0/0` plus this
 
 ```mermaid
 flowchart LR
-  gh["GitHub<br/>kishanraj41/hawkxai"]
-  vercel["Vercel hawkxai.vercel.app<br/>until www Cloud Run cutover"]
+  gh["GitHub<br/>snagaram3/grokhackx"]
+  vercel["Vercel hawkxai.vercel.app<br/>Cloud Run hawkxai also live"]
   fn["Next.js 14 functions<br/>region iad1"]
   env["Env: GOOGLE_API_KEY<br/>FLEET_URL<br/>YOUTUBE_API_KEY<br/>TREND_DB_*"]
   sql["Cloud SQL Postgres 16<br/>hawkxai-trends · us-east4<br/>35.245.139.208:5432 TLS"]
@@ -28,8 +28,8 @@ flowchart LR
 
 | Piece | Value |
 |---|---|
-| GitHub | `kishanraj41/hawkxai` |
-| Vercel team / project | `hawk-ai4` / `hawkxai.vercel.app` (`prj_8yCxNZaUrJhVFDL9Ijbp5pqhJ1Gb`; console slug may still read grokhackx until renamed there) |
+| GitHub | `snagaram3/grokhackx` |
+| Vercel team / project | `hawk-ai4` / `grokhackx` (`prj_8yCxNZaUrJhVFDL9Ijbp5pqhJ1Gb`) · live `hawkxai.vercel.app` |
 | Production | [hawkxai.com](https://hawkxai.com) |
 | Function region | `iad1` (Northern Virginia) |
 | GCP project (fleet / Cloud Run) | `project-16647bb0-5d45-4404-956` (display **Hawkxai**). Cloud SQL `hawkxai-trends` is a separate instance — reuse it; do not create a second one here. |

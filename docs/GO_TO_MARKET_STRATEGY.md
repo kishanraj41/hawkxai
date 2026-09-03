@@ -167,7 +167,7 @@ We solve a different job: "Where did MY campaign land, and what do I do next?"
 Beta users tracked: #HeatWaveFit, Camry campaigns, startup product launches.
 
 Try it: [Live Demo Link]
-Repo (open source): github.com/kishanraj41/hawkxai
+Repo (open source): github.com/snagaram3/grokhackx
 
 Happy to answer questions! 🙌
 ```
@@ -200,7 +200,7 @@ HawkxAI is different:
 
 Tech stack: Next.js 14, TypeScript, D3 v7, Gemini 3.5 (clustering), Postgres (10 category DBs)
 
-Open source: github.com/kishanraj41/hawkxai
+Open source: github.com/snagaram3/grokhackx
 Live demo: [Vercel URL]
 
 Built this during a hackathon. Beta users are tracking real campaigns now.
@@ -244,7 +244,7 @@ Why this is useful:
 
 Not selling anything (it's open source). Just sharing what worked.
 
-Code: github.com/kishanraj41/hawkxai
+Code: github.com/snagaram3/grokhackx
 Demo: [link]
 
 Questions? Happy to help.

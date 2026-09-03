@@ -1,8 +1,8 @@
 /** Mermaid sources for the live HawkxAI runtime. Keep in sync with docs/ARCHITECTURE.md. */
 
 export const DEPLOY_GRAPH = `flowchart LR
-  gh["GitHub<br/>kishanraj41/hawkxai"]
-  vercel["Cloud Run desk hawkxai<br/>Vercel fallback until www cutover"]
+  gh["GitHub<br/>snagaram3/grokhackx"]
+  vercel["Vercel hawkxai.vercel.app<br/>Cloud Run hawkxai also live"]
   fn["Next.js 14 functions<br/>region iad1"]
   env["Env: GOOGLE_API_KEY<br/>FLEET_URL<br/>YOUTUBE_API_KEY<br/>TREND_DB_*"]
   sql["Cloud SQL Postgres 16<br/>hawkxai-trends · us-east4<br/>35.245.139.208:5432 TLS"]
@@ -114,7 +114,7 @@ export const ARCHITECTURE_SECTIONS = [
   {
     id: "deploy",
     title: "Deploy path",
-    caption: "GitHub kishanraj41/hawkxai is the source. Production desk is Cloud Run hawkxai; Vercel remains until www cutover. Functions reach Cloud SQL over TLS on the public IP.",
+    caption: "GitHub snagaram3/grokhackx is the source. Vercel hawkxai.vercel.app is production; Cloud Run hawkxai is also live. Functions reach Cloud SQL over TLS on the public IP.",
     chart: DEPLOY_GRAPH,
   },
   {

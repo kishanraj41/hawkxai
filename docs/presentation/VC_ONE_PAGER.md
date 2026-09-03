@@ -5,7 +5,7 @@
 
 HawkxAI is the live footprint desk for a campaign name a team already owns. Paste the phrase. See where it printed since yesterday, with receipts. No invented why.
 
-Repo: https://github.com/kishanraj41/hawkxai · `cursor/hawkai-one-pager-1303` @ `1a4132e`
+Repo: https://github.com/snagaram3/grokhackx · `cursor/hawkai-one-pager-1303` @ `1a4132e`
 
 ## The problem
 

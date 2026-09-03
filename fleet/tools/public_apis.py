@@ -13,7 +13,7 @@ import httpx
 from tools.buffer import add_posts, now_iso, stamp
 from tools.permissions import is_enabled
 
-UA = "HawkxAI-fleet/1.0 (+https://github.com/kishanraj41/hawkxai)"
+UA = "HawkxAI-fleet/1.0 (+https://github.com/snagaram3/grokhackx)"
 MODEL_MAKE = {
     "camry": ("toyota", "camry"),
     "corolla": ("toyota", "corolla"),

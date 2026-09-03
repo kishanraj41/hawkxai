@@ -76,6 +76,11 @@ Last run: 2026-08-31T21:00:00+00:00
 - **Why:** Shipped. `/footprint` POSTs the phrase to `/api/fleet`. `GET /api/trends` is untouched. Footprint falls back to live tape when fleet is 503.
 - **Next:** Keep `FLEET_URL` on both Vercel and Cloud Run `hawkxai` until www DNS cutover.
 
+## P1 — Consent + per-user owner for ML / comparison data
+
+- **Why:** Plugged phrases, Watch POIs, `?vs=` overlays, and Official/Occupied/Ignore tags are the labeled set for HistGB and side-by-side comparison. Owner is still `demo`. Judges and later users need a sentence that says what we take and what we do not (no silent account scrape).
+- **Next:** Auth splits owner off `demo`. Show a one-line “used to fit next-window / occupancy when floors are met” on Watch inspect. Do not train on a phrase they did not plug or tag.
+
 ## P1 — Shared-artifact bridges on the mind map
 
 - **Why:** The mind map only draws amber dashes when the same hashtag, QR, URL, or ticker prints on two names. Zero bridges means correlation is still a star, not a graph.

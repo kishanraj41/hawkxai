@@ -12,7 +12,7 @@ import type {
   ResearchSourceKind,
 } from "./types";
 
-const UA = "HawkxAI/1.0 (+https://github.com/kishanraj41/hawkxai)";
+const UA = "HawkxAI/1.0 (+https://github.com/snagaram3/grokhackx)";
 
 const briefSchema = z.object({
   summary: z.string().min(1).transform((s) => s.slice(0, 1200)),

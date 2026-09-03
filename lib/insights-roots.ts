@@ -11,7 +11,7 @@ import type {
   RootTrace,
 } from "./insights-types";
 
-const UA = "HawkxAI/1.0 (+https://github.com/kishanraj41/hawkxai)";
+const UA = "HawkxAI/1.0 (+https://github.com/snagaram3/grokhackx)";
 
 const HIDDEN_CAT =
   /^(All |Articles |Wikipedia|Pages |CS1|Use dmy|Use mdy|Short description|Webarchive|Good articles|Featured )/i;

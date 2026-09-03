@@ -147,7 +147,7 @@ First 10 get free access through EOY.
 ### [ ] 1. Deploy to Vercel (30 min)
 ```bash
 # Go to vercel.com/new
-# Import kishanraj41/hawkxai
+# Import snagaram3/grokhackx
 # Add env vars: GOOGLE_API_KEY, GEMINI_MODEL, FLEET_URL
 # Deploy
 ```
